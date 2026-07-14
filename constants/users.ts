@@ -1,0 +1,42 @@
+export const initialUsers = [
+    {
+        id: "USR-001",
+        name: "Aarav Patel",
+        email: "aarav.patel@example.com",
+        role: "User",
+        status: "Active",
+        joined: "2023-11-12",
+    },
+    {
+        id: "USR-002",
+        name: "Diya Sharma",
+        email: "diya.sharma@example.com",
+        role: "User",
+        status: "Active",
+        joined: "2023-11-15",
+    },
+    {
+        id: "USR-003",
+        name: "Rohan Gupta",
+        email: "rohan.gupta@example.com",
+        role: "Moderator",
+        status: "Active",
+        joined: "2023-10-01",
+    },
+    {
+        id: "USR-004",
+        name: "Sneha Reddy",
+        email: "sneha.reddy@example.com",
+        role: "User",
+        status: "Suspended",
+        joined: "2023-12-05",
+    },
+    {
+        id: "USR-005",
+        name: "Vikram Singh",
+        email: "vikram.singh@example.com",
+        role: "User",
+        status: "Active",
+        joined: "2023-12-10",
+    },
+];
