@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import {
-    LayoutDashboard, Menu, X, LogOut, User, Award, Gift,
+    LayoutDashboard, Menu, X, LogOut, User, Award, Gift, UserX,
     Users, UserCheck, ShieldAlert, Video, Plus, Flag, HelpCircle,
     ListTodo, Ban, AlertOctagon, Calendar, MessageSquare, Bell,
     CheckSquare, FileCheck, DollarSign, Coins, ChevronDown, ChevronRight
@@ -92,6 +92,7 @@ const sidebarSections: SidebarSection[] = [
             { name: 'Add New', href: '/add-new', icon: Plus },
             { name: 'Reports', href: '/reports', icon: Flag },
             { name: 'Help & Support', href: '/help-support', icon: HelpCircle },
+            { name: 'Account Deletions', href: '/deletions', icon: UserX },
             { name: 'Task', href: '/tasks', icon: ListTodo }
         ]
     },

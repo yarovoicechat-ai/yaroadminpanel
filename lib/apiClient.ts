@@ -2,6 +2,8 @@
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.mithichat.live';
 
+console.log("API_BASE_URL =", API_BASE_URL);
+
 export interface ApiResponse<T = any> {
     success: boolean;
     message: string;
