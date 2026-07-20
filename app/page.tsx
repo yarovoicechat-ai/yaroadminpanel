@@ -42,7 +42,7 @@ function RootContent() {
         if (typeof window !== 'undefined') {
             const token = localStorage.getItem('admin_token');
             if (token) {
-                router.replace('/admins');
+                router.replace('/dashboard');
             } else {
                 router.replace('/login');
             }

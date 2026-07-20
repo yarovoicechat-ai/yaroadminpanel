@@ -54,7 +54,7 @@ const sidebarSections: SidebarSection[] = [
         title: 'Core Console',
         category: 'Dashboard',
         items: [
-            { name: 'Dashboard', href: '/', icon: LayoutDashboard, category: 'Dashboard' }
+            { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' }
         ]
     },
     {
