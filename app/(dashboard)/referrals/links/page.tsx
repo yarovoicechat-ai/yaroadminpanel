@@ -20,41 +20,39 @@ export default function ReferralLinks() {
 
   const referralCode = user?.meethiId || user?.id?.substring(18).toUpperCase() || 'AGY8X92';
 
-  const teamLeaderDomain = 'team-leader.meethichat.live';
-
   const links = [
     {
-      role: 'Team Leader',
-      desc: 'Recruit Team Leaders for Meethi Chat portal directly.',
-      url: `https://${teamLeaderDomain}/apply/team-leader?ref=${referralCode}`,
+      role: 'Admin',
+      desc: 'Recruit sub-administrators directly under your organization.',
+      url: `https://${adminDomain}/?referrer=${referralCode}&role=admin`,
       icon: Briefcase,
-      color: 'text-pink-400 border-pink-500/20 bg-pink-500/5'
+      color: 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5'
     },
     {
       role: 'Host',
       desc: 'Sign up new hosts under your agency hierarchy automatically.',
-      url: `https://${hostDomain}/apply/host?ref=${referralCode}`,
+      url: `https://${hostDomain}/?referrer=${referralCode}&role=host`,
       icon: Video,
       color: 'text-lime-400 border-lime-500/20 bg-lime-500/5'
     },
     {
       role: 'Agency',
       desc: 'Recruit sub-agencies. They inherit you as their parent node.',
-      url: `https://${agencyDomain}/apply/agency?ref=${referralCode}`,
+      url: `https://${agencyDomain}/?referrer=${referralCode}&role=agency`,
       icon: Briefcase,
       color: 'text-amber-400 border-amber-500/20 bg-amber-500/5'
     },
     {
-      role: 'Admin / Operator',
-      desc: 'Link sub-administrators or operators directly to your organization.',
-      url: `https://${operatorDomain}/apply/operator?ref=${referralCode}`,
+      role: 'Operator',
+      desc: 'Link operators directly to your organization.',
+      url: `https://${operatorDomain}/?referrer=${referralCode}&role=operator`,
       icon: Key,
       color: 'text-purple-400 border-purple-500/20 bg-purple-500/5'
     },
     {
       role: 'Coin Seller',
       desc: 'Register subordinate coin sellers.',
-      url: `https://${sellerDomain}/apply?ref=${referralCode}`,
+      url: `https://${sellerDomain}/?referrer=${referralCode}&role=coinSeller`,
       icon: Award,
       color: 'text-rose-400 border-rose-500/20 bg-rose-500/5'
     }

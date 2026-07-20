@@ -4,20 +4,15 @@ import type { NextRequest } from 'next/server';
 export function middleware(request: NextRequest) {
     const hostname = request.headers.get('host') || '';
     const url = request.nextUrl.clone();
+    const searchParams = request.nextUrl.search; // preserves ?referrer=... or ?ref=...
 
-    // Extract subdomain (e.g. team-leader from team-leader.meethichat.live or team-leader.yocillive.com)
     const hostParts = hostname.split('.');
 
-    // Check if subdomains are present
+    // Subdomain rewrite handling
     if (hostParts.length > 2) {
         const subdomain = hostParts[0].toLowerCase();
 
-        if (subdomain === 'team-leader' || subdomain === 'teamleader') {
-            if (url.pathname === '/' || url.pathname === '/register') {
-                url.pathname = '/apply/team-leader';
-                return NextResponse.rewrite(url);
-            }
-        } else if (subdomain === 'agency') {
+        if (subdomain === 'agency') {
             if (url.pathname === '/' || url.pathname === '/register') {
                 url.pathname = '/apply/agency';
                 return NextResponse.rewrite(url);
@@ -32,7 +27,7 @@ export function middleware(request: NextRequest) {
                 url.pathname = '/apply/super-admin';
                 return NextResponse.rewrite(url);
             }
-        } else if (subdomain === 'admin') {
+        } else if (subdomain === 'admin' || subdomain === 'team-leader' || subdomain === 'teamleader') {
             if (url.pathname === '/' || url.pathname === '/register') {
                 url.pathname = '/apply/admin';
                 return NextResponse.rewrite(url);

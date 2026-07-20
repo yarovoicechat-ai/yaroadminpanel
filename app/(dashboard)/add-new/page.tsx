@@ -52,7 +52,7 @@ export default function AddNewEntityPage() {
     };
 
     const publicApplyUrl = typeof window !== 'undefined' 
-        ? `${window.location.origin}${getRolePath(selectedRole)}?referrer=${myCode}`
+        ? `${window.location.origin}/?referrer=${myCode}${selectedRole ? `&role=${selectedRole}` : ''}`
         : '';
 
     const copyToClipboard = () => {
