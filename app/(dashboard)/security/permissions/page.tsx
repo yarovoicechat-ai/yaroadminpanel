@@ -8,13 +8,14 @@ import { toast } from 'sonner';
 
 const roles = ['owner', 'operator', 'superAdmin', 'admin', 'agency', 'coinSeller', 'customerSupport', 'host'];
 
-const menuOptions = ['Dashboard', 'Users', 'Host', 'Agency', 'Coin Seller', 'Finance', 'Reports', 'Notifications', 'Settings', 'Developer'];
+const menuOptions = ['Dashboard', 'Users', 'Host', 'Agency', 'Coin Seller', 'Finance', 'Reports', 'Notifications', 'Recruitment', 'Settings', 'Developer'];
 
-const widgetOptions = ["Today's Minutes", "Coins Spent Today", "Host Earnings Today", "Today's Revenue", "Total Users", "Total Hosts", "Active Hosts", "Reports Pending"];
+const widgetOptions = ["Today's Minutes", "Coins Spent Today", "Host Earnings Today", "Today's Revenue", "Total Users", "Total Hosts", "Active Hosts", "Recruitment Applications", "Reports Pending"];
 
 const buttonOptions = [
-  'Add', 'Edit', 'Delete', 'Approve', 'Reject', 'Suspend', 'Activate', 
-  'Password Reset', 'Login As User', 'Export', 'Import', 'Recharge', 
+  'View', 'Create', 'Update', 'Delete', 'Approve', 'Reject', 'Export',
+  'Add', 'Edit', 'Suspend', 'Activate', 
+  'Password Reset', 'Login As User', 'Import', 'Recharge', 
   'Deduct Coin', 'Add Diamond', 'Remove Diamond', 'Transfer'
 ];
 

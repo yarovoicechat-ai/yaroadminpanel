@@ -58,6 +58,25 @@ const sidebarSections: SidebarSection[] = [
         ]
     },
     {
+        title: 'Recruitment Portal',
+        category: 'Dashboard',
+        items: [
+            {
+                name: 'Recruitment Apps',
+                icon: Briefcase,
+                category: 'Dashboard',
+                submenu: [
+                    { name: 'All Applications', href: '/recruitment' },
+                    { name: 'Agency Applications', href: '/recruitment/agency' },
+                    { name: 'Operator Applications', href: '/recruitment/operator' },
+                    { name: 'Admin Applications', href: '/recruitment/admin' },
+                    { name: 'Customer Service Apps', href: '/recruitment/customer-service' },
+                    { name: 'Super Admin Apps', href: '/recruitment/super-admin' },
+                ]
+            }
+        ]
+    },
+    {
         title: 'Users & Roles',
         category: 'Users',
         items: [

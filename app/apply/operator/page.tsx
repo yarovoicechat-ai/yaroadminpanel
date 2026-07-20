@@ -1,377 +1,377 @@
 'use client';
 
 import { useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
+import { RecruitmentFormLayout, FormStep } from '@/components/recruitment/RecruitmentFormLayout';
+import { ReferralState } from '@/components/recruitment/ReferralBanner';
+import { apiClient } from '@/lib/apiClient';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.mithichat.live';
+const OPERATOR_STEPS: FormStep[] = [
+    { id: 'personal', title: 'Personal Profile', description: 'Applicant personal details' },
+    { id: 'experience', title: 'Operational Experience', description: 'Skills & team management' },
+    { id: 'availability', title: 'Shift & Capacity', description: 'Daily hours & team scale' },
+    { id: 'verification', title: 'Documents & Undertaking', description: 'Identity verification' },
+];
 
 function OperatorFormContent() {
-    const searchParams = useSearchParams();
-    const refCode = searchParams.get('referrer') || searchParams.get('ref') || '';
+    const [currentStep, setCurrentStep] = useState(0);
+    const [referral, setReferral] = useState<ReferralState>({ code: '', isVerified: false, isLocked: false });
 
-    const initialFormState = {
-        name: '',
+    const [formData, setFormData] = useState({
+        fullName: '',
         email: '',
         phone: '',
+        gender: 'female',
         city: '',
         country: 'India',
-        resume: '',
-        linkedin: '',
-        portfolio: '',
-        experienceLetter: '',
-        addressProof: '',
-        idProof: '',
-        personalNote: '',
-        referralCode: refCode,
-    };
 
-    const [form, setForm] = useState(initialFormState);
+        experienceYears: '2-5 years',
+        previousPlatforms: '',
+        languagesSpoken: 'Hindi, English',
+        operatorCategory: 'Live Stream Operator',
+
+        dailyActiveHours: '8+ Hours',
+        shiftPreference: 'Evening / Night Shift',
+        managedTeamSize: '10-20 Members',
+
+        govtIdUrl: '',
+        resumePdfUrl: '',
+        experienceProofUrl: '',
+        agreedToTerms: false,
+    });
+
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [applicationId, setApplicationId] = useState('');
 
-    const handleReset = () => {
-        setForm(initialFormState);
+    const updateField = (field: string, value: any) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!form.name || !form.email || !form.phone || !form.city || !form.linkedin) {
-            toast.error('Please fill in all required fields');
+    const validateCurrentStep = (): boolean => {
+        if (currentStep === 0) {
+            if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.city.trim()) {
+                toast.error('Please fill in Full Name, Email, Phone, and City.');
+                return false;
+            }
+            if (!/\S+@\S+\.\S+/.test(formData.email)) {
+                toast.error('Please enter a valid email address.');
+                return false;
+            }
+        } else if (currentStep === 1) {
+            if (!formData.previousPlatforms.trim()) {
+                toast.error('Please specify previous platforms or companies managed.');
+                return false;
+            }
+        }
+        return true;
+    };
+
+    const handleStepChange = (newStep: number) => {
+        if (newStep > currentStep) {
+            if (!validateCurrentStep()) return;
+        }
+        setCurrentStep(newStep);
+    };
+
+    const handleSubmit = async () => {
+        if (!validateCurrentStep()) return;
+
+        if (!formData.agreedToTerms) {
+            toast.error('Please accept the operator code of conduct to submit.');
             return;
         }
 
         try {
             setSubmitting(true);
-            const res = await fetch(`${API_BASE}/api/public/apply`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: form.name,
-                    email: form.email,
-                    phoneNumber: form.phone,
-                    role: 'operator',
-                    referralCode: form.referralCode,
-                    documents: [form.resume, form.portfolio, form.experienceLetter, form.addressProof, form.idProof].filter(Boolean),
-                    city: form.city,
-                    country: form.country,
-                    linkedin: form.linkedin,
-                    personalNote: form.personalNote,
-                }),
-            });
-            const data = await res.json();
-            if (data.success) {
+            const payload = {
+                name: formData.fullName,
+                email: formData.email,
+                phone: formData.phone,
+                gender: formData.gender,
+                city: formData.city,
+                country: formData.country,
+                experienceYears: formData.experienceYears,
+                role: 'operator',
+                referralCode: referral.code,
+                documents: [
+                    formData.govtIdUrl ? { name: 'Government ID', documentType: 'GovtID', url: formData.govtIdUrl } : null,
+                    formData.resumePdfUrl ? { name: 'Resume PDF', documentType: 'Resume', url: formData.resumePdfUrl } : null,
+                    formData.experienceProofUrl ? { name: 'Experience Proof', documentType: 'Certificate', url: formData.experienceProofUrl } : null,
+                ].filter(Boolean),
+
+                // Role specific data
+                operatorCategory: formData.operatorCategory,
+                previousPlatforms: formData.previousPlatforms,
+                languagesSpoken: formData.languagesSpoken,
+                dailyActiveHours: formData.dailyActiveHours,
+                shiftPreference: formData.shiftPreference,
+                managedTeamSize: formData.managedTeamSize,
+            };
+
+            const res = await apiClient.post('/api/recruitment/operator', payload);
+
+            if (res.success && res.data) {
+                setApplicationId(res.data.applicationId);
                 setSuccess(true);
-                toast.success('Operator application submitted successfully!');
+                toast.success('Operator Application Submitted Successfully!');
+                localStorage.removeItem('recruitment_draft_operator');
             } else {
-                toast.error(data.message || 'Submission failed');
+                toast.error(res.message || 'Submission failed.');
             }
-        } catch {
-            toast.error('Network error. Please try again.');
+        } catch (error: any) {
+            toast.error(error.message || 'Network error. Please try again.');
         } finally {
             setSubmitting(false);
         }
     };
 
-    if (success) {
-        return (
-            <div className="min-h-screen bg-gradient-to-br from-[#831843] via-[#9d174d] to-[#be185d] flex items-center justify-center p-4">
-                <div className="max-w-md w-full text-center space-y-6 bg-white/10 backdrop-blur-xl border border-white/20 p-8 rounded-3xl text-white shadow-2xl">
-                    <div className="w-20 h-20 rounded-full bg-emerald-500/20 border border-emerald-400 flex items-center justify-center mx-auto animate-bounce">
-                        <svg className="w-10 h-10 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                        </svg>
-                    </div>
-                    <h2 className="text-3xl font-black">Application Submitted! 🎉</h2>
-                    <p className="text-white/80 text-sm">Your Operator onboarding application has been submitted successfully.</p>
-                </div>
-            </div>
-        );
-    }
-
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#831843] via-[#9d174d] to-[#be185d] flex flex-col items-center py-10 px-4">
-            <div className="max-w-2xl w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 md:p-10 text-white shadow-2xl">
-                
-                {/* Form Header */}
-                <div className="mb-8">
-                    <h1 className="text-2xl font-extrabold tracking-wide text-white uppercase">
-                        OPERATOR FORM - MEETHICHAT
-                    </h1>
-                    <p className="text-xs font-semibold text-white/70 mt-1">
-                        MeethiChat, Operator Requirements
-                    </p>
-                </div>
-
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    
-                    {/* Applicant name */}
+        <RecruitmentFormLayout
+            roleKey="operator"
+            roleTitle="Regional Operator Recruitment"
+            roleSubtitle="Apply as an official Regional Operations Lead to manage live stream hosts & regional moderation."
+            badgeText="Operations & Team Lead Recruitment"
+            themeGradient="from-slate-950 via-teal-950 to-emerald-950"
+            accentColor="emerald"
+            steps={OPERATOR_STEPS}
+            currentStep={currentStep}
+            onStepChange={handleStepChange}
+            onReferralVerified={setReferral}
+            onSubmit={handleSubmit}
+            submitting={submitting}
+            success={success}
+            applicationId={applicationId}
+            formData={formData}
+        >
+            {/* Step 1: Personal Profile */}
+            {currentStep === 0 && (
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-white mb-2">1. Personal & Contact Information</h3>
                     <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Applicant&apos;s name *
-                        </label>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">Full Name *</label>
                         <input
                             type="text"
-                            required
-                            value={form.name}
-                            onChange={e => setForm({ ...form, name: e.target.value })}
-                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                            value={formData.fullName}
+                            onChange={e => updateField('fullName', e.target.value)}
+                            placeholder="Your Full Name"
+                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
                         />
                     </div>
-
-                    {/* Email */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Email *
-                        </label>
-                        <input
-                            type="email"
-                            required
-                            value={form.email}
-                            onChange={e => setForm({ ...form, email: e.target.value })}
-                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        />
-                    </div>
-
-                    {/* Phone */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Phone *
-                        </label>
-                        <input
-                            type="tel"
-                            required
-                            value={form.phone}
-                            onChange={e => setForm({ ...form, phone: e.target.value })}
-                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        />
-                    </div>
-
-                    {/* City */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            City *
-                        </label>
-                        <input
-                            type="text"
-                            required
-                            value={form.city}
-                            onChange={e => setForm({ ...form, city: e.target.value })}
-                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        />
-                    </div>
-
-                    {/* Country */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Country *
-                        </label>
-                        <input
-                            type="text"
-                            required
-                            value={form.country}
-                            onChange={e => setForm({ ...form, country: e.target.value })}
-                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        />
-                    </div>
-
-                    {/* Resume / CV */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Resume / CV
-                        </label>
-                        <div className="bg-white/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center justify-between">
-                            <label className="cursor-pointer bg-white/20 hover:bg-white/30 text-white font-semibold text-xs px-3 py-1.5 rounded-full shrink-0 flex items-center gap-1.5 transition-all border border-white/30">
-                                Choose File
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) setForm({ ...form, resume: file.name });
-                                    }}
-                                />
-                            </label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Email Address *</label>
                             <input
-                                type="text"
-                                placeholder={form.resume || "No file chosen"}
-                                value={form.resume}
-                                onChange={e => setForm({ ...form, resume: e.target.value })}
-                                className="bg-transparent text-white placeholder-white/60 text-xs w-full ml-3 focus:outline-none truncate"
+                                type="email"
+                                value={formData.email}
+                                onChange={e => updateField('email', e.target.value)}
+                                placeholder="operator@example.com"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Mobile / WhatsApp Number *</label>
+                            <input
+                                type="tel"
+                                value={formData.phone}
+                                onChange={e => updateField('phone', e.target.value)}
+                                placeholder="+91 9876543210"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
                             />
                         </div>
                     </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Gender</label>
+                            <select
+                                value={formData.gender}
+                                onChange={e => updateField('gender', e.target.value)}
+                                className="w-full bg-slate-900 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-400"
+                            >
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">City *</label>
+                            <input
+                                type="text"
+                                value={formData.city}
+                                onChange={e => updateField('city', e.target.value)}
+                                placeholder="e.g. Delhi"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Country</label>
+                            <input
+                                type="text"
+                                value={formData.country}
+                                onChange={e => updateField('country', e.target.value)}
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-400"
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
 
-                    {/* LinkedIn Profile URL */}
+            {/* Step 2: Experience */}
+            {currentStep === 1 && (
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-white mb-2">2. Operational Experience & Skills</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Years of Team Management Exp</label>
+                            <select
+                                value={formData.experienceYears}
+                                onChange={e => updateField('experienceYears', e.target.value)}
+                                className="w-full bg-slate-900 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-400"
+                            >
+                                <option value="<1 year">&lt; 1 Year</option>
+                                <option value="1-2 years">1 - 2 Years</option>
+                                <option value="2-5 years">2 - 5 Years</option>
+                                <option value="5+ years">5+ Years</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Operator Specialization</label>
+                            <select
+                                value={formData.operatorCategory}
+                                onChange={e => updateField('operatorCategory', e.target.value)}
+                                className="w-full bg-slate-900 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-400"
+                            >
+                                <option value="Live Stream Operator">Live Stream Operations</option>
+                                <option value="Regional Team Lead">Regional Team Lead</option>
+                                <option value="Quality & Moderation">Quality & Moderation</option>
+                            </select>
+                        </div>
+                    </div>
                     <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            LinkedIn Profile URL *
-                        </label>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">Previous Apps / Companies Managed *</label>
+                        <input
+                            type="text"
+                            value={formData.previousPlatforms}
+                            onChange={e => updateField('previousPlatforms', e.target.value)}
+                            placeholder="e.g. Loco, ShareChat, Tango, Bigo"
+                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">Languages Spoken</label>
+                        <input
+                            type="text"
+                            value={formData.languagesSpoken}
+                            onChange={e => updateField('languagesSpoken', e.target.value)}
+                            placeholder="e.g. Hindi, English, Punjabi, Tamil"
+                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
+                        />
+                    </div>
+                </div>
+            )}
+
+            {/* Step 3: Availability */}
+            {currentStep === 2 && (
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-white mb-2">3. Availability & Shift Capacity</h3>
+                    <div>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">Daily Available Active Hours</label>
+                        <select
+                            value={formData.dailyActiveHours}
+                            onChange={e => updateField('dailyActiveHours', e.target.value)}
+                            className="w-full bg-slate-900 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-400"
+                        >
+                            <option value="4-6 Hours">4 - 6 Hours / Day</option>
+                            <option value="8+ Hours">8+ Hours (Full Time)</option>
+                            <option value="12+ Hours">12+ Hours (Flexible Shifts)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">Shift Preference</label>
+                        <select
+                            value={formData.shiftPreference}
+                            onChange={e => updateField('shiftPreference', e.target.value)}
+                            className="w-full bg-slate-900 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-400"
+                        >
+                            <option value="Morning Shift">Morning Shift (8 AM - 4 PM)</option>
+                            <option value="Evening / Night Shift">Evening / Night Shift (4 PM - 12 AM)</option>
+                            <option value="Late Night Shift">Late Night Shift (12 AM - 8 AM)</option>
+                            <option value="Flexible / Any Shift">Flexible Rotational Shifts</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">Team Size You Can Manage</label>
+                        <select
+                            value={formData.managedTeamSize}
+                            onChange={e => updateField('managedTeamSize', e.target.value)}
+                            className="w-full bg-slate-900 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-400"
+                        >
+                            <option value="5-10 Members">5 - 10 Members</option>
+                            <option value="10-20 Members">10 - 20 Members</option>
+                            <option value="20-50 Members">20 - 50 Members</option>
+                            <option value="50+ Members">50+ Members</option>
+                        </select>
+                    </div>
+                </div>
+            )}
+
+            {/* Step 4: Verification */}
+            {currentStep === 3 && (
+                <div className="space-y-4">
+                    <h3 className="text-lg font-bold text-white mb-2">4. Identity Verification Documents</h3>
+                    <div>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">Government ID (Aadhaar / Voter ID / Passport) URL</label>
                         <input
                             type="url"
-                            required
-                            placeholder="https://linkedin.com/in/username"
-                            value={form.linkedin}
-                            onChange={e => setForm({ ...form, linkedin: e.target.value })}
-                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                            value={formData.govtIdUrl}
+                            onChange={e => updateField('govtIdUrl', e.target.value)}
+                            placeholder="https://drive.google.com/..."
+                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">Resume / CV Document URL</label>
+                        <input
+                            type="url"
+                            value={formData.resumePdfUrl}
+                            onChange={e => updateField('resumePdfUrl', e.target.value)}
+                            placeholder="Resume PDF link"
+                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
+                        />
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">Experience Letter / Recommendation URL</label>
+                        <input
+                            type="url"
+                            value={formData.experienceProofUrl}
+                            onChange={e => updateField('experienceProofUrl', e.target.value)}
+                            placeholder="Certificate link"
+                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
                         />
                     </div>
 
-                    {/* Portfolio */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Portfolio
-                        </label>
-                        <div className="bg-white/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center justify-between">
-                            <label className="cursor-pointer bg-white/20 hover:bg-white/30 text-white font-semibold text-xs px-3 py-1.5 rounded-full shrink-0 flex items-center gap-1.5 transition-all border border-white/30">
-                                Choose File
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) setForm({ ...form, portfolio: file.name });
-                                    }}
-                                />
-                            </label>
+                    <div className="pt-3">
+                        <label className="flex items-start gap-3 cursor-pointer bg-white/5 p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
                             <input
-                                type="text"
-                                placeholder={form.portfolio || "No file chosen"}
-                                value={form.portfolio}
-                                onChange={e => setForm({ ...form, portfolio: e.target.value })}
-                                className="bg-transparent text-white placeholder-white/60 text-xs w-full ml-3 focus:outline-none truncate"
+                                type="checkbox"
+                                checked={formData.agreedToTerms}
+                                onChange={e => updateField('agreedToTerms', e.target.checked)}
+                                className="w-5 h-5 mt-0.5 accent-emerald-500 rounded"
                             />
-                        </div>
-                    </div>
-
-                    {/* Experience Letter */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Experience Letter
+                            <span className="text-xs text-white/80 leading-relaxed">
+                                I confirm that all details provided are accurate. I agree to uphold the operational integrity and moderation guidelines of MeethiChat.
+                            </span>
                         </label>
-                        <div className="bg-white/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center justify-between">
-                            <label className="cursor-pointer bg-white/20 hover:bg-white/30 text-white font-semibold text-xs px-3 py-1.5 rounded-full shrink-0 flex items-center gap-1.5 transition-all border border-white/30">
-                                Choose File
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) setForm({ ...form, experienceLetter: file.name });
-                                    }}
-                                />
-                            </label>
-                            <input
-                                type="text"
-                                placeholder={form.experienceLetter || "No file chosen"}
-                                value={form.experienceLetter}
-                                onChange={e => setForm({ ...form, experienceLetter: e.target.value })}
-                                className="bg-transparent text-white placeholder-white/60 text-xs w-full ml-3 focus:outline-none truncate"
-                            />
-                        </div>
                     </div>
-
-                    {/* Address Proof */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Address Proof *
-                        </label>
-                        <div className="bg-white/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center justify-between">
-                            <label className="cursor-pointer bg-white/20 hover:bg-white/30 text-white font-semibold text-xs px-3 py-1.5 rounded-full shrink-0 flex items-center gap-1.5 transition-all border border-white/30">
-                                Choose File
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) setForm({ ...form, addressProof: file.name });
-                                    }}
-                                />
-                            </label>
-                            <input
-                                type="text"
-                                placeholder={form.addressProof || "No file chosen"}
-                                value={form.addressProof}
-                                onChange={e => setForm({ ...form, addressProof: e.target.value })}
-                                className="bg-transparent text-white placeholder-white/60 text-xs w-full ml-3 focus:outline-none truncate"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Id Proof */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Id Proof *
-                        </label>
-                        <div className="bg-white/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center justify-between">
-                            <label className="cursor-pointer bg-white/20 hover:bg-white/30 text-white font-semibold text-xs px-3 py-1.5 rounded-full shrink-0 flex items-center gap-1.5 transition-all border border-white/30">
-                                Choose File
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) setForm({ ...form, idProof: file.name });
-                                    }}
-                                />
-                            </label>
-                            <input
-                                type="text"
-                                placeholder={form.idProof || "No file chosen"}
-                                value={form.idProof}
-                                onChange={e => setForm({ ...form, idProof: e.target.value })}
-                                className="bg-transparent text-white placeholder-white/60 text-xs w-full ml-3 focus:outline-none truncate"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Personal Note */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Personal Note *
-                        </label>
-                        <textarea
-                            required
-                            rows={3}
-                            placeholder="Brief note about yourself and your background..."
-                            value={form.personalNote}
-                            onChange={e => setForm({ ...form, personalNote: e.target.value })}
-                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-2xl px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        />
-                    </div>
-
-                    {/* Buttons */}
-                    <div className="flex items-center justify-end gap-4 pt-4">
-                        <button
-                            type="button"
-                            onClick={handleReset}
-                            className="bg-white hover:bg-slate-100 text-slate-800 font-bold px-8 py-2.5 rounded-full text-sm transition-all shadow-md"
-                        >
-                            Reset All
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={submitting}
-                            className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold px-10 py-2.5 rounded-full text-sm transition-all shadow-lg shadow-orange-500/40 disabled:opacity-50"
-                        >
-                            {submitting ? 'Submitting...' : 'Submit Form'}
-                        </button>
-                    </div>
-
-                </form>
-            </div>
-        </div>
+                </div>
+            )}
+        </RecruitmentFormLayout>
     );
 }
 
-export default function OperatorFormPage() {
+export default function OperatorApplyPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Loading Operator Form...</div>}>
+        <Suspense fallback={<div className="min-h-screen bg-slate-950 text-white flex items-center justify-center">Loading Operator Portal...</div>}>
             <OperatorFormContent />
         </Suspense>
     );
