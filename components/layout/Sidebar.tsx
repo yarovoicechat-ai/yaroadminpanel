@@ -6,13 +6,15 @@ import { cn } from '@/lib/utils';
 import {
     LayoutDashboard, Menu, X, LogOut, User, Award, Gift, UserX,
     Users, UserCheck, ShieldAlert, Video, Plus, Flag, HelpCircle,
-    ListTodo, Ban, AlertOctagon, Calendar, MessageSquare, Bell,
-    CheckSquare, FileCheck, DollarSign, Coins, ChevronDown, ChevronRight
+    Ban, AlertOctagon, Calendar, MessageSquare, Bell,
+    CheckSquare, FileCheck, DollarSign, Coins, ChevronDown, ChevronRight,
+    Crown, Briefcase, Terminal, ShieldCheck, Settings
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
+import { apiClient } from '@/lib/apiClient';
 
 interface SubmenuItem {
     name: string;
@@ -24,27 +26,45 @@ interface SidebarItem {
     href?: string;
     icon: any;
     submenu?: SubmenuItem[];
+    category: string; // Used to filter dynamically
 }
 
 interface SidebarSection {
     title: string;
     items: SidebarItem[];
+    category: string;
 }
 
-// Hand-drawn specifications operational navigation structure
+// Dynamic role configurations
+export const roleConfig: Record<string, { label: string; color: string; bg: string; border: string; icon: any }> = {
+    owner: { label: 'Owner', color: 'text-pink-400 dark:text-pink-400', bg: 'bg-pink-500/10', border: 'border-pink-500/25', icon: Crown },
+    operator: { label: 'Operator', color: 'text-blue-400 dark:text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/25', icon: UserCheck },
+    superAdmin: { label: 'Super Admin', color: 'text-purple-400 dark:text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/25', icon: ShieldCheck },
+    admin: { label: 'Admin', color: 'text-emerald-400 dark:text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/25', icon: UserCheck },
+    agency: { label: 'Agency', color: 'text-amber-400 dark:text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/25', icon: Briefcase },
+    coinSeller: { label: 'Coin Seller', color: 'text-rose-400 dark:text-rose-400', bg: 'bg-rose-500/10', border: 'border-rose-500/25', icon: Coins },
+    customerSupport: { label: 'Customer Support', color: 'text-cyan-400 dark:text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/25', icon: HelpCircle },
+    host: { label: 'Host', color: 'text-lime-400 dark:text-lime-400', bg: 'bg-lime-500/10', border: 'border-lime-500/25', icon: Video },
+};
+
+const defaultRoleConfig = { label: 'Staff', color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/25', icon: User };
+
 const sidebarSections: SidebarSection[] = [
     {
         title: 'Core Console',
+        category: 'Dashboard',
         items: [
-            { name: 'Dashboard', href: '/', icon: LayoutDashboard }
+            { name: 'Dashboard', href: '/', icon: LayoutDashboard, category: 'Dashboard' }
         ]
     },
     {
         title: 'Users & Roles',
+        category: 'Users',
         items: [
             {
                 name: 'Users',
                 icon: Users,
+                category: 'Users',
                 submenu: [
                     { name: 'Add User', href: '/users/add' },
                     { name: 'User List', href: '/users' },
@@ -52,17 +72,27 @@ const sidebarSections: SidebarSection[] = [
                 ]
             },
             {
-                name: 'Admin',
+                name: 'Operator',
                 icon: UserCheck,
+                category: 'Users',
                 submenu: [
-                    { name: 'Add Admin', href: '/admins/add' },
-                    { name: 'Request', href: '/admins/request' },
-                    { name: 'Admin List', href: '/admins' }
+                    { name: 'Operator Requests', href: '/operators/request' },
+                    { name: 'Operator List', href: '/operators' }
+                ]
+            },
+            {
+                name: 'Super Admin',
+                icon: ShieldAlert,
+                category: 'Users',
+                submenu: [
+                    { name: 'Super Admin Requests', href: '/super-admins/request' },
+                    { name: 'Super Admin List', href: '/super-admins' }
                 ]
             },
             {
                 name: 'Seller',
                 icon: ShieldAlert,
+                category: 'Coin Seller',
                 submenu: [
                     { name: 'Add Seller', href: '/sellers/add' },
                     { name: 'Request', href: '/sellers/request' },
@@ -72,54 +102,114 @@ const sidebarSections: SidebarSection[] = [
         ]
     },
     {
+        title: 'Admin Module',
+        category: 'Admin',
+        items: [
+            { name: 'Create Admin', href: '/admins/create', icon: Plus, category: 'Admin' },
+            { name: 'Admin Requests', href: '/admins/request', icon: FileCheck, category: 'Admin' },
+            { name: 'Admin List', href: '/admins', icon: Users, category: 'Admin' }
+        ]
+    },
+    {
+        title: 'Super Admin Module',
+        category: 'SuperAdmin',
+        items: [
+            { name: 'Create Super Admin', href: '/super-admins/create', icon: Plus, category: 'SuperAdmin' },
+            { name: 'Super Admin Requests', href: '/super-admins/request', icon: FileCheck, category: 'SuperAdmin' },
+            { name: 'Super Admin List', href: '/super-admins', icon: Users, category: 'SuperAdmin' }
+        ]
+    },
+
+
+    {
         title: 'Hosts & Performance',
+        category: 'Host',
         items: [
             {
                 name: 'Hosts',
                 icon: Video,
+                category: 'Host',
                 submenu: [
                     { name: 'Add Host', href: '/hosts/add' },
                     { name: 'Host Request', href: '/hosts/request' },
                     { name: 'Host List', href: '/hosts' }
                 ]
             },
-            { name: 'Host Management', href: '/host-management', icon: Video }
+            { name: 'Host Management', href: '/host-management', icon: Video, category: 'Host' }
         ]
     },
     {
-        title: 'Operations & Support',
+        title: 'Agencies Office',
+        category: 'Agency',
         items: [
-            { name: 'Add New', href: '/add-new', icon: Plus },
-            { name: 'Reports', href: '/reports', icon: Flag },
-            { name: 'Help & Support', href: '/help-support', icon: HelpCircle },
-            { name: 'Account Deletions', href: '/deletions', icon: UserX },
-            { name: 'Task', href: '/tasks', icon: ListTodo }
+            {
+                name: 'Agency',
+                icon: Briefcase,
+                category: 'Agency',
+                submenu: [
+                    { name: 'Agency List', href: '/agencies' },
+                    { name: 'Agency Requests', href: '/agencies/requests' }
+                ]
+            }
+        ]
+    },
+
+    {
+        title: 'Operations & Support',
+        category: 'Reports',
+        items: [
+            { name: 'Add New', href: '/add-new', icon: Plus, category: 'Reports' },
+            { name: 'Reports', href: '/reports', icon: Flag, category: 'Reports' },
+            { name: 'Help & Support', href: '/help-support', icon: HelpCircle, category: 'Reports' },
+            { name: 'Account Deletions', href: '/deletions', icon: UserX, category: 'Reports' }
         ]
     },
     {
         title: 'Security & Verification',
+        category: 'Notifications',
         items: [
-            { name: 'ID Ban', href: '/bans/id', icon: Ban },
-            { name: 'Device Ban', href: '/bans/device', icon: AlertOctagon },
-            { name: 'Event', href: '/events', icon: Calendar },
-            { name: 'System Message', href: '/messages/system', icon: MessageSquare },
-            { name: 'Activity', href: '/messages/activity', icon: Bell },
-            { name: 'KYC', href: '/kyc', icon: CheckSquare },
-            { name: 'Verification', href: '/verification', icon: FileCheck }
+            { name: 'ID Ban', href: '/bans/id', icon: Ban, category: 'Notifications' },
+            { name: 'Device Ban', href: '/bans/device', icon: AlertOctagon, category: 'Notifications' },
+            { name: 'Event', href: '/events', icon: Calendar, category: 'Notifications' },
+            { name: 'System Message', href: '/messages/system', icon: MessageSquare, category: 'Notifications' },
+            { name: 'Activity', href: '/messages/activity', icon: Bell, category: 'Notifications' },
+            { name: 'KYC Verification', href: '/kyc', icon: CheckSquare, category: 'Notifications' },
+            { name: 'Requests Approval', href: '/verification/requests', icon: FileCheck, category: 'Notifications' }
         ]
     },
     {
         title: 'Finance & Recharges',
+        category: 'Finance',
         items: [
-            { name: 'Withdrawal', href: '/withdrawals', icon: DollarSign },
+            { name: 'Withdrawal', href: '/withdrawals', icon: DollarSign, category: 'Finance' },
             {
                 name: 'Diamond Recharge',
                 icon: Coins,
+                category: 'Finance',
                 submenu: [
                     { name: 'User', href: '/recharges/user' },
                     { name: 'Seller', href: '/recharges/seller' }
                 ]
             }
+        ]
+    },
+    {
+        title: 'System & Control',
+        category: 'Settings',
+        items: [
+            { name: 'Settings', href: '/settings', icon: Settings, category: 'Settings' },
+            { name: 'Workflows', href: '/settings/workflows', category: 'Settings', icon: Calendar },
+            { name: 'Permissions Builder', href: '/security/permissions', category: 'Settings', icon: ShieldAlert },
+            { name: 'Compare Users', href: '/security/compare', category: 'Settings', icon: Users },
+            { name: 'Referral Links', href: '/referrals/links', category: 'Settings', icon: Plus }
+        ]
+    },
+    {
+        title: 'Developer Center',
+        category: 'Developer',
+        items: [
+            { name: 'System Logs', href: '/logs', icon: Terminal, category: 'Developer' },
+            { name: 'Audit Logs', href: '/security/logs', icon: ShieldCheck, category: 'Developer' }
         ]
     }
 ];
@@ -130,6 +220,7 @@ export default function Sidebar() {
     const [isOpen, setIsOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
     const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
+    const [allowedMenus, setAllowedMenus] = useState<string[]>([]);
 
     useEffect(() => {
         const checkMobile = () => {
@@ -142,12 +233,57 @@ export default function Sidebar() {
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
 
+    // Load permitted menus dynamically
+    useEffect(() => {
+        const fetchPermissions = async () => {
+            try {
+                if (!user) return;
+                
+                if (user.role === 'owner') {
+                    // Owner always has all menus
+                    setAllowedMenus(['Dashboard', 'Users', 'Host', 'Agency', 'Coin Seller', 'Finance', 'Reports', 'Notifications', 'Settings', 'Developer', 'Admin', 'SuperAdmin']);
+                    return;
+                }
+
+                const res = await apiClient.get('/api/ems/my-permissions');
+                if (res.success && res.data && res.data.menus) {
+                    setAllowedMenus(res.data.menus);
+                }
+            } catch (err) {
+                console.error('Failed to load menu permissions', err);
+            }
+        };
+
+        fetchPermissions();
+    }, [user]);
+
     const toggleMenu = (name: string) => {
         setExpandedMenus(prev => ({
             ...prev,
             [name]: !prev[name]
         }));
     };
+
+    // Filter layout sections based on loaded permissions
+    const filteredSections = sidebarSections.map(section => {
+        // Owner bypasses everything. Otherwise check if the category is allowed.
+        const isCategoryAllowed = user?.role === 'owner' || allowedMenus.includes(section.category);
+        if (!isCategoryAllowed) return null;
+
+        const filteredItems = section.items.filter(item => {
+            return user?.role === 'owner' || allowedMenus.includes(item.category);
+        });
+
+        if (filteredItems.length === 0) return null;
+
+        return {
+            ...section,
+            items: filteredItems
+        };
+    }).filter(Boolean) as SidebarSection[];
+
+    const currentRole = user?.role ? (roleConfig[user.role] || defaultRoleConfig) : defaultRoleConfig;
+    const RoleIcon = currentRole.icon;
 
     return (
         <>
@@ -183,12 +319,12 @@ export default function Sidebar() {
             >
                 <div className="px-6 mb-6 mt-4 md:mt-0 flex items-center justify-between">
                     <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                        Admin Panel
+                        Meethi Chat EMS
                     </h1>
                 </div>
 
                 <nav className="flex-1 px-4 space-y-4 overflow-y-auto pb-6">
-                    {sidebarSections.map((section, idx) => (
+                    {filteredSections.map((section, idx) => (
                         <div key={idx} className="space-y-1">
                             <h3 className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                 {section.title}
@@ -284,13 +420,15 @@ export default function Sidebar() {
                         <span>Sign Out</span>
                     </button>
 
-                    <div className="bg-slate-900 rounded-xl p-3 border border-slate-800 flex items-center gap-3 justify-between shadow-inner">
+                    <div className={cn("rounded-xl p-3 border flex items-center gap-3 justify-between shadow-inner transition-colors", currentRole.bg, currentRole.border)}>
                         <div className="flex items-center gap-3 overflow-hidden">
-                            <div className="h-8 w-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary">
-                                {user?.name?.[0]?.toUpperCase() || 'A'}
+                            <div className={cn("h-8 w-8 rounded-full border flex items-center justify-center text-xs font-bold shrink-0", currentRole.color, currentRole.border, "bg-slate-900/50")}>
+                                <RoleIcon size={16} />
                             </div>
                             <div className="overflow-hidden">
-                                <p className="text-[10px] text-slate-500 font-bold truncate">Logged in as</p>
+                                <p className={cn("text-[9px] font-bold uppercase tracking-wider opacity-80", currentRole.color)}>
+                                    {currentRole.label}
+                                </p>
                                 <p className="text-xs font-bold text-slate-200 truncate w-24">{user?.name || 'Admin'}</p>
                             </div>
                         </div>

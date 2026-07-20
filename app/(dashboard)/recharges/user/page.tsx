@@ -58,8 +58,9 @@ export default function UserRechargePage() {
                 toast.error(res.message || 'Recharge failed');
             }
         } catch (error: any) {
-            console.error('Recharge Error:', error);
-            toast.error(error.response?.data?.message || 'Error communicating with backend');
+            const errMsg = error?.message || error?.error || (typeof error === 'string' ? error : 'Error communicating with backend');
+            console.error('Recharge Error:', errMsg, error);
+            toast.error(errMsg);
         } finally {
             setLoading(false);
         }

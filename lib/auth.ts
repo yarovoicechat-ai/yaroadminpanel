@@ -7,6 +7,8 @@ export interface User {
     email: string;
     role: 'owner' | 'superAdmin' | 'admin' | 'coinSeller' | 'host' | 'user';
     meethiId?: string;
+    employeeCode?: string;
+    specialCode?: string;
 }
 
 export async function login(email: string, password: string): Promise<{ user: User; token: string; refreshToken: string }> {
@@ -31,6 +33,8 @@ export async function login(email: string, password: string): Promise<{ user: Us
                     email: user.email,
                     role: user.role,
                     meethiId: user.meethiId,
+                    employeeCode: user.employeeCode || user.specialCode,
+                    specialCode: user.specialCode,
                 },
                 token,
                 refreshToken,
@@ -67,6 +71,8 @@ export async function getUser(token: string): Promise<User | null> {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                employeeCode: user.employeeCode || user.specialCode,
+                specialCode: user.specialCode,
             };
         }
 
@@ -80,6 +86,8 @@ export async function getUser(token: string): Promise<User | null> {
                 name: user.name,
                 email: user.email,
                 role: user.role,
+                employeeCode: user.employeeCode || user.specialCode,
+                specialCode: user.specialCode,
             };
         }
 

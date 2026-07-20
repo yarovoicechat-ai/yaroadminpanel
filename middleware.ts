@@ -2,15 +2,52 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-    const token = request.cookies.get('admin_token');
+    const hostname = request.headers.get('host') || '';
+    const url = request.nextUrl.clone();
 
-    if (!token) {
-        return NextResponse.redirect(new URL('/login', request.url));
+    // Extract subdomain (e.g. team-leader from team-leader.meethichat.live or team-leader.yocillive.com)
+    const hostParts = hostname.split('.');
+
+    // Check if subdomains are present
+    if (hostParts.length > 2) {
+        const subdomain = hostParts[0].toLowerCase();
+
+        if (subdomain === 'team-leader' || subdomain === 'teamleader') {
+            if (url.pathname === '/' || url.pathname === '/register') {
+                url.pathname = '/apply/team-leader';
+                return NextResponse.rewrite(url);
+            }
+        } else if (subdomain === 'agency') {
+            if (url.pathname === '/' || url.pathname === '/register') {
+                url.pathname = '/apply/agency';
+                return NextResponse.rewrite(url);
+            }
+        } else if (subdomain === 'operator') {
+            if (url.pathname === '/' || url.pathname === '/register') {
+                url.pathname = '/apply/operator';
+                return NextResponse.rewrite(url);
+            }
+        } else if (subdomain === 'super-admin' || subdomain === 'superadmin') {
+            if (url.pathname === '/' || url.pathname === '/register') {
+                url.pathname = '/apply/super-admin';
+                return NextResponse.rewrite(url);
+            }
+        } else if (subdomain === 'admin') {
+            if (url.pathname === '/' || url.pathname === '/register') {
+                url.pathname = '/apply/admin';
+                return NextResponse.rewrite(url);
+            }
+        } else if (subdomain === 'host') {
+            if (url.pathname === '/' || url.pathname === '/register') {
+                url.pathname = '/apply/host';
+                return NextResponse.rewrite(url);
+            }
+        }
     }
 
     return NextResponse.next();
 }
 
 export const config = {
-    matcher: '/((?!api|_next/static|_next/image|favicon.ico|login).*)',
+    matcher: ['/', '/register', '/apply/:path*'],
 };

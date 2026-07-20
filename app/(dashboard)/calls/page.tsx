@@ -115,7 +115,7 @@ export default function CallsPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">--</div>
-                        <p className="text-xs text-slate-400">Total coins spent</p>
+                         <p className="text-xs text-slate-400">Total coin receiving</p>
                     </CardContent>
                 </Card>
                 <Card glass>
@@ -154,12 +154,13 @@ export default function CallsPage() {
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent border-slate-700/50">
                                         <TableHead>Type</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Host</TableHead>
-                                        <TableHead>Caller</TableHead>
-                                        <TableHead>Duration</TableHead>
-                                        <TableHead>Coins</TableHead>
-                                        <TableHead className="text-right">Time</TableHead>
+                                         <TableHead>Status</TableHead>
+                                         <TableHead>Host</TableHead>
+                                         <TableHead>Caller</TableHead>
+                                         <TableHead>Duration</TableHead>
+                                         <TableHead>🪙 Coin Receiving</TableHead>
+                                         <TableHead>💎 Diamond Sending</TableHead>
+                                         <TableHead className="text-right">Time</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -204,19 +205,24 @@ export default function CallsPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <div className="flex items-center text-amber-300 font-mono">
-                                                    <Coins className="h-3 w-3 mr-1 text-amber-500" />
-                                                    {Math.max(call.voice, call.gift)}
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right text-xs text-slate-500">
-                                                {new Date(call.date).toLocaleString()}
-                                            </TableCell>
+                                                 <div className="flex items-center gap-1 text-yellow-300 font-mono font-semibold">
+                                                     <Coins className="h-3 w-3 text-amber-500" />
+                                                     {(Math.max(call.voice, call.gift)).toLocaleString()}
+                                                 </div>
+                                             </TableCell>
+                                             <TableCell>
+                                                 <div className="flex items-center gap-1 text-sky-300 font-mono font-semibold">
+                                                     💎 {(call.hostEarning || 0).toLocaleString()}
+                                                 </div>
+                                             </TableCell>
+                                             <TableCell className="text-right text-xs text-slate-500">
+                                                 {new Date(call.date).toLocaleString()}
+                                             </TableCell>
                                         </TableRow>
                                     ))}
                                     {filteredCalls.length === 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={7} className="text-center py-8 text-slate-500">
+                                            <TableCell colSpan={8} className="text-center py-8 text-slate-500">
                                                 No call logs found.
                                             </TableCell>
                                         </TableRow>

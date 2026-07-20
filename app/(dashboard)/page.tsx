@@ -26,6 +26,7 @@ export default function Home() {
   const [callData, setCallData] = useState([]);
   const [distributionData, setDistributionData] = useState([]);
   const [recentActivity, setRecentActivity] = useState([]);
+  const [allowedWidgets, setAllowedWidgets] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -47,6 +48,17 @@ export default function Home() {
         if (distRes.success) setDistributionData(distRes.data as any);
         if (historyRes.success) setRecentActivity((historyRes.data as any).calls || []);
 
+        // Load allowed dashboard widgets dynamically
+        const userObj = JSON.parse(localStorage.getItem('admin_user') || '{}');
+        let widgets = ["Today's Minutes", "Coins Spent Today", "Host Earnings Today", "Today's Revenue", "Total Users", "Total Hosts", "Active Hosts", "Reports Pending"];
+        if (userObj.role !== 'owner') {
+          const res = await apiClient.get('/api/ems/my-permissions');
+          if (res.success && res.data && res.data.dashboardWidgets) {
+            widgets = res.data.dashboardWidgets;
+          }
+        }
+        setAllowedWidgets(widgets);
+
       } catch (error) {
         toast.error("Failed to load dashboard data");
       } finally {
@@ -60,6 +72,10 @@ export default function Home() {
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen text-slate-400">Loading dashboard...</div>;
   }
+
+  const isWidgetVisible = (title: string) => {
+    return allowedWidgets.includes(title);
+  };
 
   return (
     <div className="space-y-8">
@@ -76,65 +92,81 @@ export default function Home() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Row 1: Key Financials (Daily) */}
-        <StatsCard
-          title="Today's Minutes"
-          value={`${stats?.stats?.minutesToday || 0} mins`}
-          change="Daily stats"
-          icon={Activity}
-          trend="neutral"
-        />
-        <StatsCard
-          title="Coins Spent Today"
-          value={(stats?.stats?.coinsSpentToday || 0).toLocaleString()}
-          change="Daily usage"
-          icon={Coins}
-          trend="neutral"
-        />
-        <StatsCard
-          title="Host Earnings Today"
-          value={`$${stats?.stats?.hostEarningsToday || 0}`}
-          change="Verified payouts"
-          icon={Briefcase}
-          trend="neutral"
-        />
-        <StatsCard
-          title="Today's Revenue"
-          value={`$${stats?.stats?.revenueToday || 0}`}
-          change="Gross revenue"
-          icon={DollarSign}
-          trend="neutral"
-        />
+        {isWidgetVisible("Today's Minutes") && (
+          <StatsCard
+            title="Today's Minutes"
+            value={`${stats?.stats?.minutesToday || 0} mins`}
+            change="Daily stats"
+            icon={Activity}
+            trend="neutral"
+          />
+        )}
+        {isWidgetVisible("Coins Spent Today") && (
+          <StatsCard
+            title="Coins Spent Today"
+            value={(stats?.stats?.coinsSpentToday || 0).toLocaleString()}
+            change="Daily usage"
+            icon={Coins}
+            trend="neutral"
+          />
+        )}
+        {isWidgetVisible("Host Earnings Today") && (
+          <StatsCard
+            title="Host Earnings Today"
+            value={`$${stats?.stats?.hostEarningsToday || 0}`}
+            change="Verified payouts"
+            icon={Briefcase}
+            trend="neutral"
+          />
+        )}
+        {isWidgetVisible("Today's Revenue") && (
+          <StatsCard
+            title="Today's Revenue"
+            value={`$${stats?.stats?.revenueToday || 0}`}
+            change="Gross revenue"
+            icon={DollarSign}
+            trend="neutral"
+          />
+        )}
 
         {/* Row 2: User Base Stats */}
-        <StatsCard
-          title="Total Users"
-          value={(stats?.totalUsers || 0).toLocaleString()}
-          change={`${stats?.activeUsers || 0} active`}
-          icon={Users}
-          trend="up"
-        />
-        <StatsCard
-          title="Total Hosts"
-          value={(stats?.totalHosts || 0).toLocaleString()}
-          change={`${stats?.activeHosts || 0} approved`}
-          icon={UserPlus}
-          trend="up"
-        />
-        <StatsCard
-          title="Active Hosts"
-          value={(stats?.activeCalls || 0).toString()}
-          change="Busy in calls"
-          icon={Heart}
-          trend="up"
-        />
-        <StatsCard
-          title="Reports Pending"
-          value={(stats?.reportsPending || 0).toString()}
-          change="Needs attention"
-          icon={AlertTriangle}
-          trend="down"
-          alert={stats?.reportsPending > 0}
-        />
+        {isWidgetVisible("Total Users") && (
+          <StatsCard
+            title="Total Users"
+            value={(stats?.totalUsers || 0).toLocaleString()}
+            change={`${stats?.activeUsers || 0} active`}
+            icon={Users}
+            trend="up"
+          />
+        )}
+        {isWidgetVisible("Total Hosts") && (
+          <StatsCard
+            title="Total Hosts"
+            value={(stats?.totalHosts || 0).toLocaleString()}
+            change={`${stats?.activeHosts || 0} approved`}
+            icon={UserPlus}
+            trend="up"
+          />
+        )}
+        {isWidgetVisible("Active Hosts") && (
+          <StatsCard
+            title="Active Hosts"
+            value={(stats?.activeCalls || 0).toString()}
+            change="Busy in calls"
+            icon={Heart}
+            trend="up"
+          />
+        )}
+        {isWidgetVisible("Reports Pending") && (
+          <StatsCard
+            title="Reports Pending"
+            value={(stats?.reportsPending || 0).toString()}
+            change="Needs attention"
+            icon={AlertTriangle}
+            trend="down"
+            alert={stats?.reportsPending > 0}
+          />
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

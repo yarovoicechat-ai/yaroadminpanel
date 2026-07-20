@@ -11,16 +11,15 @@ import {
     TableHeader, TableRow,
 } from "@/components/ui/Table";
 import {
-    CheckCircle2, XCircle, Eye, Download, Loader2, RefreshCw,
-    Search, FileText, User, Hash, Shield, UserCheck, X, ZoomIn,
-    ChevronLeft, ChevronRight, Mail, Phone, Calendar, Layers,
-    Clock, MessageSquare, ListTodo, Award, FileSpreadsheet
+    CheckCircle2, XCircle, Eye, Loader2, RefreshCw,
+    Search, User, Hash, X, ChevronLeft, ChevronRight,
+    ListTodo, Award, Network
 } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface AdminRequest {
+interface SuperAdminRequest {
     _id: string;
     userId?: number;
     requestType: string;
@@ -57,13 +56,13 @@ interface AdminRequest {
         skills?: string;
         parentOwner?: string;
         parentOperator?: string;
-        parentSuperAdmin?: string;
         referralCode?: string;
         invitationToken?: string;
         resume?: string;
         adharFront?: string;
         adharBack?: string;
         pan?: string;
+        superAdminCode?: string;
         adminCode?: string;
         specialCode?: string;
         meethiChatId?: string;
@@ -81,22 +80,21 @@ const STATUS_BADGE: Record<string, string> = {
     expired:   'bg-slate-600/20 text-slate-500 border-slate-600/40',
 };
 
-export default function AdminRequestsPage() {
+export default function SuperAdminRequestsPage() {
     const { user: currentUser } = useAuth();
-    const [requests, setRequests] = useState<AdminRequest[]>([]);
+    const [requests, setRequests] = useState<SuperAdminRequest[]>([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     
-    // Filtering states
+    // Filters & Pagination
     const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState<string>('all');
+    const [statusFilter, setStatusFilter] = useState('all');
     const [parentFilter, setParentFilter] = useState('');
     const [stateFilter, setStateFilter] = useState('');
-    const [countryFilter, setCountryFilter] = useState('');
     const [page, setPage] = useState(1);
     
-    // Detail Modal states
-    const [selectedReq, setSelectedReq] = useState<AdminRequest | null>(null);
+    // Modal states
+    const [selectedReq, setSelectedReq] = useState<SuperAdminRequest | null>(null);
     const [activeTab, setActiveTab] = useState<'personal' | 'contact' | 'address' | 'professional' | 'organization' | 'workflow' | 'audit'>('personal');
     const [comment, setComment] = useState('');
     const [rejectionReason, setRejectionReason] = useState('');
@@ -107,16 +105,16 @@ export default function AdminRequestsPage() {
     const fetchRequests = useCallback(async () => {
         setLoading(true);
         try {
-            const params: Record<string, any> = { requestType: 'Admin Request' };
+            const params: Record<string, any> = { requestType: 'Super Admin Request' };
             if (statusFilter !== 'all') params.status = statusFilter;
             const res = await apiClient.get('/api/ems/requests', params);
             if (res.success && Array.isArray(res.data)) {
                 setRequests(res.data);
             } else {
-                toast.error(res.message || 'Failed to load Admin Requests');
+                toast.error(res.message || 'Failed to load requests');
             }
         } catch (err: any) {
-            toast.error(err?.message || 'Error fetching Admin Requests');
+            toast.error(err?.message || 'Error fetching Super Admin requests');
         } finally {
             setLoading(false);
         }
@@ -133,7 +131,7 @@ export default function AdminRequestsPage() {
                 comments: comment || (force ? 'Force Approved by Owner' : 'Approved') 
             });
             if (res.success) {
-                toast.success('✅ Request approved successfully');
+                toast.success('✅ Super Admin request approved successfully');
                 fetchRequests();
                 setSelectedReq(null);
                 setComment('');
@@ -149,7 +147,7 @@ export default function AdminRequestsPage() {
 
     const handleReject = async (id: string) => {
         if (!rejectionReason.trim()) {
-            toast.error('Please specify a rejection reason');
+            toast.error('Rejection reason is required');
             return;
         }
         setActionLoading(true);
@@ -178,7 +176,6 @@ export default function AdminRequestsPage() {
         const d = r.data;
         const q = search.toLowerCase();
         
-        // Text search
         const matchesSearch = !q ||
             (d.name || '').toLowerCase().includes(q) ||
             (d.email || '').toLowerCase().includes(q) ||
@@ -186,22 +183,18 @@ export default function AdminRequestsPage() {
             r._id.toLowerCase().includes(q) ||
             (d.referralCode || '').toLowerCase().includes(q);
 
-        // Filter Dropdowns
         const matchesParent = !parentFilter || 
             (d.parentOwner || '').includes(parentFilter) ||
-            (d.parentOperator || '').includes(parentFilter) ||
-            (d.parentSuperAdmin || '').includes(parentFilter);
+            (d.parentOperator || '').includes(parentFilter);
 
         const matchesState = !stateFilter || (d.state || '').toLowerCase().includes(stateFilter.toLowerCase());
-        const matchesCountry = !countryFilter || (d.country || '').toLowerCase().includes(countryFilter.toLowerCase());
 
-        return matchesSearch && matchesParent && matchesState && matchesCountry;
+        return matchesSearch && matchesParent && matchesState;
     });
 
     const totalPages = Math.ceil(filtered.length / limit);
     const paginated = filtered.slice((page - 1) * limit, page * limit);
 
-    // Dashboard count statistics
     const counts = {
         total: requests.length,
         pending: requests.filter(r => r.status === 'pending').length,
@@ -213,14 +206,14 @@ export default function AdminRequestsPage() {
 
     return (
         <div className="space-y-6">
-            {/* Page Header */}
+            {/* Header */}
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">
-                        Admin Requests Panel
+                        Super Admin Requests
                     </h2>
                     <p className="text-muted-foreground text-sm mt-1">
-                        Manage onboarding workflow, approvals and hierarchy mappings for Admin registrations.
+                        Evaluate registrations and confirm hierarchical mappings for Super Admins.
                     </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={fetchRequests} className="gap-2">
@@ -228,7 +221,7 @@ export default function AdminRequestsPage() {
                 </Button>
             </div>
 
-            {/* Dashboard summary cards */}
+            {/* Dashboard summary */}
             <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
                 <Card className="glass-card">
                     <CardHeader className="py-3"><CardTitle className="text-xs font-medium text-slate-400">Total Applications</CardTitle></CardHeader>
@@ -239,7 +232,7 @@ export default function AdminRequestsPage() {
                     <CardContent className="pb-4"><div className="text-2xl font-black text-amber-400">{counts.pending}</div></CardContent>
                 </Card>
                 <Card className="glass-card">
-                    <CardHeader className="py-3"><CardTitle className="text-xs font-medium text-slate-400">Approved Admins</CardTitle></CardHeader>
+                    <CardHeader className="py-3"><CardTitle className="text-xs font-medium text-slate-400">Approved Super Admins</CardTitle></CardHeader>
                     <CardContent className="pb-4"><div className="text-2xl font-black text-emerald-400">{counts.approved}</div></CardContent>
                 </Card>
                 <Card className="glass-card">
@@ -248,9 +241,9 @@ export default function AdminRequestsPage() {
                 </Card>
             </div>
 
-            {/* Filters panel */}
+            {/* Filters */}
             <Card className="glass-card p-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div className="relative col-span-1 md:col-span-2">
                         <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input 
@@ -277,13 +270,6 @@ export default function AdminRequestsPage() {
                             placeholder="Filter by Parent ID" 
                             value={parentFilter}
                             onChange={e => { setParentFilter(e.target.value); setPage(1); }}
-                        />
-                    </div>
-                    <div>
-                        <Input 
-                            placeholder="Filter by State" 
-                            value={stateFilter}
-                            onChange={e => { setStateFilter(e.target.value); setPage(1); }}
                         />
                     </div>
                 </div>
@@ -319,7 +305,7 @@ export default function AdminRequestsPage() {
                                         <TableCell colSpan={15} className="text-center py-20">
                                             <div className="flex flex-col items-center gap-3 text-slate-500">
                                                 <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
-                                                <span>Fetching requests...</span>
+                                                <span>Loading requests...</span>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -328,7 +314,7 @@ export default function AdminRequestsPage() {
                                         <TableCell colSpan={15} className="text-center py-20">
                                             <div className="flex flex-col items-center gap-3 text-slate-500">
                                                 <ListTodo className="h-8 w-8 text-slate-600" />
-                                                <span>No Admin requests match the filters</span>
+                                                <span>No requests found</span>
                                             </div>
                                         </TableCell>
                                     </TableRow>
@@ -338,7 +324,7 @@ export default function AdminRequestsPage() {
                                         <TableRow key={req._id} className="hover:bg-slate-800/40 border-slate-700/30 text-xs">
                                             {/* 1. Invited By */}
                                             <TableCell className="text-slate-300 whitespace-nowrap">
-                                                {d.invitedBy || d.parentOperator || d.parentSuperAdmin || req.createdByRole || 'System'}
+                                                {d.invitedBy || d.parentOperator || req.createdByRole || 'System'}
                                             </TableCell>
 
                                             {/* 2. Name */}
@@ -347,7 +333,7 @@ export default function AdminRequestsPage() {
                                             {/* 3. Admin Photo */}
                                             <TableCell>
                                                 {d.profilePhoto ? (
-                                                    <img src={d.profilePhoto} alt="Admin" className="h-8 w-8 rounded-full object-cover ring-2 ring-violet-500/20" />
+                                                    <img src={d.profilePhoto} alt="Super Admin" className="h-8 w-8 rounded-full object-cover ring-2 ring-violet-500/20" />
                                                 ) : (
                                                     <div className="h-8 w-8 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-400">
                                                         <User className="h-4 w-4" />
@@ -374,7 +360,7 @@ export default function AdminRequestsPage() {
                                             <TableCell className="whitespace-nowrap">
                                                 {d.resume ? (
                                                     <a href={d.resume} target="_blank" rel="noreferrer" className="text-xs text-violet-400 hover:underline flex items-center gap-1">
-                                                        <FileText className="h-3.5 w-3.5" /> View Resume
+                                                        View Resume
                                                     </a>
                                                 ) : (
                                                     <span className="text-slate-500">—</span>
@@ -407,7 +393,7 @@ export default function AdminRequestsPage() {
                                             <TableCell className="whitespace-nowrap">
                                                 {d.pan ? (
                                                     <a href={d.pan} target="_blank" rel="noreferrer" className="text-xs text-amber-400 hover:underline flex items-center gap-1">
-                                                        <FileText className="h-3.5 w-3.5" /> View PAN
+                                                        View PAN
                                                     </a>
                                                 ) : (
                                                     <span className="text-slate-500">—</span>
@@ -415,7 +401,7 @@ export default function AdminRequestsPage() {
                                             </TableCell>
 
                                             {/* 13. Admin Code */}
-                                            <TableCell className="font-mono text-slate-300 text-xs whitespace-nowrap">{d.adminCode || d.specialCode || d.referralCode || '—'}</TableCell>
+                                            <TableCell className="font-mono text-slate-300 text-xs whitespace-nowrap">{d.superAdminCode || d.adminCode || d.specialCode || d.referralCode || '—'}</TableCell>
 
                                             {/* 14. Password */}
                                             <TableCell className="font-mono text-slate-400 text-xs whitespace-nowrap">{req.passwordBeforeApproval || '••••••••'}</TableCell>
@@ -466,7 +452,7 @@ export default function AdminRequestsPage() {
             {/* Pagination */}
             {totalPages > 1 && (
                 <div className="flex items-center justify-between">
-                    <span className="text-sm text-slate-500">Page {page} of {totalPages} — {filtered.length} applications</span>
+                    <span className="text-sm text-slate-500">Page {page} of {totalPages}</span>
                     <div className="flex gap-2">
                         <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>
                             <ChevronLeft className="h-4 w-4" /> Prev
@@ -483,10 +469,10 @@ export default function AdminRequestsPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
                     <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-3xl max-h-[92vh] overflow-y-auto flex flex-col shadow-2xl">
                         {/* Header */}
-                        <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+                        <div className="p-5 border-b border-slate-800 flex items-center justify-between">
                             <div>
                                 <h3 className="text-lg font-bold text-slate-100">Request ID: {selectedReq._id}</h3>
-                                <p className="text-xs text-slate-500">Request Type: Admin Request</p>
+                                <p className="text-xs text-slate-500">Request Type: Super Admin Request</p>
                             </div>
                             <button onClick={() => setSelectedReq(null)} className="p-1 text-slate-400 hover:text-slate-100 rounded-lg hover:bg-slate-800">
                                 <X className="h-6 w-6" />
@@ -547,7 +533,7 @@ export default function AdminRequestsPage() {
                                     <div><Label className="text-slate-500 text-xs">Country</Label><p className="text-slate-200">{selectedReq.data.country || '—'}</p></div>
                                     <div><Label className="text-slate-500 text-xs">State</Label><p className="text-slate-200">{selectedReq.data.state || '—'}</p></div>
                                     <div><Label className="text-slate-500 text-xs">District</Label><p className="text-slate-200">{selectedReq.data.district || '—'}</p></div>
-                                    <div><Label className="text-slate-500 text-xs">City / Town</Label><p className="text-slate-200">{selectedReq.data.city || '—'}</p></div>
+                                    <div><Label className="text-slate-500 text-xs">City</Label><p className="text-slate-200">{selectedReq.data.city || '—'}</p></div>
                                     <div><Label className="text-slate-500 text-xs">Pincode</Label><p className="text-slate-200">{selectedReq.data.pincode || '—'}</p></div>
                                     <div className="col-span-2"><Label className="text-slate-500 text-xs">Full Address</Label><p className="text-slate-200">{selectedReq.data.fullAddress || '—'}</p></div>
                                 </div>
@@ -557,17 +543,16 @@ export default function AdminRequestsPage() {
                                 <div className="grid grid-cols-2 gap-4">
                                     <div><Label className="text-slate-500 text-xs">Qualification</Label><p className="text-slate-200">{selectedReq.data.qualification || '—'}</p></div>
                                     <div><Label className="text-slate-500 text-xs">Experience (Years)</Label><p className="text-slate-200">{selectedReq.data.experience || '—'}</p></div>
-                                    <div><Label className="text-slate-500 text-xs">Previous Employer</Label><p className="text-slate-200">{selectedReq.data.previousCompany || '—'}</p></div>
+                                    <div><Label className="text-slate-500 text-xs">Previous Company</Label><p className="text-slate-200">{selectedReq.data.previousCompany || '—'}</p></div>
                                     <div><Label className="text-slate-500 text-xs">Skills</Label><p className="text-slate-200">{selectedReq.data.skills || '—'}</p></div>
                                 </div>
                             )}
 
                             {activeTab === 'organization' && (
-                                <div className="grid grid-cols-2 gap-4 col-span-2">
+                                <div className="grid grid-cols-2 gap-4">
                                     <div><Label className="text-slate-500 text-xs">Parent Owner ID</Label><p className="text-slate-200 font-mono text-xs">{selectedReq.data.parentOwner || '—'}</p></div>
                                     <div><Label className="text-slate-500 text-xs">Parent Operator ID</Label><p className="text-slate-200 font-mono text-xs">{selectedReq.data.parentOperator || '—'}</p></div>
-                                    <div><Label className="text-slate-500 text-xs">Parent Super Admin ID</Label><p className="text-slate-200 font-mono text-xs">{selectedReq.data.parentSuperAdmin || '—'}</p></div>
-                                    <div><Label className="text-slate-500 text-xs">Referral Code</Label><p className="text-slate-200">{selectedReq.data.referralCode || '—'}</p></div>
+                                    <div><Label className="text-slate-500 text-xs">Referral Code</Label><p className="text-slate-200 font-mono text-xs">{selectedReq.data.referralCode || '—'}</p></div>
                                     <div><Label className="text-slate-500 text-xs">Invited By</Label><p className="text-slate-200">{selectedReq.data.invitedBy || '—'}</p></div>
                                     <div><Label className="text-slate-500 text-xs">Joining Date</Label><p className="text-slate-200">{selectedReq.data.joiningDate || '—'}</p></div>
                                 </div>
@@ -596,7 +581,7 @@ export default function AdminRequestsPage() {
                                             </div>
                                         ))}
                                         {(!selectedReq.approvedBy || selectedReq.approvedBy.length === 0) && (
-                                            <p className="text-xs text-slate-600">No approval steps stamp registered yet.</p>
+                                            <p className="text-xs text-slate-600">No approval steps registered yet.</p>
                                         )}
                                     </div>
                                 </div>
@@ -607,10 +592,6 @@ export default function AdminRequestsPage() {
                                     <div className="bg-slate-800/20 p-2.5 rounded border border-slate-800 flex justify-between">
                                         <span>Request initiated in system</span>
                                         <span className="text-slate-500">{new Date(selectedReq.createdAt).toLocaleString()}</span>
-                                    </div>
-                                    <div className="bg-slate-800/20 p-2.5 rounded border border-slate-800 flex justify-between">
-                                        <span>Last modified state</span>
-                                        <span className="text-slate-500">{new Date(selectedReq.updatedAt).toLocaleString()}</span>
                                     </div>
                                 </div>
                             )}
@@ -643,7 +624,7 @@ export default function AdminRequestsPage() {
                                         <div>
                                             <Label className="text-xs text-slate-400 mb-1.5 block">Reviewer Comment</Label>
                                             <Input
-                                                placeholder="Add verification notes/comments..."
+                                                placeholder="Add verification notes..."
                                                 value={comment}
                                                 onChange={e => setComment(e.target.value)}
                                                 className="bg-slate-950"
@@ -655,7 +636,7 @@ export default function AdminRequestsPage() {
                                                 onClick={() => handleApprove(selectedReq._id)}
                                                 disabled={actionLoading}
                                             >
-                                                <CheckCircle2 className="h-4 w-4" /> Approve Step
+                                                Approve Step
                                             </Button>
                                             {isOwner && (
                                                 <Button 
@@ -663,16 +644,16 @@ export default function AdminRequestsPage() {
                                                     onClick={() => handleApprove(selectedReq._id, true)}
                                                     disabled={actionLoading}
                                                 >
-                                                    <Award className="h-4 w-4" /> Force Approve
+                                                    Force Approve
                                                 </Button>
                                             )}
                                             <Button 
                                                 variant="outline" 
-                                                className="border-red-500/30 text-red-400 hover:bg-red-500/10 flex-1 min-w-[120px] gap-1.5"
+                                                className="border-red-500/30 text-red-400 hover:bg-red-500/10 flex-1 min-w-[120px]"
                                                 onClick={() => setShowRejectForm(true)}
                                                 disabled={actionLoading}
                                             >
-                                                <XCircle className="h-4 w-4" /> Reject
+                                                Reject
                                             </Button>
                                         </div>
                                     </div>

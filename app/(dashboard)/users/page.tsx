@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -31,7 +32,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/AlertDialog";
-import { Ban, Edit2, Search, ShieldCheck, UserPlus, Trash2, CheckCircle, Save, Users, UserCheck, Coins } from "lucide-react";
+import { Ban, Edit2, Search, ShieldCheck, UserPlus, Trash2, CheckCircle, Save, Users, UserCheck, Coins, Info, History as HistoryIcon, Bell, Copy, Clock, User as UserIcon } from "lucide-react";
 import { toast } from 'sonner';
 import { Pagination } from "@/components/ui/Pagination";
 import { apiClient } from '@/lib/apiClient';
@@ -66,17 +67,77 @@ export default function UsersPage() {
     const [selectedUserForCoins, setSelectedUserForCoins] = useState<User | null>(null);
     const [coinsAmount, setCoinsAmount] = useState('');
 
+    const [visibleColumns, setVisibleColumns] = useState<string[]>(['No', 'Image', 'Name', 'Username', 'UniqueId', 'Email', 'Role', 'Gender', 'Rcoin', 'Diamond', 'Country', 'Age', 'Level', 'isVIP', 'isHost', 'Joined', 'Status']);
+    const [allowedButtons, setAllowedButtons] = useState<string[]>(['Add', 'Edit', 'Delete', 'Suspend', 'Activate', 'Recharge', 'Export']);
+
+    // Filter States
+    const [filterGender, setFilterGender] = useState<string>('all');
+    const [filterStatus, setFilterStatus] = useState<string>('all');
+    const [filterRole, setFilterRole] = useState<string>('all');
+    const [filterLevel, setFilterLevel] = useState<string>('all');
+
     useEffect(() => {
+        const fetchPerms = async () => {
+            try {
+                const userObj = JSON.parse(localStorage.getItem('admin_user') || '{}');
+                if (userObj.role === 'owner') {
+                    // Owner has bypass
+                    return;
+                }
+                
+                let cols = ['No', 'Image', 'Name', 'Username', 'UniqueId', 'Email', 'Role', 'Gender', 'Rcoin', 'Diamond', 'Country', 'Age', 'Level', 'isVIP', 'isHost', 'Joined', 'Status'];
+                let btns = ['Add', 'Edit', 'Delete', 'Suspend', 'Activate', 'Recharge', 'Export'];
+                
+                const res = await apiClient.get('/api/ems/my-permissions');
+                let permData = res.data;
+                
+                if (permData) {
+                    if (permData.columns && permData.columns.user) {
+                        cols = permData.columns.user;
+                        
+                        // Legacy layout adapters
+                        if (cols.includes('UID') && !cols.includes('UniqueId')) {
+                            cols.push('UniqueId');
+                        }
+                        
+                        // Force structural columns to prevent rendering gaps
+                        if (!cols.includes('No')) cols.unshift('No');
+                        if (!cols.includes('Image')) cols.splice(1, 0, 'Image');
+                        if (!cols.includes('Username')) cols.push('Username');
+                        if (!cols.includes('UniqueId')) cols.push('UniqueId');
+                        if (!cols.includes('Rcoin')) cols.push('Rcoin');
+                        if (!cols.includes('Diamond')) cols.push('Diamond');
+                        if (!cols.includes('Level')) cols.push('Level');
+                        if (!cols.includes('isVIP')) cols.push('isVIP');
+                        if (!cols.includes('isHost')) cols.push('isHost');
+                        if (!cols.includes('Gender')) cols.push('Gender');
+                        if (!cols.includes('Country')) cols.push('Country');
+                        if (!cols.includes('Age')) cols.push('Age');
+                    }
+                    if (permData.buttons) {
+                        btns = permData.buttons;
+                    }
+                }
+                
+                setVisibleColumns(cols);
+                setAllowedButtons(btns);
+            } catch (err) {
+                console.error(err);
+            }
+        };
+
+        fetchPerms();
         fetchUsers(pagination.currentPage);
     }, [pagination.currentPage]);
+
+    const showCol = (col: string) => visibleColumns.includes(col);
+    const showBtn = (btn: string) => allowedButtons.includes(btn);
 
     const fetchUsers = async (page: number) => {
         try {
             setLoading(true);
             const response = await apiClient.get(API_ENDPOINTS.USERS.LIST, { page, limit: pagination.limit });
             if (response.success && response.data) {
-                // Handle the nested response structure from backend: { usersData: { users: [], totalUsers: 0, ... } }
-                // or flat structure depending on API. Based on userController, it is response.data.usersData
                 const data = response.data as any;
                 const usersData = data.usersData;
 
@@ -198,12 +259,26 @@ export default function UsersPage() {
         }
     };
 
-    // Client-side search (temporary until backend supports it)
-    const filteredUsers = users.filter(user =>
-        user.name?.toLowerCase().includes(search.toLowerCase()) ||
-        user.email?.toLowerCase().includes(search.toLowerCase()) ||
-        user.userId?.toString().includes(search)
-    );
+    // Client-side search and dropdown filtering
+    const filteredUsers = users.filter(user => {
+        const matchesSearch = 
+            user.name?.toLowerCase().includes(search.toLowerCase()) ||
+            user.email?.toLowerCase().includes(search.toLowerCase()) ||
+            user.userId?.toString().includes(search) ||
+            user.userName?.toLowerCase().includes(search.toLowerCase());
+
+        const matchesGender = filterGender === 'all' || user.gender === filterGender;
+
+        const matchesStatus = filterStatus === 'all' || 
+            (filterStatus === 'active' && !user.isBlocked) || 
+            (filterStatus === 'suspended' && user.isBlocked);
+
+        const matchesRole = filterRole === 'all' || user.role === filterRole;
+
+        const matchesLevel = filterLevel === 'all' || user.level?.toString() === filterLevel;
+
+        return matchesSearch && matchesGender && matchesStatus && matchesRole && matchesLevel;
+    });
 
     const activeUsersCount = users.filter(u => !u.isBlocked).length;
 
@@ -215,10 +290,12 @@ export default function UsersPage() {
                     <p className="text-slate-400 mt-1">Manage users, roles, and permissions.</p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={() => toast.info("Exporting CSV...")}>Export CSV</Button>
-                    <Button onClick={() => setIsAddingUser(!isAddingUser)}>
-                        {isAddingUser ? "Cancel" : "Add User"}
-                    </Button>
+                    {showBtn('Export') && <Button variant="outline" onClick={() => toast.info("Exporting CSV...")}>Export CSV</Button>}
+                    {showBtn('Add') && (
+                        <Button onClick={() => setIsAddingUser(!isAddingUser)}>
+                            {isAddingUser ? "Cancel" : "Add User"}
+                        </Button>
+                    )}
                 </div>
             </div>
 
@@ -282,6 +359,71 @@ export default function UsersPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
+                    {/* Filters Row */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                        {/* Gender Selector */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-slate-400">Gender</label>
+                            <select
+                                className="h-9 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-1 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-ring"
+                                value={filterGender}
+                                onChange={(e) => setFilterGender(e.target.value)}
+                            >
+                                <option value="all">All Genders</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        {/* Status Selector */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-slate-400">Status</label>
+                            <select
+                                className="h-9 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-1 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-ring"
+                                value={filterStatus}
+                                onChange={(e) => setFilterStatus(e.target.value)}
+                            >
+                                <option value="all">All Status</option>
+                                <option value="active">Active</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                        {/* User Type/Role Selector */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-slate-400">User Type</label>
+                            <select
+                                className="h-9 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-1 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-ring"
+                                value={filterRole}
+                                onChange={(e) => setFilterRole(e.target.value)}
+                            >
+                                <option value="all">All User Types</option>
+                                <option value="user">User</option>
+                                <option value="host">Host</option>
+                                <option value="agency">Agency</option>
+                                <option value="coinSeller">Coin Seller</option>
+                                <option value="admin">Admin</option>
+                                <option value="superAdmin">Super Admin</option>
+                                <option value="owner">Owner</option>
+                            </select>
+                        </div>
+                        {/* Level Selector */}
+                        <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-bold text-slate-400">Level</label>
+                            <select
+                                className="h-9 w-full rounded-md border border-slate-800 bg-slate-950 px-3 py-1 text-xs text-slate-300 focus:outline-none focus:ring-2 focus:ring-ring"
+                                value={filterLevel}
+                                onChange={(e) => setFilterLevel(e.target.value)}
+                            >
+                                <option value="all">All Levels</option>
+                                <option value="1">Level 1</option>
+                                <option value="2">Level 2</option>
+                                <option value="3">Level 3</option>
+                                <option value="4">Level 4</option>
+                                <option value="5">Level 5</option>
+                            </select>
+                        </div>
+                    </div>
+
                     {loading ? (
                         <div className="text-center py-10 text-slate-500">Loading users...</div>
                     ) : (
@@ -289,91 +431,190 @@ export default function UsersPage() {
                             <Table>
                                 <TableHeader>
                                     <TableRow className="hover:bg-transparent border-slate-700/50">
-                                        <TableHead>User</TableHead>
-                                        <TableHead>Role</TableHead>
-                                        <TableHead>Status</TableHead>
-                                        <TableHead>Joined</TableHead>
+                                        {showCol('No') && <TableHead>No.</TableHead>}
+                                        {showCol('Image') && <TableHead>Image</TableHead>}
+                                        {showCol('Name') && <TableHead>Name</TableHead>}
+                                        {showCol('Username') && <TableHead>Username</TableHead>}
+                                        {showCol('UniqueId') && <TableHead>UniqueId</TableHead>}
+                                        {showCol('Email') && <TableHead>Email</TableHead>}
+                                        {showCol('Role') && <TableHead>Role</TableHead>}
+                                        {showCol('Gender') && <TableHead>Gender</TableHead>}
+                                        {showCol('Rcoin') && <TableHead>Coin</TableHead>}
+                                        {showCol('Diamond') && <TableHead>Diamond</TableHead>}
+                                        {showCol('Country') && <TableHead>Country</TableHead>}
+                                        {showCol('Age') && <TableHead>Age</TableHead>}
+                                        {showCol('Level') && <TableHead>Level</TableHead>}
+                                        {showCol('isVIP') && <TableHead>is VIP</TableHead>}
+                                        {showCol('isHost') && <TableHead>is Host</TableHead>}
+                                        {showCol('Joined') && <TableHead>Joined</TableHead>}
+                                        {showCol('Status') && <TableHead>Status</TableHead>}
+                                        <TableHead className="text-center">Info</TableHead>
+                                        <TableHead className="text-center">History</TableHead>
+                                        <TableHead className="text-center">Notification</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {filteredUsers.map((user) => (
+                                    {filteredUsers.map((user, idx) => (
                                         <TableRow key={user.userId} className="border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                                            <TableCell className="font-medium">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300 overflow-hidden">
+                                            {showCol('No') && (
+                                                <TableCell className="text-slate-400 font-semibold text-xs">
+                                                    {idx + 1 + (pagination.currentPage - 1) * pagination.limit}
+                                                </TableCell>
+                                            )}
+                                            {showCol('Image') && (
+                                                <TableCell>
+                                                    <div className="h-8 w-8 rounded overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center">
                                                         {user.image ? (
                                                             <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
                                                         ) : (
-                                                            user.name?.charAt(0) || 'U'
+                                                            <UserIcon className="h-4 w-4 text-slate-500" />
                                                         )}
                                                     </div>
-                                                    <div>
-                                                        <div className="text-slate-200">{user.name}</div>
-                                                        <div className="text-xs text-slate-500">{user.email || user.phoneNumber || `#${user.userId}`}</div>
+                                                </TableCell>
+                                            )}
+                                            {showCol('Name') && (
+                                                <TableCell className="text-slate-200 font-semibold text-sm">
+                                                    {user.name}
+                                                </TableCell>
+                                            )}
+                                            {showCol('Username') && (
+                                                <TableCell className="text-fuchsia-400 font-bold text-xs">
+                                                    {user.userName || '-'}
+                                                </TableCell>
+                                            )}
+                                            {showCol('UniqueId') && (
+                                                <TableCell className="font-mono text-xs font-bold text-slate-300">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span>{user.userId}</span>
+                                                        <button
+                                                            onClick={() => {
+                                                                navigator.clipboard.writeText(user.userId.toString());
+                                                                toast.success("Copied!");
+                                                            }}
+                                                            className="p-1 hover:text-white transition-colors"
+                                                            title="Copy User ID"
+                                                        >
+                                                            <Copy className="h-3 w-3" />
+                                                        </button>
                                                     </div>
-                                                </div>
+                                                </TableCell>
+                                            )}
+                                            {showCol('Email') && (
+                                                <TableCell className="text-slate-400 text-xs">
+                                                    {user.email || user.phoneNumber || '-'}
+                                                </TableCell>
+                                            )}
+                                            {showCol('Role') && (
+                                                <TableCell className="text-xs">
+                                                    <div className="flex items-center gap-1.5">
+                                                        {(user.role === 'admin' || user.role === 'superAdmin' || user.role === 'owner') && <ShieldCheck className="h-3 w-3 text-primary" />}
+                                                        <span className={(user.role === 'admin' || user.role === 'superAdmin' || user.role === 'owner') ? "text-primary font-bold" : ""}>{user.role}</span>
+                                                    </div>
+                                                </TableCell>
+                                            )}
+                                            {showCol('Gender') && (
+                                                <TableCell className="text-fuchsia-400 font-bold capitalize text-xs">
+                                                    {user.gender}
+                                                </TableCell>
+                                            )}
+                                            {showCol('Rcoin') && (
+                                                <TableCell className="text-slate-200 font-semibold">
+                                                    {user.coins || 0}
+                                                </TableCell>
+                                            )}
+                                            {showCol('Diamond') && (
+                                                <TableCell className="text-slate-200 font-semibold">
+                                                    {user.diamonds || 0}
+                                                </TableCell>
+                                            )}
+                                            {showCol('Country') && (
+                                                <TableCell className="text-emerald-400 font-semibold">
+                                                    {user.country?.name || 'India'}
+                                                </TableCell>
+                                            )}
+                                            {showCol('Age') && (
+                                                <TableCell className="text-slate-300 font-semibold text-xs">
+                                                    {user.age || 18}
+                                                </TableCell>
+                                            )}
+                                            {showCol('Level') && (
+                                                <TableCell>
+                                                    <Badge variant="secondary" className="bg-red-500/10 text-red-400 border-red-500/20 font-bold text-xs">
+                                                        Level {user.level || 1}
+                                                    </Badge>
+                                                </TableCell>
+                                            )}
+                                            {showCol('isVIP') && (
+                                                <TableCell className="text-slate-300 text-xs">
+                                                    {user.level && user.level > 1 ? 'Yes' : 'No'}
+                                                </TableCell>
+                                            )}
+                                            {showCol('isHost') && (
+                                                <TableCell className="text-slate-300 text-xs">
+                                                    {user.role === 'host' ? 'Yes' : 'No'}
+                                                </TableCell>
+                                            )}
+                                            {showCol('Joined') && (
+                                                <TableCell className="text-slate-400 text-xs">
+                                                    {new Date(user.createdAt).toLocaleDateString()}
+                                                </TableCell>
+                                            )}
+                                            {showCol('Status') && (
+                                                <TableCell>
+                                                    <Badge variant={!user.isBlocked ? 'success' : 'destructive'}>
+                                                        {!user.isBlocked ? 'Active' : 'Suspended'}
+                                                    </Badge>
+                                                </TableCell>
+                                            )}
+                                            <TableCell className="text-center">
+                                                <Link
+                                                    href={`/users/${user.userId}`}
+                                                    className="inline-flex p-1.5 rounded bg-violet-600/20 text-violet-400 hover:bg-violet-600/30 transition-colors"
+                                                    title="View Details"
+                                                >
+                                                    <Info className="h-4 w-4" />
+                                                </Link>
                                             </TableCell>
-                                            <TableCell>
-                                                <div className="flex items-center gap-1.5">
-                                                    {(user.role === 'admin' || user.role === 'superAdmin' || user.role === 'owner') && <ShieldCheck className="h-3 w-3 text-primary" />}
-                                                    <span className={(user.role === 'admin' || user.role === 'superAdmin' || user.role === 'owner') ? "text-primary font-bold" : ""}>{user.role}</span>
-                                                </div>
+                                            <TableCell className="text-center">
+                                                <Link
+                                                    href={`/users/history/${user.userId}`}
+                                                    className="inline-flex p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                                                    title="View History Ledger"
+                                                >
+                                                    <Clock className="h-4 w-4" />
+                                                </Link>
                                             </TableCell>
-                                            <TableCell>
-                                                <Badge variant={!user.isBlocked ? 'success' : 'destructive'}>
-                                                    {!user.isBlocked ? 'Active' : 'Suspended'}
-                                                </Badge>
+                                            <TableCell className="text-center">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-pink-400 hover:text-pink-300 hover:bg-pink-500/10"
+                                                    onClick={() => toast.info(`Sending notification to #${user.userId}`)}
+                                                    title="Send Notification"
+                                                >
+                                                    <Bell className="h-4 w-4" />
+                                                </Button>
                                             </TableCell>
-                                            <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-2">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 hover:text-dosti-400"
-                                                        onClick={() => {
-                                                            setEditingUser(user);
-                                                            setIsEditOpen(true);
-                                                        }}
-                                                    >
-                                                        <Edit2 className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-yellow-400 hover:text-yellow-300 hover:bg-yellow-500/10"
-                                                        onClick={() => {
-                                                            setSelectedUserForCoins(user);
-                                                            setIsAddCoinsOpen(true);
-                                                        }}
-                                                        title="Add Coins"
-                                                    >
-                                                        <Coins className="h-4 w-4" />
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className={`h-8 w-8 ${!user.isBlocked ? 'text-orange-400 hover:text-orange-300 hover:bg-orange-500/10' : 'text-green-400 hover:text-green-300 hover:bg-green-500/10'}`}
-                                                        onClick={() => handleBanUser(user)}
-                                                    >
-                                                        {!user.isBlocked ? <Ban className="h-4 w-4" /> : <CheckCircle className="h-4 w-4" />}
-                                                    </Button>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"
-                                                        onClick={() => setDeletingUserId(user.userId.toString())}
-                                                    >
-                                                        <Trash2 className="h-4 w-4" />
-                                                    </Button>
+                                                    {showBtn('Delete') && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                                                            onClick={() => setDeletingUserId(user.userId.toString())}
+                                                        >
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </TableCell>
                                         </TableRow>
                                     ))}
                                     {filteredUsers.length === 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                                            <TableCell colSpan={17} className="text-center py-8 text-slate-500">
                                                 No users found matching your search.
                                             </TableCell>
                                         </TableRow>

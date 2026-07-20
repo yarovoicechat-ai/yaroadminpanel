@@ -5,13 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Settings, Percent, DollarSign, ToggleLeft, ToggleRight, Radio, Shield, Mail, FileText } from "lucide-react";
+import { Settings, Percent, DollarSign, ToggleLeft, ToggleRight, Radio, Shield, Mail, FileText, Crown, LogOut } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [promoteLoading, setPromoteLoading] = useState(false);
     const [settings, setSettings] = useState<any>({
         commissionRate: 20,
         coinPrice: 0.10,
@@ -62,6 +63,23 @@ export default function SettingsPage() {
 
     const handleChange = (key: string, val: any) => {
         setSettings((prev: any) => ({ ...prev, [key]: val }));
+    };
+
+    const promoteToOwner = async () => {
+        if (!confirm('⚠️ This will permanently change your role from superAdmin → owner. You will need to log out and log in again. Continue?')) return;
+        setPromoteLoading(true);
+        try {
+            const res = await apiClient.post('/api/admin/promote-owner', {});
+            if (res.success) {
+                toast.success('✅ Role changed to Owner! Please log out and log in again.');
+            } else {
+                toast.error(res.message || 'Promotion failed');
+            }
+        } catch (err: any) {
+            toast.error(err?.message || 'Error promoting role');
+        } finally {
+            setPromoteLoading(false);
+        }
     };
 
     if (loading) {
@@ -217,6 +235,39 @@ export default function SettingsPage() {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* ── Danger Zone: Role Promotion ── */}
+            <Card className="border-orange-500/40 bg-orange-500/5">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-orange-400">
+                        <Crown size={20} /> Account Role
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-between flex-wrap gap-4">
+                        <div>
+                            <p className="font-semibold text-slate-200">Set Role to Owner</p>
+                            <p className="text-xs text-slate-400 mt-0.5">
+                                Permanently upgrade your account role from <span className="text-amber-300 font-mono">superAdmin</span> → <span className="text-pink-400 font-mono">owner</span>.
+                                Owner has full bypass access to all panel features. <strong className="text-orange-300">Re-login required after.</strong>
+                            </p>
+                        </div>
+                        <Button
+                            type="button"
+                            onClick={promoteToOwner}
+                            disabled={promoteLoading}
+                            className="bg-orange-600 hover:bg-orange-700 text-white font-bold gap-2 flex-shrink-0"
+                        >
+                            <Crown className="h-4 w-4" />
+                            {promoteLoading ? 'Upgrading...' : 'Set Role → Owner'}
+                        </Button>
+                    </div>
+                    <p className="text-xs text-slate-600 mt-3">
+                        ⚠️ This action is irreversible from this panel. Only use if you are the system owner.
+                    </p>
+                </CardContent>
+            </Card>
+
         </form>
     );
 }

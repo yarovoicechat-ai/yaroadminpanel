@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/Table";
 import { Calendar, Plus, Trash2, Award, Clock, Users } from "lucide-react";
 import { toast } from 'sonner';
+import { apiClient as api } from '@/lib/apiClient';
+import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 
 export default function EventsPage() {
     const [title, setTitle] = useState('');
@@ -28,7 +30,7 @@ export default function EventsPage() {
         { id: '3', title: 'Newbie Broadcaster Challenge', reward: 25000, target: 'New Hosts', date: '2026-07-22', isActive: false }
     ]);
 
-    const handleCreateEvent = (e: React.FormEvent) => {
+    const handleCreateEvent = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!title || !date) return;
 
@@ -43,6 +45,19 @@ export default function EventsPage() {
 
         setEvents([newEvent, ...events]);
         toast.success(`Event Contest "${title}" scheduled`);
+
+        try {
+            // Broadcast push notification to all users
+            await api.post(API_ENDPOINTS.EVENTS.BROADCAST, {
+                title: 'New Event: ' + title,
+                body: `Prize pool of ${prizeCoins} coins! Tap to view details.`
+            });
+            toast.success('Event notification broadcasted to users');
+        } catch (error) {
+            console.error('Failed to broadcast event:', error);
+            toast.error('Failed to broadcast event notification');
+        }
+
         setTitle('');
         setPrizeCoins('10000');
         setDate('');

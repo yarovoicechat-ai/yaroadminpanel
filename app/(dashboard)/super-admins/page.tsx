@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 
-interface AdminUser {
+interface SuperAdminUser {
     _id: string;
     userId: number;
     name: string;
@@ -43,18 +43,17 @@ interface AdminUser {
     state?: string;
     district?: string;
     parentOperator?: string;
-    parentSuperAdmin?: string;
     wallet?: number;
     revenue?: number;
     commission?: number;
     loginHistory?: Array<{ date: string; device: string; browser: string; ip: string }>;
 }
 
-export default function AdminsPage() {
+export default function SuperAdminsPage() {
     const { user: currentUser } = useAuth();
     
-    // State lists
-    const [admins, setAdmins] = useState<AdminUser[]>([]);
+    // Lists and Stats states
+    const [superAdmins, setSuperAdmins] = useState<SuperAdminUser[]>([]);
     const [stats, setStats] = useState({ total: 0, active: 0, suspended: 0, totalCoins: 0, totalDiamonds: 0 });
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
@@ -65,48 +64,48 @@ export default function AdminsPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     
-    // Details drawer & nested tabs
-    const [selectedAdmin, setSelectedAdmin] = useState<AdminUser | null>(null);
+    // Details drawer and tabs
+    const [selectedAdmin, setSelectedAdmin] = useState<SuperAdminUser | null>(null);
     const [detailTab, setDetailTab] = useState<'overview' | 'organization' | 'statistics' | 'login' | 'audit'>('overview');
     
-    // Reset password dialog state
+    // Reset password success modal
     const [showResetDialog, setShowResetDialog] = useState(false);
     const [generatedPassword, setGeneratedPassword] = useState('');
 
-    const fetchAdmins = useCallback(async () => {
+    const fetchSuperAdmins = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await apiClient.get('/api/admin/admins', {
+            const res = await apiClient.get('/api/admin/super-admins', {
                 search,
                 status: statusFilter,
                 page,
                 limit: 15
             });
             if (res.success && res.data) {
-                setAdmins(res.data.admins || []);
+                setSuperAdmins(res.data.superAdmins || []);
                 setStats(res.data.stats || { total: 0, active: 0, suspended: 0, totalCoins: 0, totalDiamonds: 0 });
                 setTotalPages(res.data.totalPages || 1);
             } else {
-                toast.error(res.message || 'Failed to load Admins');
+                toast.error(res.message || 'Failed to load Super Admins');
             }
         } catch (err: any) {
-            toast.error(err?.message || 'Error fetching Admins list');
+            toast.error(err?.message || 'Error fetching Super Admins list');
         } finally {
             setLoading(false);
         }
     }, [search, statusFilter, page]);
 
     useEffect(() => {
-        fetchAdmins();
-    }, [fetchAdmins]);
+        fetchSuperAdmins();
+    }, [fetchSuperAdmins]);
 
-    const handleToggleBlock = async (admin: AdminUser) => {
+    const handleToggleBlock = async (admin: SuperAdminUser) => {
         setActionLoading(true);
         try {
-            const res = await apiClient.patch(`/api/admin/admins/${admin._id}/toggle-block`);
+            const res = await apiClient.patch(`/api/admin/super-admins/${admin._id}/toggle-block`);
             if (res.success) {
-                toast.success(`Admin status updated successfully`);
-                fetchAdmins();
+                toast.success(`Super Admin status updated successfully`);
+                fetchSuperAdmins();
                 if (selectedAdmin?._id === admin._id) {
                     setSelectedAdmin(prev => prev ? { ...prev, isBlocked: !prev.isBlocked } : null);
                 }
@@ -120,29 +119,29 @@ export default function AdminsPage() {
         }
     };
 
-    const handleDeleteAdmin = async (admin: AdminUser) => {
-        if (!confirm(`⚠️ Are you sure you want to delete Admin ${admin.name}? This will mark their profile as deleted.`)) return;
+    const handleDeleteAdmin = async (admin: SuperAdminUser) => {
+        if (!confirm(`⚠️ Irreversible: Delete Super Admin ${admin.name}?`)) return;
         setActionLoading(true);
         try {
-            const res = await apiClient.delete(`/api/admin/admins/${admin._id}`);
+            const res = await apiClient.delete(`/api/admin/super-admins/${admin._id}`);
             if (res.success) {
-                toast.success('Admin deleted successfully');
-                fetchAdmins();
+                toast.success('Super Admin soft-deleted');
+                fetchSuperAdmins();
                 setSelectedAdmin(null);
             } else {
-                toast.error(res.message || 'Failed to delete admin');
+                toast.error(res.message || 'Failed to delete');
             }
         } catch (err: any) {
-            toast.error(err?.message || 'Error deleting admin');
+            toast.error(err?.message || 'Error deleting Super Admin');
         } finally {
             setActionLoading(false);
         }
     };
 
-    const handleResetPassword = async (admin: AdminUser) => {
+    const handleResetPassword = async (admin: SuperAdminUser) => {
         setActionLoading(true);
         try {
-            const res = await apiClient.post(`/api/admin/admins/${admin._id}/reset-password`);
+            const res = await apiClient.post(`/api/admin/super-admins/${admin._id}/reset-password`);
             if (res.success && res.data?.newPassword) {
                 setGeneratedPassword(res.data.newPassword);
                 setShowResetDialog(true);
@@ -164,29 +163,29 @@ export default function AdminsPage() {
             <div className="flex items-center justify-between flex-wrap gap-3">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent">
-                        Admin List
+                        Super Admin List
                     </h2>
                     <p className="text-muted-foreground text-sm mt-1">
-                        View, manage, suspend, activate or delete registered admin accounts.
+                        View, manage, activate or delete registered super-admin accounts.
                     </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={fetchAdmins} className="gap-2">
+                <Button variant="outline" size="sm" onClick={fetchSuperAdmins} className="gap-2">
                     <RefreshCw className="h-4 w-4" /> Refresh
                 </Button>
             </div>
 
-            {/* Dashboard Cards */}
+            {/* Dashboard Stats */}
             <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
                 <Card className="glass-card">
-                    <CardHeader className="py-3"><CardTitle className="text-xs font-medium text-slate-400">Total Admins</CardTitle></CardHeader>
+                    <CardHeader className="py-3"><CardTitle className="text-xs font-medium text-slate-400">Total Super Admins</CardTitle></CardHeader>
                     <CardContent className="pb-4"><div className="text-2xl font-black text-slate-100">{stats.total}</div></CardContent>
                 </Card>
                 <Card className="glass-card">
-                    <CardHeader className="py-3"><CardTitle className="text-xs font-medium text-slate-400">Active Admins</CardTitle></CardHeader>
+                    <CardHeader className="py-3"><CardTitle className="text-xs font-medium text-slate-400">Active</CardTitle></CardHeader>
                     <CardContent className="pb-4"><div className="text-2xl font-black text-emerald-400">{stats.active}</div></CardContent>
                 </Card>
                 <Card className="glass-card">
-                    <CardHeader className="py-3"><CardTitle className="text-xs font-medium text-slate-400">Suspended Admins</CardTitle></CardHeader>
+                    <CardHeader className="py-3"><CardTitle className="text-xs font-medium text-slate-400">Suspended</CardTitle></CardHeader>
                     <CardContent className="pb-4"><div className="text-2xl font-black text-red-400">{stats.suspended}</div></CardContent>
                 </Card>
                 <Card className="glass-card">
@@ -212,7 +211,7 @@ export default function AdminsPage() {
                         value={statusFilter}
                         onChange={e => { setStatusFilter(e.target.value); setPage(1); }}
                     >
-                        <option value="all">All Admins</option>
+                        <option value="all">All Super Admins</option>
                         <option value="active">Active</option>
                         <option value="suspended">Suspended</option>
                     </select>
@@ -226,7 +225,9 @@ export default function AdminsPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow className="hover:bg-transparent border-slate-700/50 text-xs">
-                                    <TableHead className="text-slate-300 font-bold whitespace-nowrap">Admin Name</TableHead>
+                                    <TableHead className="text-slate-300 font-bold whitespace-nowrap">Super Admin Name</TableHead>
+                                    <TableHead className="text-slate-300 font-bold whitespace-nowrap text-center">Active Admin</TableHead>
+                                    <TableHead className="text-slate-300 font-bold whitespace-nowrap text-center">New Admin</TableHead>
                                     <TableHead className="text-slate-300 font-bold whitespace-nowrap text-center">Active Agencies</TableHead>
                                     <TableHead className="text-slate-300 font-bold whitespace-nowrap text-center">New Agencies</TableHead>
                                     <TableHead className="text-slate-300 font-bold whitespace-nowrap text-center">Active Host</TableHead>
@@ -234,30 +235,31 @@ export default function AdminsPage() {
                                     <TableHead className="text-slate-300 font-bold whitespace-nowrap">Date Added</TableHead>
                                     <TableHead className="text-slate-300 font-bold whitespace-nowrap text-center">Action</TableHead>
                                     <TableHead className="text-slate-300 font-bold whitespace-nowrap text-center">Data (View Recruited Agencies)</TableHead>
+                                    <TableHead className="text-slate-300 font-bold whitespace-nowrap text-center">Data (View Recruited Admin)</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {loading ? (
                                     <TableRow>
-                                        <TableCell colSpan={8} className="text-center py-20">
+                                        <TableCell colSpan={11} className="text-center py-20">
                                             <div className="flex flex-col items-center gap-3 text-slate-500">
                                                 <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
-                                                <span>Loading registered admins...</span>
+                                                <span>Loading super admins...</span>
                                             </div>
                                         </TableCell>
                                     </TableRow>
-                                ) : admins.length === 0 ? (
+                                ) : superAdmins.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={8} className="text-center py-20">
+                                        <TableCell colSpan={11} className="text-center py-20">
                                             <div className="flex flex-col items-center gap-3 text-slate-500">
                                                 <Users className="h-8 w-8 text-slate-600" />
-                                                <span>No admins found</span>
+                                                <span>No super admins found</span>
                                             </div>
                                         </TableCell>
                                     </TableRow>
-                                ) : admins.map(admin => (
+                                ) : superAdmins.map(admin => (
                                     <TableRow key={admin._id} className="hover:bg-slate-800/40 border-slate-700/30 text-xs">
-                                        {/* 1. Admin Name */}
+                                        {/* 1. Super Admin Name */}
                                         <TableCell className="font-semibold text-slate-200 flex items-center gap-2 whitespace-nowrap">
                                             {admin.image ? (
                                                 <img src={admin.image} alt="Profile" className="h-7 w-7 rounded-full object-cover ring-2 ring-violet-500/20" />
@@ -269,32 +271,42 @@ export default function AdminsPage() {
                                             <span>{admin.name}</span>
                                         </TableCell>
 
-                                        {/* 2. Active Agencies */}
+                                        {/* 2. Active Admin */}
                                         <TableCell className="text-center font-semibold text-emerald-400 whitespace-nowrap">
+                                            {(admin as any).activeAdminsCount ?? 0}
+                                        </TableCell>
+
+                                        {/* 3. New Admin */}
+                                        <TableCell className="text-center font-semibold text-cyan-400 whitespace-nowrap">
+                                            {(admin as any).newAdminsCount ?? 0}
+                                        </TableCell>
+
+                                        {/* 4. Active Agencies */}
+                                        <TableCell className="text-center font-semibold text-violet-400 whitespace-nowrap">
                                             {(admin as any).activeAgenciesCount ?? 0}
                                         </TableCell>
 
-                                        {/* 3. New Agencies */}
-                                        <TableCell className="text-center font-semibold text-cyan-400 whitespace-nowrap">
+                                        {/* 5. New Agencies */}
+                                        <TableCell className="text-center font-semibold text-pink-400 whitespace-nowrap">
                                             {(admin as any).newAgenciesCount ?? 0}
                                         </TableCell>
 
-                                        {/* 4. Active Host */}
-                                        <TableCell className="text-center font-semibold text-violet-400 whitespace-nowrap">
+                                        {/* 6. Active Host */}
+                                        <TableCell className="text-center font-semibold text-indigo-400 whitespace-nowrap">
                                             {(admin as any).activeHostsCount ?? 0}
                                         </TableCell>
 
-                                        {/* 5. New Host */}
-                                        <TableCell className="text-center font-semibold text-pink-400 whitespace-nowrap">
+                                        {/* 7. New Host */}
+                                        <TableCell className="text-center font-semibold text-amber-400 whitespace-nowrap">
                                             {(admin as any).newHostsCount ?? 0}
                                         </TableCell>
 
-                                        {/* 6. Date Added */}
+                                        {/* 8. Date Added */}
                                         <TableCell className="text-slate-400 whitespace-nowrap">
                                             {new Date(admin.createdAt).toLocaleDateString('en-IN')}
                                         </TableCell>
 
-                                        {/* 7. Action */}
+                                        {/* 9. Action */}
                                         <TableCell className="text-center whitespace-nowrap">
                                             <div className="flex gap-1.5 justify-center">
                                                 <Button 
@@ -317,7 +329,7 @@ export default function AdminsPage() {
                                             </div>
                                         </TableCell>
 
-                                        {/* 8. Data (View Recruited Agencies) */}
+                                        {/* 10. Data (View Recruited Agencies) */}
                                         <TableCell className="text-center whitespace-nowrap">
                                             <Button
                                                 size="sm"
@@ -326,6 +338,18 @@ export default function AdminsPage() {
                                                 className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
                                             >
                                                 View Recruited Agencies ({((admin as any).recruitedAgencies || []).length})
+                                            </Button>
+                                        </TableCell>
+
+                                        {/* 11. Data (View Recruited Admin) */}
+                                        <TableCell className="text-center whitespace-nowrap">
+                                            <Button
+                                                size="sm"
+                                                variant="secondary"
+                                                onClick={() => setSelectedAdmin(admin)}
+                                                className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+                                            >
+                                                View Recruited Admin ({((admin as any).recruitedAdmins || []).length})
                                             </Button>
                                         </TableCell>
                                     </TableRow>
@@ -351,7 +375,7 @@ export default function AdminsPage() {
                 </div>
             )}
 
-            {/* Reset Password Success Dialog */}
+            {/* Reset Password success popup */}
             {showResetDialog && (
                 <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 p-4">
                     <div className="bg-slate-900 border border-slate-700 p-6 rounded-2xl w-full max-w-sm shadow-2xl space-y-4">
@@ -360,7 +384,7 @@ export default function AdminsPage() {
                             Password Reset Success
                         </div>
                         <p className="text-sm text-slate-300">
-                            The temporary password for this administrator account has been successfully reset.
+                            The temporary password for this Super Admin account has been successfully reset.
                         </p>
                         <div className="p-3 bg-slate-950 border border-slate-800 rounded font-mono text-center text-lg text-emerald-400 font-bold select-all">
                             {generatedPassword}
@@ -375,7 +399,7 @@ export default function AdminsPage() {
                 </div>
             )}
 
-            {/* Details Modal with Tabs */}
+            {/* Details Modal */}
             {selectedAdmin && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
                     <div className="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-2xl max-h-[92vh] overflow-y-auto flex flex-col shadow-2xl">
@@ -399,7 +423,7 @@ export default function AdminsPage() {
                             </button>
                         </div>
 
-                        {/* Tabs Bar */}
+                        {/* Tabs */}
                         <div className="flex bg-slate-800/40 p-1 gap-1 border-b border-slate-800 overflow-x-auto">
                             {[
                                 { id: 'overview', label: 'Overview' },
@@ -419,7 +443,7 @@ export default function AdminsPage() {
                             ))}
                         </div>
 
-                        {/* Modal Tab Contents */}
+                        {/* Contents */}
                         <div className="flex-1 p-5 overflow-y-auto space-y-4">
                             {detailTab === 'overview' && (
                                 <div className="space-y-4">
@@ -441,11 +465,10 @@ export default function AdminsPage() {
                             )}
 
                             {detailTab === 'organization' && (
-                                <div className="grid grid-cols-2 gap-4 text-xs">
-                                    <div><Label className="text-slate-500 text-[10px]">Parent Operator ID</Label><p className="text-slate-200 font-mono mt-0.5">{selectedAdmin.parentOperator || '—'}</p></div>
-                                    <div><Label className="text-slate-500 text-[10px]">Parent Super Admin ID</Label><p className="text-slate-200 font-mono mt-0.5">{selectedAdmin.parentSuperAdmin || '—'}</p></div>
-                                    <div><Label className="text-slate-500 text-[10px]">Referral Code</Label><p className="text-slate-200 font-mono mt-0.5">{selectedAdmin.referralCode || '—'}</p></div>
-                                    <div><Label className="text-slate-500 text-[10px]">Joined Date</Label><p className="text-slate-200 mt-0.5">{new Date(selectedAdmin.createdAt).toLocaleDateString()}</p></div>
+                                <div className="grid grid-cols-2 gap-4 text-xs font-mono">
+                                    <div><Label className="text-slate-500 text-[10px]">Parent Operator ID</Label><p className="text-slate-200 mt-0.5">{selectedAdmin.parentOperator || '—'}</p></div>
+                                    <div><Label className="text-slate-500 text-[10px]">Referral Code</Label><p className="text-slate-200 mt-0.5">{selectedAdmin.referralCode || '—'}</p></div>
+                                    <div><Label className="text-slate-500 text-[10px]">Joined Date</Label><p className="text-slate-200 font-sans mt-0.5">{new Date(selectedAdmin.createdAt).toLocaleDateString()}</p></div>
                                 </div>
                             )}
 
@@ -460,12 +483,12 @@ export default function AdminsPage() {
                                         <p className="text-xl font-bold text-pink-400 mt-1">💎 {selectedAdmin.diamonds.toLocaleString()}</p>
                                     </div>
                                     <div className="p-3 bg-slate-800/30 border border-slate-800 rounded-lg">
-                                        <Label className="text-slate-500 text-xs">Assigned Agencies</Label>
-                                        <p className="text-xl font-bold text-violet-400 mt-1">0</p>
+                                        <Label className="text-slate-500 text-xs">Total Admins Under Hierarchy</Label>
+                                        <p className="text-xl font-bold text-blue-400 mt-1">0</p>
                                     </div>
                                     <div className="p-3 bg-slate-800/30 border border-slate-800 rounded-lg">
-                                        <Label className="text-slate-500 text-xs">Revenue Contribution</Label>
-                                        <p className="text-xl font-bold text-emerald-400 mt-1">$0.00</p>
+                                        <Label className="text-slate-500 text-xs">Total Assigned Agencies</Label>
+                                        <p className="text-xl font-bold text-violet-400 mt-1">0</p>
                                     </div>
                                 </div>
                             )}

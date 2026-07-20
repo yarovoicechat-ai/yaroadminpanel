@@ -15,12 +15,16 @@ export interface User {
     role: 'owner' | 'superAdmin' | 'admin' | 'coinSeller' | 'host' | 'user';
     authType: 'phone' | 'google' | 'email';
     coins: number;
+    diamonds: number;
     image?: string;
     isDeleted: boolean;
     isOnline: boolean;
     isBlocked: boolean;
     lastOnline?: Date;
     language?: string[];
+    country?: { name?: string; code?: string; flag?: string };
+    age?: number;
+    level?: number;
     frameId?: string;
     userName?: string;
     isUserName: boolean;

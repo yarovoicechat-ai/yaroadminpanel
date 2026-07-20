@@ -10,10 +10,22 @@ export const API_ENDPOINTS = {
         SETTINGS: '/api/admin/settings',
         UPDATE_SETTINGS: '/api/admin/settings',
 
-        // SuperAdmin: Manage Admins
+        // SuperAdmin: Manage Admins (legacy)
         CREATE_ADMIN: '/api/admin/create-admin',
         LIST_ADMINS: '/api/admin/list-admins',
         BLOCK_ADMIN: (id: string) => `/api/admin/block-admin/${id}`,
+
+        // Role Hierarchy: Employee Management
+        CREATE_EMPLOYEE: '/api/admin/employees/create',
+        LIST_EMPLOYEES: '/api/admin/employees/list',
+        BLOCK_EMPLOYEE: (id: string) => `/api/admin/employees/block/${id}`,
+        OVERRIDE_LINKAGE: (id: string) => `/api/admin/employees/override/${id}`,
+    },
+
+    // Public Application Forms
+    PUBLIC: {
+        APPLY: '/api/public/apply',
+        VERIFY_CODE: (code: string) => `/api/public/verify-code/${code}`,
     },
 
     // Dashboard Analytics
@@ -102,5 +114,10 @@ export const API_ENDPOINTS = {
         CREATE: '/api/gift/create',
         TOGGLE: (id: string) => `/api/gift/${id}/toggle`,
         DELETE: (id: string) => `/api/gift/${id}`,
+    },
+
+    // Events
+    EVENTS: {
+        BROADCAST: '/api/admin/events/broadcast',
     },
 } as const;
