@@ -64,8 +64,8 @@ export default function AddNewEntityPage() {
 
     const handleCreateManually = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedRole || !name || !email || !password || !docUrl) {
-            return toast.error("Please fill all required fields, including at least one document URL.");
+        if (!selectedRole || !name || !email || !password) {
+            return toast.error("Please fill required fields (Name, Email, Password).");
         }
         
         setLoading(true);
@@ -76,7 +76,7 @@ export default function AddNewEntityPage() {
                 password,
                 phoneNumber: phone || undefined,
                 targetRole: selectedRole,
-                documents: [docUrl]
+                documents: docUrl ? [docUrl] : []
             };
             
             const res = await apiClient.post(API_ENDPOINTS.ADMIN.CREATE_EMPLOYEE, payload);
@@ -219,14 +219,13 @@ export default function AddNewEntityPage() {
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-semibold text-slate-300">Document URL *</label>
+                                    <label className="text-sm font-semibold text-slate-300">Document URL (Optional)</label>
                                     <Input
                                         placeholder="Link to ID proof / Agreement"
                                         value={docUrl}
                                         onChange={(e) => setDocUrl(e.target.value)}
-                                        required
                                     />
-                                    <p className="text-[10px] text-slate-500">Required for verification purposes.</p>
+                                    <p className="text-[10px] text-slate-500">Optional verification document link.</p>
                                 </div>
                                 <Button type="submit" disabled={loading} className="w-full mt-4">
                                     {loading ? 'Creating...' : `Create ${ROLE_DETAILS[selectedRole].label}`}

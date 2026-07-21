@@ -5,12 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { toast } from 'sonner';
-import { UserPlus, ArrowLeft, Coins, ShieldCheck, Mail, Phone, User } from 'lucide-react';
+import { UserPlus, ArrowLeft, Coins, Lock } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { apiClient } from '@/lib/apiClient';
+import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 
 export default function AddUserPage() {
+    const router = useRouter();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
     const [phone, setPhone] = useState('');
     const [gender, setGender] = useState('male');
     const [role, setRole] = useState('user');
@@ -19,19 +24,38 @@ export default function AddUserPage() {
 
     const handleAddUserSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!name || !email) {
+            return toast.error("Name and Email are required");
+        }
         setLoading(true);
         try {
-            // Mock API signup integration
-            setTimeout(() => {
-                toast.success(`Successfully registered User "${name}" with role "${role}"`);
+            const autoPassword = password || 'Mithi@12345';
+            const payload = {
+                name,
+                email,
+                password: autoPassword,
+                phoneNumber: phone || undefined,
+                targetRole: role,
+                gender,
+                coins: Number(coins) || 100
+            };
+
+            const res = await apiClient.post(API_ENDPOINTS.ADMIN.CREATE_EMPLOYEE, payload);
+
+            if (res.success) {
+                toast.success(`Successfully registered "${name}" as ${role}`);
                 setName('');
                 setEmail('');
+                setPassword('');
                 setPhone('');
                 setCoins('100');
-                setLoading(false);
-            }, 1000);
-        } catch (error) {
-            toast.error("Failed to register user");
+                router.push('/users');
+            } else {
+                toast.error(res.message || "Failed to register account");
+            }
+        } catch (error: any) {
+            toast.error(error.message || "Failed to register user");
+        } finally {
             setLoading(false);
         }
     };
@@ -61,7 +85,7 @@ export default function AddUserPage() {
                     <form onSubmit={handleAddUserSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-300">Display Name</label>
+                                <label className="text-sm font-semibold text-slate-300">Display Name *</label>
                                 <Input
                                     placeholder="e.g. Rahul Sharma"
                                     value={name}
@@ -84,7 +108,7 @@ export default function AddUserPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-300">Email Address</label>
+                            <label className="text-sm font-semibold text-slate-300">Email Address *</label>
                             <Input
                                 type="email"
                                 placeholder="rahul@example.com"
@@ -92,6 +116,19 @@ export default function AddUserPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                             />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-300">Password (Default: Mithi@12345)</label>
+                            <div className="relative">
+                                <Input
+                                    type="password"
+                                    placeholder="Enter password or leave blank for default"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                />
+                                <Lock className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
+                            </div>
                         </div>
 
                         <div className="space-y-2">
@@ -116,11 +153,11 @@ export default function AddUserPage() {
                                     <option value="coinSeller">Coin Seller</option>
                                     <option value="admin">Admin</option>
                                     <option value="superAdmin">Super Admin</option>
-                                    <option value="owner">Owner</option>
+                                    <option value="operator">Operator</option>
                                 </select>
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-300">Initial Coins Allocation</label>
+                                <label className="text-sm font-semibold text-slate-300">Initial Coins</label>
                                 <div className="relative">
                                     <Input
                                         type="number"

@@ -156,10 +156,35 @@ export default function UsersPage() {
         }
     };
 
-    const handleAddUser = () => {
-        // Backend doesn't support creating users via Admin API yet
-        toast.info("Feature not available via Admin API. Please use the mobile app to register users.");
-        setIsAddingUser(false);
+    const handleAddUser = async () => {
+        if (!newUserName || !newUserEmail) {
+            toast.error("Name and email are required");
+            return;
+        }
+
+        try {
+            setLoading(true);
+            const response = await apiClient.post(API_ENDPOINTS.ADMIN.CREATE_EMPLOYEE, {
+                name: newUserName,
+                email: newUserEmail,
+                password: 'Mithi@12345',
+                targetRole: 'user'
+            });
+
+            if (response.success) {
+                toast.success("User created successfully");
+                setNewUserName('');
+                setNewUserEmail('');
+                setIsAddingUser(false);
+                fetchUsers(1);
+            } else {
+                toast.error(response.message || "Failed to create user");
+            }
+        } catch (error: any) {
+            toast.error(error.message || "Failed to create user");
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleUpdateUser = async () => {
