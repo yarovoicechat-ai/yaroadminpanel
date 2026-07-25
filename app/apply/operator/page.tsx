@@ -359,7 +359,7 @@ function OperatorFormContent() {
                                 className="w-5 h-5 mt-0.5 accent-emerald-500 rounded"
                             />
                             <span className="text-xs text-white/80 leading-relaxed">
-                                I confirm that all details provided are accurate. I agree to uphold the operational integrity and moderation guidelines of MeethiChat.
+                                I confirm that all details provided are accurate. I agree to uphold the operational integrity and moderation guidelines of MithiChat.
                             </span>
                         </label>
                     </div>

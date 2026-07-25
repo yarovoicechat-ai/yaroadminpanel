@@ -338,7 +338,7 @@ export default function Sidebar() {
             >
                 <div className="px-6 mb-6 mt-4 md:mt-0 flex items-center justify-between">
                     <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                        Meethi Chat EMS
+                        Mithi Chat EMS
                     </h1>
                 </div>
 

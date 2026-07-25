@@ -29,7 +29,7 @@ interface FieldDraft {
 export default function FormBuilderPage() {
     const [roleKey, setRoleKey] = useState('hr');
     const [title, setTitle] = useState('HR Recruitment Portal');
-    const [subtitle, setSubtitle] = useState('Apply for HR & Talent Acquisition Lead on MeethiChat.');
+    const [subtitle, setSubtitle] = useState('Apply for HR & Talent Acquisition Lead on MithiChat.');
     const [badgeText, setBadgeText] = useState('Official HR Recruitment');
 
     const [steps, setSteps] = useState<FormStepDraft[]>([

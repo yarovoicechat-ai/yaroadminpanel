@@ -48,6 +48,7 @@ interface OperatorRequest {
         specialCode?: string;
         referralCode?: string;
         invitedBy?: string;
+        mithiChatId?: string;
         meethiChatId?: string;
         userId?: string;
     };
@@ -215,7 +216,7 @@ export default function OperatorRequestsPage() {
                                     <TableHead className="text-slate-300 font-bold whitespace-nowrap">Invited By</TableHead>
                                     <TableHead className="text-slate-300 font-bold whitespace-nowrap">Name</TableHead>
                                     <TableHead className="text-slate-300 font-bold whitespace-nowrap">Operator Photo</TableHead>
-                                    <TableHead className="text-slate-300 font-bold whitespace-nowrap">Meethi Chat Id</TableHead>
+                                    <TableHead className="text-slate-300 font-bold whitespace-nowrap">Mithi Chat Id</TableHead>
                                     <TableHead className="text-slate-300 font-bold whitespace-nowrap">Email Id</TableHead>
                                     <TableHead className="text-slate-300 font-bold whitespace-nowrap">Mobile Number</TableHead>
                                     <TableHead className="text-slate-300 font-bold whitespace-nowrap">State Name</TableHead>
@@ -272,7 +273,7 @@ export default function OperatorRequestsPage() {
                                             </TableCell>
 
                                             {/* 4. Meethi Chat Id */}
-                                            <TableCell className="font-mono text-violet-300 whitespace-nowrap">{d.meethiChatId || req.userId || d.userId || '—'}</TableCell>
+                                            <TableCell className="font-mono text-violet-300 whitespace-nowrap">{d.mithiChatId || d.meethiChatId || req.userId || d.userId || '—'}</TableCell>
 
                                             {/* 5. Email Id */}
                                             <TableCell className="text-slate-300 whitespace-nowrap">{d.email || '—'}</TableCell>

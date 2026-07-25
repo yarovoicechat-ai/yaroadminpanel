@@ -127,7 +127,7 @@ function AdminFormContent() {
         <RecruitmentFormLayout
             roleKey="admin"
             roleTitle="Admin Recruitment Portal"
-            roleSubtitle="Apply for Platform Administrator & Governance clearance on MeethiChat."
+            roleSubtitle="Apply for Platform Administrator & Governance clearance on MithiChat."
             badgeText="Platform Administrator Recruitment"
             themeGradient="from-slate-950 via-blue-950 to-indigo-950"
             accentColor="blue"

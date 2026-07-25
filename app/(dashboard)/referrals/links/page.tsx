@@ -18,7 +18,7 @@ export default function ReferralLinks() {
   const sellerDomain = 'seller.mithichat.live';
   const supportDomain = 'support.mithichat.live';
 
-  const referralCode = user?.meethiId || user?.id?.substring(18).toUpperCase() || 'AGY8X92';
+  const referralCode = (user as any)?.mithiId || user?.meethiId || user?.id?.substring(18).toUpperCase() || 'AGY8X92';
 
   const links = [
     {

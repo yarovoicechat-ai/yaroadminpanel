@@ -96,10 +96,10 @@ function HostFormContent() {
                 {/* Form Header */}
                 <div className="mb-8">
                     <h1 className="text-2xl font-extrabold tracking-wide text-white uppercase">
-                        HOST FORM - MEETHICHAT
+                        HOST FORM - MITHICHAT
                     </h1>
                     <p className="text-xs font-semibold text-white/70 mt-1">
-                        MeethiChat, Host Requirements
+                        MithiChat, Host Requirements
                     </p>
                 </div>
 

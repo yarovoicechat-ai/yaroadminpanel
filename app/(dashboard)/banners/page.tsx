@@ -149,7 +149,7 @@ export default function BannersPage() {
                             <div className="space-y-2">
                                 <label className="text-sm font-semibold text-slate-300">Action Deep Link</label>
                                 <Input
-                                    placeholder="meethichat://profile/1002"
+                                    placeholder="mithichat://profile/1002"
                                     value={linkUrl}
                                     onChange={(e) => setLinkUrl(e.target.value)}
                                 />

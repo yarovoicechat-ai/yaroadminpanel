@@ -61,7 +61,7 @@ function ApplyPageContent() {
         <div className="min-h-screen bg-gradient-to-br from-[#1e1b4b] via-[#312e81] to-[#4338ca] flex flex-col items-center justify-center p-4">
             <div className="max-w-xl w-full text-center space-y-6">
                 <h1 className="text-3xl font-black text-white uppercase tracking-wider">
-                    MEETHICHAT APPLICATION FORMS
+                    MITHICHAT APPLICATION FORMS
                 </h1>
                 <p className="text-slate-300 text-sm">
                     Select the specific application form below:
