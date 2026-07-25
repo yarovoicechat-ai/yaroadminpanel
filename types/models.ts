@@ -3,6 +3,7 @@
 export interface User {
     _id: string;
     userId: number;
+    mithiId?: string;
     meethiId?: string;
     name: string;
     email?: string;
@@ -37,7 +38,8 @@ export interface User {
 export interface Host {
     _id: string;
     hostId: number;
-    meethiId: string;
+    mithiId?: string;
+    meethiId?: string;
     fullName: string;
     mobileNumber: string;
     emailId: string;

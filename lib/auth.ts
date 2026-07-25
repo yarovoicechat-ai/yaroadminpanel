@@ -6,6 +6,7 @@ export interface User {
     name: string;
     email: string;
     role: 'owner' | 'superAdmin' | 'admin' | 'coinSeller' | 'host' | 'user';
+    mithiId?: string;
     meethiId?: string;
     employeeCode?: string;
     specialCode?: string;
@@ -32,7 +33,8 @@ export async function login(email: string, password: string): Promise<{ user: Us
                     name: user.name,
                     email: user.email,
                     role: user.role,
-                    meethiId: user.meethiId,
+                    mithiId: user.mithiId || user.meethiId,
+                    meethiId: user.meethiId || user.mithiId,
                     employeeCode: user.employeeCode || user.specialCode,
                     specialCode: user.specialCode,
                 },

@@ -11,7 +11,7 @@ import Link from 'next/link';
 export default function AddHostPage() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
-    const [meethiId, setMeethiId] = useState('');
+    const [mithiId, setMithiId] = useState('');
     const [loading, setLoading] = useState(false);
 
     const handleAddHostSubmit = async (e: React.FormEvent) => {
@@ -23,7 +23,7 @@ export default function AddHostPage() {
                 toast.success(`Successfully registered live Host "${name}"`);
                 setName('');
                 setEmail('');
-                setMeethiId('');
+                setMithiId('');
                 setLoading(false);
             }, 1000);
         } catch (error) {
@@ -82,8 +82,8 @@ export default function AddHostPage() {
                                 <Input
                                     type="number"
                                     placeholder="e.g. 500021"
-                                    value={meethiId}
-                                    onChange={(e) => setMeethiId(e.target.value)}
+                                    value={mithiId}
+                                    onChange={(e) => setMithiId(e.target.value)}
                                     required
                                 />
                                 <Award className="absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
