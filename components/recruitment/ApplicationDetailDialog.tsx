@@ -145,9 +145,11 @@ export function ApplicationDetailDialog({
                             <Phone className="w-4 h-4 text-emerald-400 shrink-0" />
                             <span className="text-slate-300">{application.applicant?.phone}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-xs col-span-2">
                             <MapPin className="w-4 h-4 text-rose-400 shrink-0" />
-                            <span className="text-slate-300 truncate">{application.applicant?.city || 'N/A'}, {application.applicant?.country || 'India'}</span>
+                            <span className="text-slate-300">
+                                {application.applicant?.city || application.roleData?.city || 'N/A'}, {application.applicant?.district || application.roleData?.district || 'N/A'}, {application.applicant?.state || application.roleData?.state || 'N/A'}, {application.applicant?.country || application.roleData?.country || 'India'}
+                            </span>
                         </div>
                     </div>
 

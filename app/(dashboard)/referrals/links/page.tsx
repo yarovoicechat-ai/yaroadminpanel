@@ -22,25 +22,18 @@ export default function ReferralLinks() {
 
   const links = [
     {
+      role: 'Super Admin',
+      desc: 'Recruit executive Super Administrators for board & platform governance.',
+      url: `https://${adminDomain}/apply/super-admin?referrer=${referralCode}`,
+      icon: Key,
+      color: 'text-rose-400 border-rose-500/20 bg-rose-500/5'
+    },
+    {
       role: 'Admin',
       desc: 'Recruit sub-administrators directly under your organization.',
-      url: `https://${adminDomain}/?referrer=${referralCode}&role=admin`,
+      url: `https://${adminDomain}/apply/admin?referrer=${referralCode}`,
       icon: Briefcase,
       color: 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5'
-    },
-    {
-      role: 'Host',
-      desc: 'Sign up new hosts under your agency hierarchy automatically.',
-      url: `https://${hostDomain}/?referrer=${referralCode}&role=host`,
-      icon: Video,
-      color: 'text-lime-400 border-lime-500/20 bg-lime-500/5'
-    },
-    {
-      role: 'Agency',
-      desc: 'Recruit sub-agencies. They inherit you as their parent node.',
-      url: `https://${agencyDomain}/?referrer=${referralCode}&role=agency`,
-      icon: Briefcase,
-      color: 'text-amber-400 border-amber-500/20 bg-amber-500/5'
     },
     {
       role: 'Operator',
@@ -50,11 +43,32 @@ export default function ReferralLinks() {
       color: 'text-purple-400 border-purple-500/20 bg-purple-500/5'
     },
     {
+      role: 'Agency',
+      desc: 'Recruit sub-agencies. They inherit you as their parent node.',
+      url: `https://${agencyDomain}/?referrer=${referralCode}&role=agency`,
+      icon: Briefcase,
+      color: 'text-amber-400 border-amber-500/20 bg-amber-500/5'
+    },
+    {
+      role: 'Host',
+      desc: 'Sign up new hosts under your agency hierarchy automatically.',
+      url: `https://${hostDomain}/?referrer=${referralCode}&role=host`,
+      icon: Video,
+      color: 'text-lime-400 border-lime-500/20 bg-lime-500/5'
+    },
+    {
+      role: 'Customer Service Support',
+      desc: 'Register customer support & helpdesk staff candidates.',
+      url: `https://${adminDomain}/apply/customer-service?referrer=${referralCode}`,
+      icon: Users,
+      color: 'text-cyan-400 border-cyan-500/20 bg-cyan-500/5'
+    },
+    {
       role: 'Coin Seller',
       desc: 'Register subordinate coin sellers.',
       url: `https://${sellerDomain}/?referrer=${referralCode}&role=coinSeller`,
       icon: Award,
-      color: 'text-rose-400 border-rose-500/20 bg-rose-500/5'
+      color: 'text-pink-400 border-pink-500/20 bg-pink-500/5'
     }
   ];
 

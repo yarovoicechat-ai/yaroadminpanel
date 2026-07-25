@@ -85,9 +85,7 @@ const sidebarSections: SidebarSection[] = [
                 icon: Users,
                 category: 'Users',
                 submenu: [
-                    { name: 'Add User', href: '/users/add' },
-                    { name: 'User List', href: '/users' },
-                    { name: 'New User', href: '/users/new' }
+                    { name: 'User List', href: '/users' }
                 ]
             },
             {

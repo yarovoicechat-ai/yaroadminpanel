@@ -257,6 +257,10 @@ export default function RecruitmentAdminPage() {
                                     <TableHead className="text-slate-400 text-xs uppercase font-bold">App ID</TableHead>
                                     <TableHead className="text-slate-400 text-xs uppercase font-bold">Role</TableHead>
                                     <TableHead className="text-slate-400 text-xs uppercase font-bold">Applicant</TableHead>
+                                    <TableHead className="text-slate-400 text-xs uppercase font-bold">Location (State/District)</TableHead>
+                                    <TableHead className="text-slate-400 text-xs uppercase font-bold">Aadhaar Front</TableHead>
+                                    <TableHead className="text-slate-400 text-xs uppercase font-bold">Aadhaar Back</TableHead>
+                                    <TableHead className="text-slate-400 text-xs uppercase font-bold">PAN Card</TableHead>
                                     <TableHead className="text-slate-400 text-xs uppercase font-bold">Referrer Code</TableHead>
                                     <TableHead className="text-slate-400 text-xs uppercase font-bold">Status</TableHead>
                                     <TableHead className="text-slate-400 text-xs uppercase font-bold">Date</TableHead>
@@ -264,39 +268,74 @@ export default function RecruitmentAdminPage() {
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {applications.map(app => (
-                                    <TableRow key={app._id || app.applicationId} className="border-slate-800 hover:bg-slate-800/40 transition-colors">
-                                        <TableCell className="font-mono text-xs text-amber-400 font-bold">
-                                            {app.applicationId}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge className={`uppercase text-[10px] font-bold ${roleBadgeStyles[app.role] || ''}`}>
-                                                {app.role}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                            <div className="text-xs">
-                                                <div className="font-bold text-white">{app.applicant?.name}</div>
-                                                <div className="text-slate-400 text-[11px]">{app.applicant?.email} &bull; {app.applicant?.phone}</div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-xs text-slate-300 font-mono">
-                                            {app.referrer?.code ? (
-                                                <span className="text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                                                    {app.referrer.code}
-                                                </span>
-                                            ) : (
-                                                <span className="text-slate-500 italic">Direct</span>
-                                            )}
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge className={`uppercase text-[10px] font-bold ${statusBadgeStyles[app.status] || ''}`}>
-                                                {app.status.replace('_', ' ')}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-xs text-slate-400 font-mono">
-                                            {new Date(app.createdAt).toLocaleDateString()}
-                                        </TableCell>
+                                {applications.map(app => {
+                                    const adharFront = app.documents?.find((d: any) => d.documentType === 'AdharFront' || d.name?.toLowerCase().includes('front'))?.url || app.roleData?.adharFront;
+                                    const adharBack = app.documents?.find((d: any) => d.documentType === 'AdharBack' || d.name?.toLowerCase().includes('back'))?.url || app.roleData?.adharBack;
+                                    const panDoc = app.documents?.find((d: any) => d.documentType === 'PAN' || d.name?.toLowerCase().includes('pan'))?.url || app.roleData?.pan;
+
+                                    const stateName = app.applicant?.state || app.roleData?.state || '—';
+                                    const districtName = app.applicant?.district || app.roleData?.district || '—';
+                                    const cityName = app.applicant?.city || app.roleData?.city || '—';
+                                    const countryName = app.applicant?.country || app.roleData?.country || 'India';
+
+                                    return (
+                                        <TableRow key={app._id || app.applicationId} className="border-slate-800 hover:bg-slate-800/40 transition-colors text-xs">
+                                            <TableCell className="font-mono text-xs text-amber-400 font-bold whitespace-nowrap">
+                                                {app.applicationId}
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap">
+                                                <Badge className={`uppercase text-[10px] font-bold ${roleBadgeStyles[app.role] || ''}`}>
+                                                    {app.role}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="text-xs">
+                                                    <div className="font-bold text-white whitespace-nowrap">{app.applicant?.name}</div>
+                                                    <div className="text-slate-400 text-[11px] whitespace-nowrap">{app.applicant?.email} &bull; {app.applicant?.phone}</div>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-slate-300 whitespace-nowrap">
+                                                <div>{cityName}, {districtName}</div>
+                                                <div className="text-[10px] text-slate-500">{stateName}, {countryName}</div>
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap">
+                                                {adharFront ? (
+                                                    <a href={adharFront} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline flex items-center gap-1 font-semibold">
+                                                        📄 View Front
+                                                    </a>
+                                                ) : <span className="text-slate-600">—</span>}
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap">
+                                                {adharBack ? (
+                                                    <a href={adharBack} target="_blank" rel="noreferrer" className="text-emerald-400 hover:underline flex items-center gap-1 font-semibold">
+                                                        📄 View Back
+                                                    </a>
+                                                ) : <span className="text-slate-600">—</span>}
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap">
+                                                {panDoc ? (
+                                                    <a href={panDoc} target="_blank" rel="noreferrer" className="text-amber-400 hover:underline flex items-center gap-1 font-semibold">
+                                                        💳 View PAN
+                                                    </a>
+                                                ) : <span className="text-slate-600">—</span>}
+                                            </TableCell>
+                                            <TableCell className="text-xs text-slate-300 font-mono whitespace-nowrap">
+                                                {app.referrer?.code ? (
+                                                    <span className="text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                                                        {app.referrer.code}
+                                                    </span>
+                                                ) : (
+                                                    <span className="text-slate-500 italic">Direct</span>
+                                                )}
+                                            </TableCell>
+                                            <TableCell className="whitespace-nowrap">
+                                                <Badge className={`uppercase text-[10px] font-bold ${statusBadgeStyles[app.status] || ''}`}>
+                                                    {app.status.replace('_', ' ')}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-xs text-slate-400 font-mono whitespace-nowrap">
+                                                {new Date(app.createdAt).toLocaleDateString()}
+                                            </TableCell>
                                         <TableCell className="text-right">
                                             <Button
                                                 size="sm"
@@ -308,7 +347,8 @@ export default function RecruitmentAdminPage() {
                                             </Button>
                                         </TableCell>
                                     </TableRow>
-                                ))}
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     )}
