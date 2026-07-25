@@ -108,12 +108,65 @@ export default function SuperAdminRequestsPage() {
         try {
             const params: Record<string, any> = { requestType: 'Super Admin Request' };
             if (statusFilter !== 'all') params.status = statusFilter;
-            const res = await apiClient.get('/api/ems/requests', params);
-            if (res.success && Array.isArray(res.data)) {
-                setRequests(res.data);
-            } else {
-                toast.error(res.message || 'Failed to load requests');
-            }
+
+            const [emsRes, recruitRes] = await Promise.all([
+                apiClient.get('/api/ems/requests', params).catch(() => ({ success: false, data: [] })),
+                apiClient.get('/api/recruitment/applications', { role: 'super-admin', ...(statusFilter !== 'all' ? { status: statusFilter } : {}) }).catch(() => ({ success: false, data: [] }))
+            ]);
+
+            let emsList: SuperAdminRequest[] = (emsRes.success && Array.isArray(emsRes.data)) ? emsRes.data : [];
+            let recruitList: any[] = (recruitRes.success && Array.isArray(recruitRes.data)) ? recruitRes.data : [];
+
+            const mappedRecruits: SuperAdminRequest[] = recruitList.map(app => {
+                const resumeDoc = app.documents?.find((d: any) => d.documentType === 'Resume' || d.name?.toLowerCase().includes('resume'));
+                const adharFrontDoc = app.documents?.find((d: any) => d.name?.toLowerCase().includes('front') || d.documentType === 'GovtID');
+                const adharBackDoc = app.documents?.find((d: any) => d.name?.toLowerCase().includes('back'));
+                const panDoc = app.documents?.find((d: any) => d.name?.toLowerCase().includes('pan') || d.documentType === 'Certificate');
+
+                return {
+                    _id: app._id || app.applicationId,
+                    requestType: 'Super Admin Request',
+                    status: app.status === 'under_review' ? 'pending' : (app.status || 'pending'),
+                    appliedDate: app.createdAt,
+                    createdAt: app.createdAt,
+                    updatedAt: app.updatedAt,
+                    passwordBeforeApproval: '••••••••',
+                    createdByRole: 'public',
+                    data: {
+                        name: app.applicant?.name || app.roleData?.fullName || '—',
+                        email: app.applicant?.email || app.roleData?.email || '—',
+                        phoneNumber: app.applicant?.phone || app.roleData?.mobileNo || '—',
+                        gender: app.applicant?.gender || '—',
+                        state: app.applicant?.state || app.roleData?.state || '—',
+                        district: app.applicant?.district || app.roleData?.district || '—',
+                        city: app.applicant?.city || '—',
+                        country: app.applicant?.country || 'India',
+                        invitedBy: app.referrer?.referrerName || app.referrer?.code || 'Direct Portal',
+                        mithiChatId: app.applicationId,
+                        meethiChatId: app.applicationId,
+                        resume: resumeDoc?.url || '',
+                        adharFront: adharFrontDoc?.url || '',
+                        adharBack: adharBackDoc?.url || '',
+                        pan: panDoc?.url || '',
+                        superAdminCode: app.roleData?.superAdminCode || app.referrer?.code || '—',
+                        ...app.roleData
+                    }
+                };
+            });
+
+            const combinedMap = new Map<string, SuperAdminRequest>();
+            emsList.forEach(item => {
+                const key = (item.data?.email || item._id).toLowerCase();
+                combinedMap.set(key, item);
+            });
+            mappedRecruits.forEach(item => {
+                const key = (item.data?.email || item._id).toLowerCase();
+                if (!combinedMap.has(key)) {
+                    combinedMap.set(key, item);
+                }
+            });
+
+            setRequests(Array.from(combinedMap.values()));
         } catch (err: any) {
             toast.error(err?.message || 'Error fetching Super Admin requests');
         } finally {
