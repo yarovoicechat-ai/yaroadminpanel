@@ -36,6 +36,11 @@ export interface ApplicationFormData {
     whyJoinUs: string;
     personalNote: string;
 
+    district?: string;
+    adharFront?: File | string | null;
+    adharBack?: File | string | null;
+    pan?: File | string | null;
+
     // Declaration
     confirmedTrue: boolean;
 }

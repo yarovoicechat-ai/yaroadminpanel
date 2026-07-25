@@ -22,6 +22,8 @@ function AgencyFormContent() {
         registrationNo: '',
         businessAddress: '',
         city: '',
+        state: '',
+        district: '',
         country: 'India',
 
         managerName: '',
@@ -34,6 +36,9 @@ function AgencyFormContent() {
         payoutUpiOrBank: '',
 
         panCopyUrl: '',
+        adharFrontUrl: '',
+        adharBackUrl: '',
+        panCardUrl: '',
         addressProofUrl: '',
         managerPhotoUrl: '',
         agreedToTerms: false,
@@ -94,16 +99,23 @@ function AgencyFormContent() {
                 phone: formData.phone,
                 role: 'agency',
                 city: formData.city,
+                state: formData.state,
+                district: formData.district,
                 country: formData.country,
                 address: formData.businessAddress,
                 referralCode: referral.code,
                 documents: [
-                    formData.panCopyUrl ? { name: 'PAN Copy', documentType: 'PAN', url: formData.panCopyUrl } : null,
+                    formData.adharFrontUrl ? { name: 'Aadhaar Front', documentType: 'AdharFront', url: formData.adharFrontUrl } : null,
+                    formData.adharBackUrl ? { name: 'Aadhaar Back', documentType: 'AdharBack', url: formData.adharBackUrl } : null,
+                    formData.panCardUrl || formData.panCopyUrl ? { name: 'PAN Card', documentType: 'PAN', url: formData.panCardUrl || formData.panCopyUrl } : null,
                     formData.addressProofUrl ? { name: 'Address Proof', documentType: 'AddressProof', url: formData.addressProofUrl } : null,
                     formData.managerPhotoUrl ? { name: 'Manager Photo', documentType: 'Photo', url: formData.managerPhotoUrl } : null,
                 ].filter(Boolean),
 
                 // Role specific data
+                adharFront: formData.adharFrontUrl,
+                adharBack: formData.adharBackUrl,
+                pan: formData.panCardUrl || formData.panCopyUrl,
                 businessName: formData.businessName,
                 registrationNo: formData.registrationNo,
                 managerName: formData.managerName,
@@ -171,6 +183,28 @@ function AgencyFormContent() {
                             placeholder="e.g. 27AAAAA0000A1Z5"
                             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
                         />
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">State *</label>
+                            <input
+                                type="text"
+                                value={formData.state}
+                                onChange={e => updateField('state', e.target.value)}
+                                placeholder="e.g. Maharashtra"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">District *</label>
+                            <input
+                                type="text"
+                                value={formData.district}
+                                onChange={e => updateField('district', e.target.value)}
+                                placeholder="e.g. Mumbai City"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
+                            />
+                        </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
@@ -301,12 +335,34 @@ function AgencyFormContent() {
             {currentStep === 3 && (
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-white mb-2">4. Documents & Terms Agreement</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Front Side Document URL / File</label>
+                            <input
+                                type="url"
+                                value={formData.adharFrontUrl}
+                                onChange={e => updateField('adharFrontUrl', e.target.value)}
+                                placeholder="https://drive.google.com/..."
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Back Side Document URL / File</label>
+                            <input
+                                type="url"
+                                value={formData.adharBackUrl}
+                                onChange={e => updateField('adharBackUrl', e.target.value)}
+                                placeholder="https://drive.google.com/..."
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
+                            />
+                        </div>
+                    </div>
                     <div>
                         <label className="text-xs font-semibold text-white/80 block mb-1">PAN Card / Business Tax Document URL</label>
                         <input
                             type="url"
-                            value={formData.panCopyUrl}
-                            onChange={e => updateField('panCopyUrl', e.target.value)}
+                            value={formData.panCardUrl || formData.panCopyUrl}
+                            onChange={e => { updateField('panCardUrl', e.target.value); updateField('panCopyUrl', e.target.value); }}
                             placeholder="https://drive.google.com/... or image link"
                             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
                         />

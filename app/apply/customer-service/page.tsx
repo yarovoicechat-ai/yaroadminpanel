@@ -23,6 +23,8 @@ function CustomerServiceFormContent() {
         phone: '',
         gender: 'female',
         city: '',
+        state: '',
+        district: '',
         country: 'India',
 
         typingSpeedWpm: '40-60 WPM',
@@ -34,6 +36,9 @@ function CustomerServiceFormContent() {
         preferredChannels: 'Live Chat & Email Support',
 
         educationCertUrl: '',
+        adharFrontUrl: '',
+        adharBackUrl: '',
+        panCardUrl: '',
         idProofUrl: '',
         photoUrl: '',
         agreedToTerms: false,
@@ -89,16 +94,24 @@ function CustomerServiceFormContent() {
                 phone: formData.phone,
                 gender: formData.gender,
                 city: formData.city,
+                state: formData.state,
+                district: formData.district,
                 country: formData.country,
                 role: 'customer-service',
                 referralCode: referral.code,
                 documents: [
+                    formData.adharFrontUrl ? { name: 'Aadhaar Front', documentType: 'AdharFront', url: formData.adharFrontUrl } : null,
+                    formData.adharBackUrl ? { name: 'Aadhaar Back', documentType: 'AdharBack', url: formData.adharBackUrl } : null,
+                    formData.panCardUrl ? { name: 'PAN Card', documentType: 'PAN', url: formData.panCardUrl } : null,
                     formData.educationCertUrl ? { name: 'Education Certificate', documentType: 'Certificate', url: formData.educationCertUrl } : null,
                     formData.idProofUrl ? { name: 'ID Proof', documentType: 'GovtID', url: formData.idProofUrl } : null,
                     formData.photoUrl ? { name: 'Profile Photo', documentType: 'Photo', url: formData.photoUrl } : null,
                 ].filter(Boolean),
 
                 // Role specific data
+                adharFront: formData.adharFrontUrl,
+                adharBack: formData.adharBackUrl,
+                pan: formData.panCardUrl,
                 typingSpeedWpm: formData.typingSpeedWpm,
                 languagesSpoken: formData.languagesSpoken,
                 userConflictScenarioAnswer: formData.userConflictScenarioAnswer,
@@ -174,6 +187,28 @@ function CustomerServiceFormContent() {
                                 value={formData.phone}
                                 onChange={e => updateField('phone', e.target.value)}
                                 placeholder="+91 9876543210"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400"
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">State *</label>
+                            <input
+                                type="text"
+                                value={formData.state}
+                                onChange={e => updateField('state', e.target.value)}
+                                placeholder="e.g. Karnataka / Delhi"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">District *</label>
+                            <input
+                                type="text"
+                                value={formData.district}
+                                onChange={e => updateField('district', e.target.value)}
+                                placeholder="e.g. Bangalore Urban"
                                 className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400"
                             />
                         </div>
@@ -303,6 +338,38 @@ function CustomerServiceFormContent() {
             {currentStep === 3 && (
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-white mb-2">4. Documents & Support Pledge</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Front Side Document URL / File</label>
+                            <input
+                                type="url"
+                                value={formData.adharFrontUrl}
+                                onChange={e => updateField('adharFrontUrl', e.target.value)}
+                                placeholder="https://drive.google.com/..."
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Back Side Document URL / File</label>
+                            <input
+                                type="url"
+                                value={formData.adharBackUrl}
+                                onChange={e => updateField('adharBackUrl', e.target.value)}
+                                placeholder="https://drive.google.com/..."
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400"
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">PAN Card Document URL / File</label>
+                        <input
+                            type="url"
+                            value={formData.panCardUrl}
+                            onChange={e => updateField('panCardUrl', e.target.value)}
+                            placeholder="https://drive.google.com/..."
+                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400"
+                        />
+                    </div>
                     <div>
                         <label className="text-xs font-semibold text-white/80 block mb-1">Education Certificate URL</label>
                         <input

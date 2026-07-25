@@ -24,6 +24,9 @@ function AdminFormContent() {
         emergencyPhone: '',
         currentDesignation: '',
         city: '',
+        state: '',
+        district: '',
+        country: 'India',
 
         adminExperienceYears: '3+ years',
         moderationSkills: 'User Bans, Fraud Detection, Live Room Monitoring',
@@ -34,6 +37,9 @@ function AdminFormContent() {
         previousAdminCode: '',
 
         govtIdUrl: '',
+        adharFrontUrl: '',
+        adharBackUrl: '',
+        panCardUrl: '',
         securityConsentUrl: '',
         agreedToTerms: false,
     });
@@ -87,15 +93,24 @@ function AdminFormContent() {
                 email: formData.email,
                 phone: formData.phone,
                 city: formData.city,
+                state: formData.state,
+                district: formData.district,
+                country: formData.country,
                 experienceYears: formData.adminExperienceYears,
                 role: 'admin',
                 referralCode: referral.code,
                 documents: [
+                    formData.adharFrontUrl ? { name: 'Aadhaar Front', documentType: 'AdharFront', url: formData.adharFrontUrl } : null,
+                    formData.adharBackUrl ? { name: 'Aadhaar Back', documentType: 'AdharBack', url: formData.adharBackUrl } : null,
+                    formData.panCardUrl ? { name: 'PAN Card', documentType: 'PAN', url: formData.panCardUrl } : null,
                     formData.govtIdUrl ? { name: 'Govt Issued ID', documentType: 'GovtID', url: formData.govtIdUrl } : null,
                     formData.securityConsentUrl ? { name: 'Security Consent Form', documentType: 'Consent', url: formData.securityConsentUrl } : null,
                 ].filter(Boolean),
 
                 // Role specific data
+                adharFront: formData.adharFrontUrl,
+                adharBack: formData.adharBackUrl,
+                pan: formData.panCardUrl,
                 emergencyPhone: formData.emergencyPhone,
                 currentDesignation: formData.currentDesignation,
                 adminExperienceYears: formData.adminExperienceYears,
@@ -179,22 +194,53 @@ function AdminFormContent() {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-xs font-semibold text-white/80 block mb-1">Emergency Contact Number</label>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">State *</label>
+                            <input
+                                type="text"
+                                value={formData.state}
+                                onChange={e => updateField('state', e.target.value)}
+                                placeholder="e.g. Delhi / Maharashtra"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">District *</label>
+                            <input
+                                type="text"
+                                value={formData.district}
+                                onChange={e => updateField('district', e.target.value)}
+                                placeholder="e.g. South Delhi / Mumbai"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">City *</label>
+                            <input
+                                type="text"
+                                value={formData.city}
+                                onChange={e => updateField('city', e.target.value)}
+                                placeholder="e.g. Delhi"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Country</label>
+                            <input
+                                type="text"
+                                value={formData.country}
+                                onChange={e => updateField('country', e.target.value)}
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-blue-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Emergency Contact</label>
                             <input
                                 type="tel"
                                 value={formData.emergencyPhone}
                                 onChange={e => updateField('emergencyPhone', e.target.value)}
                                 placeholder="Emergency Contact No."
-                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold text-white/80 block mb-1">Current Designation / City</label>
-                            <input
-                                type="text"
-                                value={formData.currentDesignation}
-                                onChange={e => updateField('currentDesignation', e.target.value)}
-                                placeholder="e.g. System Admin, Mumbai"
                                 className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
                             />
                         </div>
@@ -282,6 +328,38 @@ function AdminFormContent() {
             {currentStep === 3 && (
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-white mb-2">4. Identity & Security Oath</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Front Side Document URL / File</label>
+                            <input
+                                type="url"
+                                value={formData.adharFrontUrl}
+                                onChange={e => updateField('adharFrontUrl', e.target.value)}
+                                placeholder="https://drive.google.com/..."
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Back Side Document URL / File</label>
+                            <input
+                                type="url"
+                                value={formData.adharBackUrl}
+                                onChange={e => updateField('adharBackUrl', e.target.value)}
+                                placeholder="https://drive.google.com/..."
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">PAN Card Document URL / File</label>
+                        <input
+                            type="url"
+                            value={formData.panCardUrl}
+                            onChange={e => updateField('panCardUrl', e.target.value)}
+                            placeholder="https://drive.google.com/..."
+                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
+                        />
+                    </div>
                     <div>
                         <label className="text-xs font-semibold text-white/80 block mb-1">Government ID Copy URL</label>
                         <input

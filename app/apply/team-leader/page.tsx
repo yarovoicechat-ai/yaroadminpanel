@@ -36,6 +36,9 @@ const initialFormData: ApplicationFormData = {
     gitHubProfile: '',
 
     resume: null,
+    adharFront: null,
+    adharBack: null,
+    pan: null,
     portfolioPdf: null,
     experienceLetter: null,
     addressProof: null,
@@ -242,6 +245,13 @@ function TeamLeaderApplicationContent() {
                                 error={errors.city}
                                 placeholder="e.g. Mumbai"
                             />
+                            <FormInput
+                                label="District"
+                                name="district"
+                                value={formData.district || ''}
+                                onChange={(e) => handleTextChange('district', e.target.value)}
+                                placeholder="e.g. Mumbai City"
+                            />
                         </div>
                     </div>
 
@@ -398,6 +408,24 @@ function TeamLeaderApplicationContent() {
                                 value={formData.governmentIdProof}
                                 onChange={(file) => handleTextChange('governmentIdProof', file)}
                                 error={errors.governmentIdProof}
+                            />
+                            <FileUpload
+                                label="Aadhaar Card Front Side"
+                                name="adharFront"
+                                value={formData.adharFront || null}
+                                onChange={(file) => handleTextChange('adharFront', file)}
+                            />
+                            <FileUpload
+                                label="Aadhaar Card Back Side"
+                                name="adharBack"
+                                value={formData.adharBack || null}
+                                onChange={(file) => handleTextChange('adharBack', file)}
+                            />
+                            <FileUpload
+                                label="PAN Card"
+                                name="pan"
+                                value={formData.pan || null}
+                                onChange={(file) => handleTextChange('pan', file)}
                             />
                             <FileUpload
                                 label="Profile Photo"

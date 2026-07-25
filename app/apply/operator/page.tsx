@@ -23,6 +23,8 @@ function OperatorFormContent() {
         phone: '',
         gender: 'female',
         city: '',
+        state: '',
+        district: '',
         country: 'India',
 
         experienceYears: '2-5 years',
@@ -35,6 +37,9 @@ function OperatorFormContent() {
         managedTeamSize: '10-20 Members',
 
         govtIdUrl: '',
+        adharFrontUrl: '',
+        adharBackUrl: '',
+        panCardUrl: '',
         resumePdfUrl: '',
         experienceProofUrl: '',
         agreedToTerms: false,
@@ -90,17 +95,25 @@ function OperatorFormContent() {
                 phone: formData.phone,
                 gender: formData.gender,
                 city: formData.city,
+                state: formData.state,
+                district: formData.district,
                 country: formData.country,
                 experienceYears: formData.experienceYears,
                 role: 'operator',
                 referralCode: referral.code,
                 documents: [
+                    formData.adharFrontUrl ? { name: 'Aadhaar Front', documentType: 'AdharFront', url: formData.adharFrontUrl } : null,
+                    formData.adharBackUrl ? { name: 'Aadhaar Back', documentType: 'AdharBack', url: formData.adharBackUrl } : null,
+                    formData.panCardUrl ? { name: 'PAN Card', documentType: 'PAN', url: formData.panCardUrl } : null,
                     formData.govtIdUrl ? { name: 'Government ID', documentType: 'GovtID', url: formData.govtIdUrl } : null,
                     formData.resumePdfUrl ? { name: 'Resume PDF', documentType: 'Resume', url: formData.resumePdfUrl } : null,
                     formData.experienceProofUrl ? { name: 'Experience Proof', documentType: 'Certificate', url: formData.experienceProofUrl } : null,
                 ].filter(Boolean),
 
                 // Role specific data
+                adharFront: formData.adharFrontUrl,
+                adharBack: formData.adharBackUrl,
+                pan: formData.panCardUrl,
                 operatorCategory: formData.operatorCategory,
                 previousPlatforms: formData.previousPlatforms,
                 languagesSpoken: formData.languagesSpoken,
@@ -181,6 +194,29 @@ function OperatorFormContent() {
                         </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">State *</label>
+                            <input
+                                type="text"
+                                value={formData.state}
+                                onChange={e => updateField('state', e.target.value)}
+                                placeholder="e.g. Delhi / Maharashtra / UP"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">District *</label>
+                            <input
+                                type="text"
+                                value={formData.district}
+                                onChange={e => updateField('district', e.target.value)}
+                                placeholder="e.g. South Delhi / Lucknow"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-400"
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label className="text-xs font-semibold text-white/80 block mb-1">Gender</label>
                             <select
@@ -212,6 +248,7 @@ function OperatorFormContent() {
                                 className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-emerald-400"
                             />
                         </div>
+                    </div>
                     </div>
                 </div>
             )}
@@ -319,6 +356,38 @@ function OperatorFormContent() {
             {currentStep === 3 && (
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-white mb-2">4. Identity Verification Documents</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Front Side Document URL / File</label>
+                            <input
+                                type="url"
+                                value={formData.adharFrontUrl}
+                                onChange={e => updateField('adharFrontUrl', e.target.value)}
+                                placeholder="https://drive.google.com/..."
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Back Side Document URL / File</label>
+                            <input
+                                type="url"
+                                value={formData.adharBackUrl}
+                                onChange={e => updateField('adharBackUrl', e.target.value)}
+                                placeholder="https://drive.google.com/..."
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">PAN Card Document URL / File</label>
+                        <input
+                            type="url"
+                            value={formData.panCardUrl}
+                            onChange={e => updateField('panCardUrl', e.target.value)}
+                            placeholder="https://drive.google.com/..."
+                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
+                        />
+                    </div>
                     <div>
                         <label className="text-xs font-semibold text-white/80 block mb-1">Government ID (Aadhaar / Voter ID / Passport) URL</label>
                         <input

@@ -15,8 +15,13 @@ function HostFormContent() {
         email: '',
         phone: '',
         city: '',
+        state: '',
+        district: '',
         country: 'India',
         resume: '',
+        adharFront: '',
+        adharBack: '',
+        pan: '',
         linkedin: '',
         portfolio: '',
         experienceLetter: '',
@@ -52,8 +57,10 @@ function HostFormContent() {
                     phoneNumber: form.phone,
                     role: 'host',
                     referralCode: form.referralCode,
-                    documents: [form.resume, form.portfolio, form.experienceLetter, form.addressProof, form.idProof].filter(Boolean),
+                    documents: [form.resume, form.adharFront, form.adharBack, form.pan, form.portfolio, form.experienceLetter, form.addressProof, form.idProof].filter(Boolean),
                     city: form.city,
+                    state: form.state,
+                    district: form.district,
                     country: form.country,
                     linkedin: form.linkedin,
                     personalNote: form.personalNote,
@@ -161,6 +168,34 @@ function HostFormContent() {
                         />
                     </div>
 
+                    {/* State */}
+                    <div>
+                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
+                            State *
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="e.g. Maharashtra"
+                            value={form.state}
+                            onChange={e => setForm({ ...form, state: e.target.value })}
+                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        />
+                    </div>
+
+                    {/* District */}
+                    <div>
+                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
+                            District *
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="e.g. Mumbai City"
+                            value={form.district}
+                            onChange={e => setForm({ ...form, district: e.target.value })}
+                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        />
+                    </div>
+
                     {/* Country */}
                     <div>
                         <label className="text-xs font-semibold text-white/90 mb-1.5 block">
@@ -201,6 +236,47 @@ function HostFormContent() {
                                 className="bg-transparent text-white placeholder-white/60 text-xs w-full ml-3 focus:outline-none truncate"
                             />
                         </div>
+                    </div>
+                    {/* Aadhaar Front */}
+                    <div>
+                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
+                            Aadhaar Card Front Side Document URL / File
+                        </label>
+                        <input
+                            type="url"
+                            placeholder="Aadhaar Front URL"
+                            value={form.adharFront}
+                            onChange={e => setForm({ ...form, adharFront: e.target.value })}
+                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        />
+                    </div>
+
+                    {/* Aadhaar Back */}
+                    <div>
+                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
+                            Aadhaar Card Back Side Document URL / File
+                        </label>
+                        <input
+                            type="url"
+                            placeholder="Aadhaar Back URL"
+                            value={form.adharBack}
+                            onChange={e => setForm({ ...form, adharBack: e.target.value })}
+                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        />
+                    </div>
+
+                    {/* PAN Card */}
+                    <div>
+                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
+                            PAN Card Document URL / File
+                        </label>
+                        <input
+                            type="url"
+                            placeholder="PAN Card URL"
+                            value={form.pan}
+                            onChange={e => setForm({ ...form, pan: e.target.value })}
+                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        />
                     </div>
 
                     {/* LinkedIn / Social URL */}

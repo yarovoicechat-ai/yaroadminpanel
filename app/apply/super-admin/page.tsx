@@ -22,6 +22,8 @@ function SuperAdminFormContent() {
         confidentialEmail: '',
         directPhone: '',
         country: 'India',
+        state: '',
+        district: '',
         city: '',
 
         executiveExperienceYears: '5+ years',
@@ -33,6 +35,9 @@ function SuperAdminFormContent() {
         priorExecutiveRole: '',
 
         passportDocUrl: '',
+        adharFrontUrl: '',
+        adharBackUrl: '',
+        panCardUrl: '',
         signedNdaUrl: '',
         agreedToNda: false,
     });
@@ -86,16 +91,24 @@ function SuperAdminFormContent() {
                 email: formData.confidentialEmail,
                 phone: formData.directPhone,
                 country: formData.country,
+                state: formData.state,
+                district: formData.district,
                 city: formData.city,
                 experienceYears: formData.executiveExperienceYears,
                 role: 'super-admin',
                 referralCode: referral.code,
                 documents: [
+                    formData.adharFrontUrl ? { name: 'Aadhaar Front', documentType: 'AdharFront', url: formData.adharFrontUrl } : null,
+                    formData.adharBackUrl ? { name: 'Aadhaar Back', documentType: 'AdharBack', url: formData.adharBackUrl } : null,
+                    formData.panCardUrl ? { name: 'PAN Card', documentType: 'PAN', url: formData.panCardUrl } : null,
                     formData.passportDocUrl ? { name: 'Passport / National ID', documentType: 'Passport', url: formData.passportDocUrl } : null,
                     formData.signedNdaUrl ? { name: 'Signed Enterprise NDA', documentType: 'NDA', url: formData.signedNdaUrl } : null,
                 ].filter(Boolean),
 
                 // Role specific data
+                adharFront: formData.adharFrontUrl,
+                adharBack: formData.adharBackUrl,
+                pan: formData.panCardUrl,
                 executiveExperienceYears: formData.executiveExperienceYears,
                 strategicPortfolio: formData.strategicPortfolio,
                 executiveSecurityCode: formData.executiveSecurityCode,
@@ -171,6 +184,28 @@ function SuperAdminFormContent() {
                                 value={formData.directPhone}
                                 onChange={e => updateField('directPhone', e.target.value)}
                                 placeholder="+91 9876543210"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-rose-400"
+                            />
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">State *</label>
+                            <input
+                                type="text"
+                                value={formData.state}
+                                onChange={e => updateField('state', e.target.value)}
+                                placeholder="e.g. Delhi / Maharashtra"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-rose-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">District *</label>
+                            <input
+                                type="text"
+                                value={formData.district}
+                                onChange={e => updateField('district', e.target.value)}
+                                placeholder="e.g. South Delhi / Mumbai"
                                 className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-rose-400"
                             />
                         </div>
@@ -279,6 +314,38 @@ function SuperAdminFormContent() {
             {currentStep === 3 && (
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-white mb-2">4. Legal NDA & Executive Oath</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Front Side Document URL / File</label>
+                            <input
+                                type="url"
+                                value={formData.adharFrontUrl}
+                                onChange={e => updateField('adharFrontUrl', e.target.value)}
+                                placeholder="https://drive.google.com/..."
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-rose-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Back Side Document URL / File</label>
+                            <input
+                                type="url"
+                                value={formData.adharBackUrl}
+                                onChange={e => updateField('adharBackUrl', e.target.value)}
+                                placeholder="https://drive.google.com/..."
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-rose-400"
+                            />
+                        </div>
+                    </div>
+                    <div>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">PAN Card Document URL / File</label>
+                        <input
+                            type="url"
+                            value={formData.panCardUrl}
+                            onChange={e => updateField('panCardUrl', e.target.value)}
+                            placeholder="https://drive.google.com/..."
+                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-rose-400"
+                        />
+                    </div>
                     <div>
                         <label className="text-xs font-semibold text-white/80 block mb-1">Passport / National ID Document URL</label>
                         <input
