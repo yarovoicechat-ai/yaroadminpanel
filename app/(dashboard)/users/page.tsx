@@ -32,14 +32,74 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/AlertDialog";
-import { Ban, Edit2, Search, ShieldCheck, UserPlus, Trash2, CheckCircle, Save, Users, UserCheck, Coins, Info, History as HistoryIcon, Bell, Copy, Clock, User as UserIcon } from "lucide-react";
+import { Ban, Edit2, Search, ShieldCheck, UserPlus, Trash2, CheckCircle, Save, Users, UserCheck, Coins, Info, History as HistoryIcon, Bell, Copy, Clock, User as UserIcon, Key } from "lucide-react";
 import { toast } from 'sonner';
 import { Pagination } from "@/components/ui/Pagination";
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 import type { User } from '@/types/models';
+import { usePageRegistry } from '@/hooks/usePageRegistry';
 
 export default function UsersPage() {
+    usePageRegistry({
+        pageId: 'users',
+        name: 'User Management',
+        category: 'General',
+        actions: ['View Users', 'Create User', 'Edit User', 'Delete User', 'Suspend User', 'Reset Password', 'Change Coins', 'Change Diamonds', 'Change Level', 'View Wallet', 'View KYC', 'View Call History'],
+        fields: [
+            { key: 'No', label: 'Serial No (No)' },
+            { key: 'Image', label: 'Profile Image' },
+            { key: 'Name', label: 'Display Name' },
+            { key: 'Username', label: 'Username' },
+            { key: 'UniqueId', label: 'Unique ID' },
+            { key: 'Email', label: 'Email / Phone' },
+            { key: 'Role', label: 'System Role' },
+            { key: 'Gender', label: 'Gender' },
+            { key: 'Rcoin', label: 'Coins Balance' },
+            { key: 'Diamond', label: 'Diamonds Balance' },
+            { key: 'Country', label: 'Country' },
+            { key: 'Age', label: 'Age' },
+            { key: 'Level', label: 'User Level' },
+            { key: 'isVIP', label: 'VIP Membership' },
+            { key: 'isHost', label: 'Host Mode' },
+            { key: 'Joined', label: 'Date Joined' },
+            { key: 'Status', label: 'Account Status' }
+        ],
+        columns: [
+            { key: 'No', label: 'Serial No (No)' },
+            { key: 'Image', label: 'Profile Image' },
+            { key: 'Name', label: 'Display Name' },
+            { key: 'Username', label: 'Username' },
+            { key: 'UniqueId', label: 'Unique ID' },
+            { key: 'Email', label: 'Email / Phone' },
+            { key: 'Role', label: 'System Role' },
+            { key: 'Gender', label: 'Gender' },
+            { key: 'Rcoin', label: 'Coins Balance' },
+            { key: 'Diamond', label: 'Diamonds Balance' },
+            { key: 'Country', label: 'Country' },
+            { key: 'Age', label: 'Age' },
+            { key: 'Level', label: 'User Level' },
+            { key: 'isVIP', label: 'VIP Membership' },
+            { key: 'isHost', label: 'Host Mode' },
+            { key: 'Joined', label: 'Date Joined' },
+            { key: 'Status', label: 'Account Status' }
+        ],
+        buttons: [
+            { key: 'Add', label: 'Add User Button' },
+            { key: 'Edit', label: 'Edit User Button' },
+            { key: 'Delete', label: 'Delete User Button' },
+            { key: 'Suspend', label: 'Suspend User Button' },
+            { key: 'Activate', label: 'Activate User Button' },
+            { key: 'Recharge', label: 'Recharge Balance Button' },
+            { key: 'Export', label: 'Export Data Button' }
+        ],
+        filters: [
+            { key: 'role', label: 'Filter by Role' },
+            { key: 'level', label: 'Filter by Level' },
+            { key: 'search', label: 'Filter by Search Query' }
+        ]
+    });
+
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
@@ -623,6 +683,13 @@ export default function UsersPage() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    <Link
+                                                        href={`/security/permissions?targetType=user&targetId=${user._id}&name=${encodeURIComponent(user.name)}`}
+                                                        className="inline-flex p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"
+                                                        title="Manage Custom User Permissions"
+                                                    >
+                                                        <Key className="h-4 w-4" />
+                                                    </Link>
                                                     {showBtn('Delete') && (
                                                         <Button
                                                             variant="ghost"

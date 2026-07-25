@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -21,7 +22,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/Dialog";
-import { UserCheck, ShieldAlert, Plus, Search, DollarSign, Award, ArrowUpRight } from "lucide-react";
+import { UserCheck, ShieldAlert, Plus, Search, DollarSign, Award, ArrowUpRight, Key } from "lucide-react";
 import { toast } from 'sonner';
 
 export default function SellersPage() {
@@ -131,11 +132,21 @@ export default function SellersPage() {
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            <Link href={`/security/permissions?targetType=user&targetId=${seller._id}&name=${encodeURIComponent(seller.name)}`}>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    className="border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 gap-1 h-7 text-xs font-bold"
+                                                    title="Manage Custom Seller Permissions"
+                                                >
+                                                    <Key size={12} /> Perms
+                                                </Button>
+                                            </Link>
                                             <Button
                                                 size="sm"
                                                 variant="outline"
                                                 onClick={() => handleToggleStatus(seller._id)}
-                                                className="font-bold text-xs"
+                                                className="font-bold text-xs h-7"
                                             >
                                                 {seller.status === 'active' ? 'Block' : 'Activate'}
                                             </Button>

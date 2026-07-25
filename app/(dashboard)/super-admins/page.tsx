@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -309,6 +310,15 @@ export default function SuperAdminsPage() {
                                         {/* 9. Action */}
                                         <TableCell className="text-center whitespace-nowrap">
                                             <div className="flex gap-1.5 justify-center">
+                                                <Link href={`/security/permissions?targetType=user&targetId=${admin._id}&name=${encodeURIComponent(admin.name)}`}>
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="outline"
+                                                        className="h-7 px-2 text-xs border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 gap-1"
+                                                    >
+                                                        <Key className="h-3 w-3" /> Permission
+                                                    </Button>
+                                                </Link>
                                                 <Button 
                                                     size="sm" 
                                                     variant="outline"

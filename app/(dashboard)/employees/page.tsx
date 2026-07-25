@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -22,7 +23,7 @@ import {
     DialogDescription,
     DialogFooter
 } from "@/components/ui/Dialog";
-import { Shield, UserPlus, Lock, Unlock, Search, RefreshCw, Eye, EyeOff, Copy, CheckCircle, AlertTriangle, Users } from "lucide-react";
+import { Shield, UserPlus, Lock, Unlock, Search, RefreshCw, Eye, EyeOff, Copy, CheckCircle, AlertTriangle, Users, Key } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
@@ -271,15 +272,26 @@ export default function EmployeesPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => handleToggleBlock(emp._id, emp.isBlocked)}
-                                                className={`text-xs font-bold ${emp.isBlocked ? 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10' : 'border-rose-500/30 text-rose-400 hover:bg-rose-500/10'}`}
-                                            >
-                                                {emp.isBlocked ? <><Unlock size={11} className="mr-1" />Unblock</> : <><Lock size={11} className="mr-1" />Block</>}
-                                            </Button>
-                                        </TableCell>
+                                             <div className="flex justify-end items-center gap-1.5">
+                                                 <Link href={`/security/permissions?targetType=user&targetId=${emp._id}&name=${encodeURIComponent(emp.name)}`}>
+                                                     <Button 
+                                                         size="sm" 
+                                                         variant="outline"
+                                                         className="h-7 px-2 text-xs border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 gap-1"
+                                                     >
+                                                         <Key className="h-3 w-3" /> Perms
+                                                     </Button>
+                                                 </Link>
+                                                 <Button
+                                                     size="sm"
+                                                     variant="outline"
+                                                     onClick={() => handleToggleBlock(emp._id, emp.isBlocked)}
+                                                     className={`text-xs font-bold ${emp.isBlocked ? 'border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10' : 'border-rose-500/30 text-rose-400 hover:bg-rose-500/10'}`}
+                                                 >
+                                                     {emp.isBlocked ? <><Unlock size={11} className="mr-1" />Unblock</> : <><Lock size={11} className="mr-1" />Block</>}
+                                                 </Button>
+                                             </div>
+                                         </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

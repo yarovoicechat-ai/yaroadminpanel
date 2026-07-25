@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -21,7 +22,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/Dialog";
-import { Plus, Trash2, ShieldAlert, Award, UserCheck, Percent, DollarSign, Settings } from "lucide-react";
+import { Plus, Trash2, ShieldAlert, Award, UserCheck, Percent, DollarSign, Settings, Key } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 
@@ -237,7 +238,19 @@ export default function AgenciesPage() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex items-center justify-end gap-1">
+                                                <div className="flex items-center justify-end gap-1.5">
+                                                    {agency.ownerId && (
+                                                        <Link href={`/security/permissions?targetType=user&targetId=${agency.ownerId._id}&name=${encodeURIComponent(agency.ownerId.name || agency.name)}`}>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="h-9 w-9 p-0 border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 flex items-center justify-center"
+                                                                title="Manage Custom Agency Owner Permissions"
+                                                            >
+                                                                <Key size={14} />
+                                                            </Button>
+                                                        </Link>
+                                                    )}
                                                     <Button
                                                         size="sm"
                                                         variant="outline"

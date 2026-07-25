@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -20,7 +21,7 @@ import {
     DialogTitle,
     DialogDescription
 } from "@/components/ui/Dialog";
-import { CheckCircle, XCircle, Search, FileText, ExternalLink, UserPlus, Users } from "lucide-react";
+import { CheckCircle, XCircle, Search, FileText, ExternalLink, UserPlus, Users, Key } from "lucide-react";
 import { toast } from 'sonner';
 import { Pagination } from '@/components/ui/Pagination';
 import { apiClient } from '@/lib/apiClient';
@@ -226,7 +227,19 @@ export default function HostsPage() {
                                                     </>
                                                 )}
                                                 {host.isApproved && (
-                                                    <span className="text-xs text-slate-500 italic">Approved</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <Link href={`/security/permissions?targetType=user&targetId=${host._id}&name=${encodeURIComponent(host.fullName)}`}>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="border-indigo-500/30 text-indigo-400 hover:bg-indigo-500/10 gap-1 h-7 text-xs font-bold"
+                                                                title="Manage Custom Host Permissions"
+                                                            >
+                                                                <Key size={12} /> Perms
+                                                            </Button>
+                                                        </Link>
+                                                        <span className="text-xs text-slate-500 italic">Approved</span>
+                                                    </div>
                                                 )}
                                             </div>
                                         </TableCell>

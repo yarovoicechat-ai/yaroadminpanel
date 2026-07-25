@@ -11,12 +11,12 @@ export default function ReferralLinks() {
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   
   // Base domains (Could be configurable via global settings)
-  const hostDomain = 'host.meethichat.live';
-  const agencyDomain = 'agency.meethichat.live';
-  const adminDomain = 'admin.meethichat.live';
-  const operatorDomain = 'operator.meethichat.live';
-  const sellerDomain = 'seller.meethichat.live';
-  const supportDomain = 'support.meethichat.live';
+  const hostDomain = 'host.mithichat.live';
+  const agencyDomain = 'agency.mithichat.live';
+  const adminDomain = 'admin.mithichat.live';
+  const operatorDomain = 'operator.mithichat.live';
+  const sellerDomain = 'seller.mithichat.live';
+  const supportDomain = 'support.mithichat.live';
 
   const referralCode = user?.meethiId || user?.id?.substring(18).toUpperCase() || 'AGY8X92';
 

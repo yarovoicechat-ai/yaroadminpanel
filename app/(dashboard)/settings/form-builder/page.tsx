@@ -88,7 +88,7 @@ export default function FormBuilderPage() {
 
             const payload = {
                 role: roleKey.toLowerCase().trim(),
-                hostname: `${roleKey.toLowerCase().trim()}.meethichat.live`,
+                hostname: `${roleKey.toLowerCase().trim()}.mithichat.live`,
                 title,
                 subtitle,
                 badgeText,
