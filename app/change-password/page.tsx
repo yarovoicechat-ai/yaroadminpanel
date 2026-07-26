@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -48,7 +48,7 @@ export default function ChangePasswordPage() {
             const res = await apiClient.post('/api/admin/change-password', { currentPassword, newPassword });
             if (res.success) {
                 toast.success('Password changed successfully! Redirecting to dashboard...');
-                setTimeout(() => router.push('/'), 1500);
+                setTimeout(() => router.push('/dashboard'), 1500);
             } else {
                 toast.error(res.message || 'Failed to change password.');
             }
