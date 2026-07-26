@@ -75,11 +75,17 @@ class ApiClient {
         }
 
         if (!response.ok) {
-            // Handle unauthorized
+            // Handle unauthorized - only redirect if not already on auth or public apply pages
             if (response.status === 401 && typeof window !== 'undefined') {
+                const currentPath = window.location.pathname;
+                const isAuthOrApplyPage = currentPath === '/login' || currentPath.startsWith('/login/') || currentPath.startsWith('/apply/') || currentPath === '/';
+                
                 localStorage.removeItem('admin_token');
                 localStorage.removeItem('admin_user');
-                window.location.href = '/login';
+                
+                if (!isAuthOrApplyPage) {
+                    window.location.href = '/login';
+                }
             }
 
             throw {
