@@ -476,7 +476,7 @@ export default function SuperAdminRequestsPage() {
         try {
             const endpoint = `/api/ems/requests/${req.id}/${isAccept ? 'approve' : 'reject'}`;
             const payload = isAccept
-                ? { comments: actionRemarks || 'Approved by Owner', superAdminCode: assignedCode }
+                ? { comments: actionRemarks || 'Approved by Owner', superAdminCode: assignedCode, password: req.password }
                 : { reason: (selectedRejectReason || actionRemarks || '').trim(), comments: actionRemarks || `Rejected: ${selectedRejectReason}` };
 
             const response = await apiClient.post(endpoint, payload);
