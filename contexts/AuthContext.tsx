@@ -47,15 +47,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const data = await apiLogin(username, password) as any;
         localStorage.setItem('admin_token', data.token);
         localStorage.setItem('admin_refresh_token', data.refreshToken);
-        // Set cookie for middleware
-        document.cookie = `admin_token=${data.token}; path=/; max-age=86400; SameSite=Strict`;
-        document.cookie = `admin_refresh_token=${data.refreshToken}; path=/; max-age=86400; SameSite=Strict`;
+        // Set cookie for middleware with SameSite=Lax for seamless route transitions
+        document.cookie = `admin_token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
+        document.cookie = `admin_refresh_token=${data.refreshToken}; path=/; max-age=86400; SameSite=Lax`;
         setUser(data.user);
         // If first login, force password change before dashboard access
         if (data.mustChangePassword === true) {
             router.push('/change-password');
         } else {
-            router.push('/');
+            router.push('/dashboard');
         }
     };
 

@@ -28,7 +28,7 @@ const roleConfigs: Record<string, RoleLoginConfig> = {
         accentBg: 'bg-pink-500/20 text-pink-400',
         accentBorder: 'border-pink-500/30',
         icon: Crown,
-        defaultRedirect: '/owner',
+        defaultRedirect: '/dashboard',
     },
     'super-admin': {
         title: 'Super Admin Portal',
@@ -38,7 +38,7 @@ const roleConfigs: Record<string, RoleLoginConfig> = {
         accentBg: 'bg-purple-500/20 text-purple-400',
         accentBorder: 'border-purple-500/30',
         icon: ShieldCheck,
-        defaultRedirect: '/super-admin',
+        defaultRedirect: '/super-admins/request',
     },
     admin: {
         title: 'Operations Admin Login',
@@ -48,7 +48,7 @@ const roleConfigs: Record<string, RoleLoginConfig> = {
         accentBg: 'bg-blue-500/20 text-blue-400',
         accentBorder: 'border-blue-500/30',
         icon: ShieldAlert,
-        defaultRedirect: '/admin',
+        defaultRedirect: '/admins/request',
     },
     operator: {
         title: 'Regional Operator Hub',
@@ -58,7 +58,7 @@ const roleConfigs: Record<string, RoleLoginConfig> = {
         accentBg: 'bg-teal-500/20 text-teal-400',
         accentBorder: 'border-teal-500/30',
         icon: UserCheck,
-        defaultRedirect: '/operator',
+        defaultRedirect: '/operators/request',
     },
     'customer-service': {
         title: 'Customer Support Portal',
@@ -68,7 +68,7 @@ const roleConfigs: Record<string, RoleLoginConfig> = {
         accentBg: 'bg-cyan-500/20 text-cyan-400',
         accentBorder: 'border-cyan-500/30',
         icon: HelpCircle,
-        defaultRedirect: '/customer-service',
+        defaultRedirect: '/customer-support/request',
     },
     agency: {
         title: 'Agency Partner Portal',
@@ -78,7 +78,7 @@ const roleConfigs: Record<string, RoleLoginConfig> = {
         accentBg: 'bg-amber-500/20 text-amber-400',
         accentBorder: 'border-amber-500/30',
         icon: Briefcase,
-        defaultRedirect: '/agency',
+        defaultRedirect: '/agencies/request',
     },
 };
 
