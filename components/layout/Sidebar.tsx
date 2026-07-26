@@ -279,16 +279,15 @@ export default function Sidebar() {
     useEffect(() => {
         const fetchPermissions = async () => {
             try {
-                if (!user) return;
+                const ALL_CATEGORIES = ['Dashboard', 'Users', 'Host', 'Agency', 'Coin Seller', 'Finance', 'Reports', 'Notifications', 'Settings', 'Developer', 'Admin', 'SuperAdmin'];
+                setAllowedMenus(ALL_CATEGORIES);
                 
-                if (user.role === 'owner') {
-                    // Owner always has all menus
-                    setAllowedMenus(['Dashboard', 'Users', 'Host', 'Agency', 'Coin Seller', 'Finance', 'Reports', 'Notifications', 'Settings', 'Developer', 'Admin', 'SuperAdmin']);
+                if (!user || ['owner', 'superAdmin', 'admin', 'operator'].includes(user.role)) {
                     return;
                 }
 
                 const res = await apiClient.get('/api/ems/my-permissions');
-                if (res.success && res.data && res.data.menus) {
+                if (res.success && res.data && Array.isArray(res.data.menus) && res.data.menus.length > 0) {
                     setAllowedMenus(res.data.menus);
                 }
             } catch (err) {
@@ -308,12 +307,12 @@ export default function Sidebar() {
 
     // Filter layout sections based on loaded permissions
     const filteredSections = sidebarSections.map(section => {
-        // Owner bypasses everything. Otherwise check if the category is allowed.
-        const isCategoryAllowed = user?.role === 'owner' || allowedMenus.includes(section.category);
+        const isOwnerOrAdmin = !user || ['owner', 'superAdmin', 'admin', 'operator'].includes(user.role);
+        const isCategoryAllowed = isOwnerOrAdmin || allowedMenus.includes(section.category);
         if (!isCategoryAllowed) return null;
 
         const filteredItems = section.items.filter(item => {
-            return user?.role === 'owner' || allowedMenus.includes(item.category);
+            return isOwnerOrAdmin || allowedMenus.includes(item.category);
         });
 
         if (filteredItems.length === 0) return null;
