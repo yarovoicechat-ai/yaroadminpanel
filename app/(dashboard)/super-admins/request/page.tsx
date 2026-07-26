@@ -217,7 +217,17 @@ export default function SuperAdminRequestsPage() {
                             remarks: ownerRev.remarks || ownerRev.comments || 'Awaiting Owner decision.',
                             status: ownerRev.status || (item.status === 'approved' ? 'Approved' : 'Pending')
                         },
-                        password: d.password || item.passwordBeforeApproval || `Mithi@${(item._id || d.meethiChatId || '9876').replace(/\D/g, '').slice(-5) || '9514'}x`,
+                        password: (() => {
+                            const explicit = d.password || item.passwordBeforeApproval;
+                            if (explicit && explicit.trim() !== '') return explicit;
+                            const cleanName = (d.name || 'User').replace(/[^a-zA-Z]/g, '');
+                            const prefix = cleanName.length >= 3
+                                ? cleanName.slice(0, 3).charAt(0).toUpperCase() + cleanName.slice(1, 3).toLowerCase()
+                                : (cleanName.length > 0 ? cleanName.charAt(0).toUpperCase() + cleanName.slice(1).toLowerCase() : 'Mith');
+                            const digits = (d.mobile || d.phoneNumber || d.email || '1234').replace(/\D/g, '');
+                            const numPart = digits.length >= 4 ? digits.slice(-4) : '1234';
+                            return `${prefix}@${numPart}!1`;
+                        })(),
                         status: item.status === 'approved' ? 'active' : item.status === 'rejected' ? 'rejected' : item.status === 'ready_for_interview' ? 'ready_for_interview' : 'pending',
                         superAdminCode: d.superAdminCode || d.specialCode || '',
                         referralCode: d.referralCode || '',
