@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -11,6 +12,7 @@ import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function CreateAdminPage() {
+    const router = useRouter();
     const { user: currentUser } = useAuth();
     const [submitting, setSubmitting] = useState(false);
     const [invitationToken, setInvitationToken] = useState(() => Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15));
@@ -98,7 +100,8 @@ export default function CreateAdminPage() {
             const response = await apiClient.post('/api/ems/requests', payload);
 
             if (response.success) {
-                toast.success("✅ Admin request submitted successfully. Status: PENDING");
+                toast.success("✅ Admin request submitted as PENDING! Redirecting to Request Page...");
+                router.push('/admins/request');
                 // Reset form
                 setForm({
                     profilePhoto: '',

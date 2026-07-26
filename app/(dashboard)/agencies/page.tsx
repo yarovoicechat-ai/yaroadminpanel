@@ -22,7 +22,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/Dialog";
-import { Plus, Trash2, ShieldAlert, Award, UserCheck, Percent, DollarSign, Settings, Key } from "lucide-react";
+import { Plus, Trash2, ShieldAlert, Award, UserCheck, Percent, DollarSign, Settings, Key, Users } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 
@@ -251,17 +251,27 @@ export default function AgenciesPage() {
                                                             </Button>
                                                         </Link>
                                                     )}
-                                                    <Button
-                                                        size="sm"
-                                                        variant="outline"
-                                                        onClick={() => {
-                                                            setSelectedAgency(agency);
-                                                            setIsAssignOpen(true);
-                                                        }}
-                                                        title="Assign Host to Agency"
-                                                    >
-                                                        <UserCheck size={16} />
-                                                    </Button>
+                                                    <Link href={`/recruited-members?parentId=${agency.ownerId?._id || agency._id}&parentName=${encodeURIComponent(agency.name)}&targetRole=host`}>
+                                                         <Button
+                                                             size="sm"
+                                                             variant="outline"
+                                                             className="h-9 p-2 text-xs border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10 flex items-center gap-1"
+                                                             title="View Recruited Hosts for this Agency"
+                                                         >
+                                                             <Users size={14} /> Recruited Hosts
+                                                         </Button>
+                                                     </Link>
+                                                     <Button
+                                                         size="sm"
+                                                         variant="outline"
+                                                         onClick={() => {
+                                                             setSelectedAgency(agency);
+                                                             setIsAssignOpen(true);
+                                                         }}
+                                                         title="Assign Host to Agency"
+                                                     >
+                                                         <UserCheck size={16} />
+                                                     </Button>
                                                     <Button
                                                         size="sm"
                                                         variant="ghost"

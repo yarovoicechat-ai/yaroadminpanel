@@ -2,8 +2,9 @@
 
 import { useState, Suspense } from 'react';
 import { toast } from 'sonner';
-import { RecruitmentFormLayout, FormStep } from '@/components/recruitment/RecruitmentFormLayout';
-import { ReferralState } from '@/components/recruitment/ReferralBanner';
+import { RoleCreateLayout, FormStep } from '@/components/role-create/RoleCreateLayout';
+import { ReferralState } from '@/components/role-create/ReferralBanner';
+import { FileUpload } from '@/components/role-create/FileUpload';
 import { apiClient } from '@/lib/apiClient';
 
 const AGENCY_STEPS: FormStep[] = [
@@ -86,6 +87,11 @@ function AgencyFormContent() {
     const handleSubmit = async () => {
         if (!validateCurrentStep()) return;
 
+        if (!referral.code || !referral.isVerified) {
+            toast.error('A valid, verified Referral Code (e.g. D07A24) is required to apply.');
+            return;
+        }
+
         if (!formData.agreedToTerms) {
             toast.error('You must accept the terms and agency policies to submit.');
             return;
@@ -143,9 +149,9 @@ function AgencyFormContent() {
     };
 
     return (
-        <RecruitmentFormLayout
+        <RoleCreateLayout
             roleKey="agency"
-            roleTitle="Agency Recruitment Portal"
+            roleTitle="Agency Application Portal"
             roleSubtitle="Register your agency to onboard and manage live streaming talent on MithiChat."
             badgeText="Official Agency Partner Onboarding"
             themeGradient="from-slate-950 via-purple-950 to-indigo-950"
@@ -334,47 +340,73 @@ function AgencyFormContent() {
             {/* Step 4: Documents & Agreement */}
             {currentStep === 3 && (
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-white mb-2">4. Documents & Terms Agreement</h3>
+                    <h3 className="text-lg font-bold text-white mb-2">4. Identity & Agency Verification Documents</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Front Side Document URL / File</label>
-                            <input
-                                type="url"
-                                value={formData.adharFrontUrl}
-                                onChange={e => updateField('adharFrontUrl', e.target.value)}
-                                placeholder="https://drive.google.com/..."
-                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Back Side Document URL / File</label>
-                            <input
-                                type="url"
-                                value={formData.adharBackUrl}
-                                onChange={e => updateField('adharBackUrl', e.target.value)}
-                                placeholder="https://drive.google.com/..."
-                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
-                            />
-                        </div>
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">PAN Card / Business Tax Document URL</label>
-                        <input
-                            type="url"
-                            value={formData.panCardUrl || formData.panCopyUrl}
-                            onChange={e => { updateField('panCardUrl', e.target.value); updateField('panCopyUrl', e.target.value); }}
-                            placeholder="https://drive.google.com/... or image link"
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
+                        <FileUpload
+                            label="Aadhaar Card Front Side Document"
+                            name="adharFrontUrl"
+                            required
+                            value={formData.adharFrontUrl}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('adharFrontUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('adharFrontUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
+                        />
+                        <FileUpload
+                            label="Aadhaar Card Back Side Document"
+                            name="adharBackUrl"
+                            required
+                            value={formData.adharBackUrl}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('adharBackUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('adharBackUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
                         />
                     </div>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">Address Proof / Electricity Bill URL</label>
-                        <input
-                            type="url"
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FileUpload
+                            label="PAN Card / Tax Registration Document"
+                            name="panCardUrl"
+                            required
+                            value={formData.panCardUrl || formData.panCopyUrl}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('panCardUrl', fileOrUrl);
+                                    updateField('panCopyUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                        updateField('panCardUrl', reader.result as string);
+                                        updateField('panCopyUrl', reader.result as string);
+                                    };
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
+                        />
+                        <FileUpload
+                            label="Agency Business Profile / CV Document"
+                            name="addressProofUrl"
+                            required
                             value={formData.addressProofUrl}
-                            onChange={e => updateField('addressProofUrl', e.target.value)}
-                            placeholder="Document link"
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('addressProofUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('addressProofUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
                         />
                     </div>
                     <div>
@@ -403,7 +435,7 @@ function AgencyFormContent() {
                     </div>
                 </div>
             )}
-        </RecruitmentFormLayout>
+        </RoleCreateLayout>
     );
 }
 

@@ -2,8 +2,9 @@
 
 import { useState, Suspense } from 'react';
 import { toast } from 'sonner';
-import { RecruitmentFormLayout, FormStep } from '@/components/recruitment/RecruitmentFormLayout';
-import { ReferralState } from '@/components/recruitment/ReferralBanner';
+import { RoleCreateLayout, FormStep } from '@/components/role-create/RoleCreateLayout';
+import { ReferralState } from '@/components/role-create/ReferralBanner';
+import { FileUpload } from '@/components/role-create/FileUpload';
 import { apiClient } from '@/lib/apiClient';
 
 const CUSTOMER_SERVICE_STEPS: FormStep[] = [
@@ -81,6 +82,11 @@ function CustomerServiceFormContent() {
     const handleSubmit = async () => {
         if (!validateCurrentStep()) return;
 
+        if (!referral.code || !referral.isVerified) {
+            toast.error('A valid, verified Referral Code (e.g. D07A24) is required to apply.');
+            return;
+        }
+
         if (!formData.agreedToTerms) {
             toast.error('Please accept the customer service pledge to submit.');
             return;
@@ -138,9 +144,9 @@ function CustomerServiceFormContent() {
     };
 
     return (
-        <RecruitmentFormLayout
+        <RoleCreateLayout
             roleKey="customer-service"
-            roleTitle="Customer Service Recruitment"
+            roleTitle="Customer Support Application Portal"
             roleSubtitle="Join our Customer Care & User Support Team to assist users and hosts 24/7."
             badgeText="Customer Support Specialist Onboarding"
             themeGradient="from-slate-950 via-cyan-950 to-sky-950"
@@ -337,57 +343,69 @@ function CustomerServiceFormContent() {
             {/* Step 4: Verification */}
             {currentStep === 3 && (
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-white mb-2">4. Documents & Support Pledge</h3>
+                    <h3 className="text-lg font-bold text-white mb-2">4. Identity & Verification Documents</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Front Side Document URL / File</label>
-                            <input
-                                type="url"
-                                value={formData.adharFrontUrl}
-                                onChange={e => updateField('adharFrontUrl', e.target.value)}
-                                placeholder="https://drive.google.com/..."
-                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Back Side Document URL / File</label>
-                            <input
-                                type="url"
-                                value={formData.adharBackUrl}
-                                onChange={e => updateField('adharBackUrl', e.target.value)}
-                                placeholder="https://drive.google.com/..."
-                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400"
-                            />
-                        </div>
+                        <FileUpload
+                            label="Aadhaar Card Front Side Document"
+                            name="adharFrontUrl"
+                            required
+                            value={formData.adharFrontUrl}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('adharFrontUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('adharFrontUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
+                        />
+                        <FileUpload
+                            label="Aadhaar Card Back Side Document"
+                            name="adharBackUrl"
+                            required
+                            value={formData.adharBackUrl}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('adharBackUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('adharBackUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
+                        />
                     </div>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">PAN Card Document URL / File</label>
-                        <input
-                            type="url"
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FileUpload
+                            label="PAN Card Document"
+                            name="panCardUrl"
+                            required
                             value={formData.panCardUrl}
-                            onChange={e => updateField('panCardUrl', e.target.value)}
-                            placeholder="https://drive.google.com/..."
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400"
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('panCardUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('panCardUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
                         />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">Education Certificate URL</label>
-                        <input
-                            type="url"
+                        <FileUpload
+                            label="Customer Support Resume / CV Document"
+                            name="educationCertUrl"
+                            required
                             value={formData.educationCertUrl}
-                            onChange={e => updateField('educationCertUrl', e.target.value)}
-                            placeholder="Certificate document link"
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">ID Proof URL (Aadhaar / Voter ID)</label>
-                        <input
-                            type="url"
-                            value={formData.idProofUrl}
-                            onChange={e => updateField('idProofUrl', e.target.value)}
-                            placeholder="ID proof link"
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-cyan-400"
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('educationCertUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('educationCertUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
                         />
                     </div>
                     <div>
@@ -416,7 +434,7 @@ function CustomerServiceFormContent() {
                     </div>
                 </div>
             )}
-        </RecruitmentFormLayout>
+        </RoleCreateLayout>
     );
 }
 

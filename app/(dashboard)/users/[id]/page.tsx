@@ -184,15 +184,27 @@ export default function UserDetailPage() {
                                 <span>{bio || 'No bio description provided.'}</span>
                             </div>
 
-                            {/* Info Fields */}
+                            {/* Global Unique Identity System Badges */}
                             <div className="space-y-3 pt-2 border-t border-slate-800/60">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-400 font-semibold">Mongo ObjectId :-</span>
+                                    <span className="text-slate-300 font-mono text-xs select-all bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{user._id}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-400 font-semibold">Employee Code :-</span>
+                                    <span className="text-emerald-400 font-bold font-mono">{(user as any).employeeCode || 'N/A'}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-400 font-semibold">Role Code :-</span>
+                                    <span className="text-purple-400 font-bold font-mono">{(user as any).specialCode || (user as any).employeeCode || 'N/A'}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                    <span className="text-slate-400 font-semibold">Meethi Chat ID :-</span>
+                                    <span className="text-fuchsia-400 font-bold font-mono">{(user as any).meethiId || `MC${user.userId}` || 'N/A'}</span>
+                                </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-slate-400 font-semibold">Username :-</span>
                                     <span className="text-fuchsia-400 font-bold">{userName || user.userId}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-slate-400 font-semibold">Unique Id :-</span>
-                                    <span className="text-fuchsia-400 font-bold">{user.userId}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-slate-400 font-semibold">Diamond :-</span>

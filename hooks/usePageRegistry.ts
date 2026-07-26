@@ -41,8 +41,8 @@ export function usePageRegistry(metadata: PageRegistryMetadata) {
           filters: metadata.filters || [],
           metadata: metadata.metadata || {}
         });
-      } catch (err) {
-        console.error('[Dynamic Page Registry] Failed to register page:', metadata.pageId, err);
+      } catch (err: any) {
+        console.warn('[Dynamic Page Registry] Notice:', metadata.pageId, err?.message || err);
       }
     };
     registerPage();

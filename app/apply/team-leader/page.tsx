@@ -8,11 +8,11 @@ import { toast } from 'sonner';
 import { ApplicationFormData } from '@/types/application';
 import { useFormValidation } from '@/hooks/useFormValidation';
 import { submitTeamLeaderApplication } from '@/services/applicationApi';
-import { FormInput } from '@/components/recruitment/FormInput';
-import { FileUpload } from '@/components/recruitment/FileUpload';
-import { SectionTitle } from '@/components/recruitment/SectionTitle';
-import { Button } from '@/components/recruitment/Button';
-import { LanguageSelector } from '@/components/recruitment/LanguageSelector';
+import { FormInput } from '@/components/role-create/FormInput';
+import { FileUpload } from '@/components/role-create/FileUpload';
+import { SectionTitle } from '@/components/role-create/SectionTitle';
+import { Button } from '@/components/role-create/Button';
+import { LanguageSelector } from '@/components/role-create/LanguageSelector';
 
 const initialFormData: ApplicationFormData = {
     fullName: '',

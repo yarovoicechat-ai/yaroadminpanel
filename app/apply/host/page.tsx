@@ -1,8 +1,12 @@
 'use client';
 
-import { useState, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Lock } from 'lucide-react';
+import { FileUpload } from '@/components/role-create/FileUpload';
+import { ReferralBanner, ReferralState } from '@/components/role-create/ReferralBanner';
+import { apiClient } from '@/lib/apiClient';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.mithichat.live';
 
@@ -35,12 +39,19 @@ function HostFormContent() {
     const [submitting, setSubmitting] = useState(false);
     const [success, setSuccess] = useState(false);
 
+    const [referralState, setReferralState] = useState<ReferralState | null>(null);
+
     const handleReset = () => {
         setForm(initialFormState);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!form.referralCode || !form.referralCode.trim()) {
+            toast.error('A valid Referral Code is required to submit host application.');
+            return;
+        }
+
         if (!form.name || !form.email || !form.phone || !form.city || !form.linkedin) {
             toast.error('Please fill in all required fields');
             return;
@@ -80,6 +91,15 @@ function HostFormContent() {
         }
     };
 
+    useEffect(() => {
+        if (success) {
+            const timer = setTimeout(() => {
+                window.location.href = '/hosts/request';
+            }, 2500);
+            return () => clearTimeout(timer);
+        }
+    }, [success]);
+
     if (success) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-[#701a75] via-[#86198f] to-[#a21caf] flex items-center justify-center p-4">
@@ -89,8 +109,14 @@ function HostFormContent() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                         </svg>
                     </div>
-                    <h2 className="text-3xl font-black">Application Submitted! 🎉</h2>
-                    <p className="text-white/80 text-sm">Your Host application has been submitted successfully.</p>
+                    <h2 className="text-3xl font-black">Saved as Pending Request! 🎉</h2>
+                    <p className="text-white/80 text-sm">Your Host application has been saved to the Host Request Queue.</p>
+                    <a
+                        href="/hosts/request"
+                        className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-white font-black text-sm rounded-xl transition-all border border-emerald-400/30 flex items-center justify-center gap-2 shadow-lg"
+                    >
+                        Go to Host Request Page (/hosts/request) →
+                    </a>
                 </div>
             </div>
         );
@@ -101,16 +127,32 @@ function HostFormContent() {
             <div className="max-w-2xl w-full bg-white/10 backdrop-blur-xl border border-white/20 rounded-3xl p-6 md:p-10 text-white shadow-2xl">
                 
                 {/* Form Header */}
-                <div className="mb-8">
+                <div className="mb-6">
                     <h1 className="text-2xl font-extrabold tracking-wide text-white uppercase">
                         HOST FORM - MITHICHAT
                     </h1>
                     <p className="text-xs font-semibold text-white/70 mt-1">
-                        MithiChat, Host Requirements
+                        MithiChat Host Recruitment & Clearances
                     </p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-5">
+                {/* Referral Banner */}
+                <ReferralBanner onReferralVerified={setReferralState} />
+
+                {!referralState?.isVerified ? (
+                    <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-8 text-center space-y-4 my-6 backdrop-blur-md">
+                        <div className="w-14 h-14 bg-amber-500/20 text-amber-400 rounded-full flex items-center justify-center mx-auto border border-amber-500/40">
+                            <Lock className="w-7 h-7" />
+                        </div>
+                        <div className="space-y-1">
+                            <h3 className="text-lg font-black text-white uppercase tracking-wider">Host Application Locked</h3>
+                            <p className="text-xs text-white/70 max-w-md mx-auto leading-relaxed">
+                                Direct application without an inviter referral code is restricted. Please enter a valid Inviter Referral Code above to unlock the host form.
+                            </p>
+                        </div>
+                    </div>
+                ) : (
+                    <form onSubmit={handleSubmit} className="space-y-5">
                     
                     {/* Applicant name */}
                     <div>
@@ -294,116 +336,72 @@ function HostFormContent() {
                         />
                     </div>
 
-                    {/* Portfolio / Audition Video */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Portfolio / Audition Video URL
-                        </label>
-                        <div className="bg-white/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center justify-between">
-                            <label className="cursor-pointer bg-white/20 hover:bg-white/30 text-white font-semibold text-xs px-3 py-1.5 rounded-full shrink-0 flex items-center gap-1.5 transition-all border border-white/30">
-                                Choose File
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.mp4,.mov"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) setForm({ ...form, portfolio: file.name });
-                                    }}
-                                />
-                            </label>
-                            <input
-                                type="text"
-                                placeholder={form.portfolio || "No file chosen"}
-                                value={form.portfolio}
-                                onChange={e => setForm({ ...form, portfolio: e.target.value })}
-                                className="bg-transparent text-white placeholder-white/60 text-xs w-full ml-3 focus:outline-none truncate"
-                            />
-                        </div>
+                    {/* Documents Upload Section */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FileUpload
+                            label="Aadhaar Card Front Side"
+                            name="adharFront"
+                            required
+                            value={form.adharFront || form.idProof}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    setForm(prev => ({ ...prev, adharFront: fileOrUrl, idProof: fileOrUrl }));
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => setForm(prev => ({ ...prev, adharFront: reader.result as string, idProof: reader.result as string }));
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
+                        />
+                        <FileUpload
+                            label="Aadhaar Card Back Side"
+                            name="adharBack"
+                            required
+                            value={form.adharBack || form.addressProof}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    setForm(prev => ({ ...prev, adharBack: fileOrUrl, addressProof: fileOrUrl }));
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => setForm(prev => ({ ...prev, adharBack: reader.result as string, addressProof: reader.result as string }));
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
+                        />
                     </div>
 
-                    {/* Experience Letter */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Experience Letter
-                        </label>
-                        <div className="bg-white/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center justify-between">
-                            <label className="cursor-pointer bg-white/20 hover:bg-white/30 text-white font-semibold text-xs px-3 py-1.5 rounded-full shrink-0 flex items-center gap-1.5 transition-all border border-white/30">
-                                Choose File
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) setForm({ ...form, experienceLetter: file.name });
-                                    }}
-                                />
-                            </label>
-                            <input
-                                type="text"
-                                placeholder={form.experienceLetter || "No file chosen"}
-                                value={form.experienceLetter}
-                                onChange={e => setForm({ ...form, experienceLetter: e.target.value })}
-                                className="bg-transparent text-white placeholder-white/60 text-xs w-full ml-3 focus:outline-none truncate"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Address Proof */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Address Proof *
-                        </label>
-                        <div className="bg-white/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center justify-between">
-                            <label className="cursor-pointer bg-white/20 hover:bg-white/30 text-white font-semibold text-xs px-3 py-1.5 rounded-full shrink-0 flex items-center gap-1.5 transition-all border border-white/30">
-                                Choose File
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) setForm({ ...form, addressProof: file.name });
-                                    }}
-                                />
-                            </label>
-                            <input
-                                type="text"
-                                placeholder={form.addressProof || "No file chosen"}
-                                value={form.addressProof}
-                                onChange={e => setForm({ ...form, addressProof: e.target.value })}
-                                className="bg-transparent text-white placeholder-white/60 text-xs w-full ml-3 focus:outline-none truncate"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Id Proof */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Id Proof *
-                        </label>
-                        <div className="bg-white/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center justify-between">
-                            <label className="cursor-pointer bg-white/20 hover:bg-white/30 text-white font-semibold text-xs px-3 py-1.5 rounded-full shrink-0 flex items-center gap-1.5 transition-all border border-white/30">
-                                Choose File
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) setForm({ ...form, idProof: file.name });
-                                    }}
-                                />
-                            </label>
-                            <input
-                                type="text"
-                                placeholder={form.idProof || "No file chosen"}
-                                value={form.idProof}
-                                onChange={e => setForm({ ...form, idProof: e.target.value })}
-                                className="bg-transparent text-white placeholder-white/60 text-xs w-full ml-3 focus:outline-none truncate"
-                            />
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FileUpload
+                            label="PAN Card Document"
+                            name="pan"
+                            required
+                            value={form.pan || form.experienceLetter}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    setForm(prev => ({ ...prev, pan: fileOrUrl }));
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => setForm(prev => ({ ...prev, pan: reader.result as string }));
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
+                        />
+                        <FileUpload
+                            label="Host Voice Sample / Audition Video"
+                            name="portfolio"
+                            required
+                            acceptedFormats={['mp3', 'wav', 'm4a', 'mp4', 'mov', 'png', 'jpg', 'pdf']}
+                            value={form.portfolio}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    setForm(prev => ({ ...prev, portfolio: fileOrUrl }));
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => setForm(prev => ({ ...prev, portfolio: reader.result as string }));
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
+                        />
                     </div>
 
                     {/* Personal Note */}
@@ -440,6 +438,7 @@ function HostFormContent() {
                     </div>
 
                 </form>
+                )}
             </div>
         </div>
     );

@@ -1,6 +1,16 @@
 // API Client with automatic token injection and error handling
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.mithichat.live';
+const getApiBaseUrl = () => {
+    if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+        return process.env.NEXT_PUBLIC_API_BASE_URL;
+    }
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+        return 'http://localhost:3001';
+    }
+    return 'https://api.mithichat.live';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 console.log("API_BASE_URL =", API_BASE_URL);
 
@@ -23,6 +33,16 @@ class ApiClient {
         this.baseURL = baseURL;
     }
 
+    private getEffectiveBaseUrl(): string {
+        if (process.env.NEXT_PUBLIC_API_BASE_URL) {
+            return process.env.NEXT_PUBLIC_API_BASE_URL;
+        }
+        if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+            return 'http://localhost:3001';
+        }
+        return this.baseURL || 'https://api.mithichat.live';
+    }
+
     private getHeaders(): HeadersInit {
         const headers: HeadersInit = {
             'Content-Type': 'application/json',
@@ -40,7 +60,19 @@ class ApiClient {
     }
 
     private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
-        const data = await response.json();
+        let data: any;
+        const contentType = response.headers.get('content-type');
+
+        try {
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                const text = await response.text();
+                data = { message: text || `HTTP ${response.status} ${response.statusText}` };
+            }
+        } catch (e: any) {
+            data = { message: `Failed to parse response: ${e.message}` };
+        }
 
         if (!response.ok) {
             // Handle unauthorized
@@ -52,8 +84,10 @@ class ApiClient {
 
             throw {
                 success: false,
-                message: data.message || data.error || 'An error occurred',
-                error: data.error,
+                message: typeof data === 'object' && (data?.message || data?.error)
+                    ? (data.message || data.error)
+                    : `Request failed with status ${response.status}`,
+                error: typeof data === 'object' ? data?.error : undefined,
             };
         }
 
@@ -70,7 +104,8 @@ class ApiClient {
     }
 
     async get<T = any>(endpoint: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
-        const url = new URL(`${this.baseURL}${endpoint}`);
+        const baseUrl = this.getEffectiveBaseUrl();
+        const url = new URL(`${baseUrl}${endpoint}`);
         if (params) {
             Object.keys(params).forEach(key => {
                 if (params[key] !== undefined && params[key] !== null) {
@@ -88,7 +123,8 @@ class ApiClient {
     }
 
     async post<T = any>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
-        const response = await fetch(`${this.baseURL}${endpoint}`, {
+        const baseUrl = this.getEffectiveBaseUrl();
+        const response = await fetch(`${baseUrl}${endpoint}`, {
             method: 'POST',
             headers: this.getHeaders(),
             body: JSON.stringify(body),
@@ -98,7 +134,8 @@ class ApiClient {
     }
 
     async patch<T = any>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
-        const response = await fetch(`${this.baseURL}${endpoint}`, {
+        const baseUrl = this.getEffectiveBaseUrl();
+        const response = await fetch(`${baseUrl}${endpoint}`, {
             method: 'PATCH',
             headers: this.getHeaders(),
             body: JSON.stringify(body),
@@ -108,7 +145,8 @@ class ApiClient {
     }
 
     async put<T = any>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
-        const response = await fetch(`${this.baseURL}${endpoint}`, {
+        const baseUrl = this.getEffectiveBaseUrl();
+        const response = await fetch(`${baseUrl}${endpoint}`, {
             method: 'PUT',
             headers: this.getHeaders(),
             body: JSON.stringify(body),
@@ -118,7 +156,8 @@ class ApiClient {
     }
 
     async delete<T = any>(endpoint: string): Promise<ApiResponse<T>> {
-        const response = await fetch(`${this.baseURL}${endpoint}`, {
+        const baseUrl = this.getEffectiveBaseUrl();
+        const response = await fetch(`${baseUrl}${endpoint}`, {
             method: 'DELETE',
             headers: this.getHeaders(),
         });
@@ -127,6 +166,7 @@ class ApiClient {
     }
 
     async uploadFile<T = any>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
+        const baseUrl = this.getEffectiveBaseUrl();
         const headers: HeadersInit = {};
 
         // Get token from localStorage (don't set Content-Type for FormData)
@@ -137,7 +177,7 @@ class ApiClient {
             }
         }
 
-        const response = await fetch(`${this.baseURL}${endpoint}`, {
+        const response = await fetch(`${baseUrl}${endpoint}`, {
             method: 'POST',
             headers,
             body: formData,

@@ -341,26 +341,28 @@ export default function SuperAdminsPage() {
 
                                         {/* 10. Data (View Recruited Agencies) */}
                                         <TableCell className="text-center whitespace-nowrap">
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                onClick={() => setSelectedAdmin(admin)}
-                                                className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-                                            >
-                                                View Recruited Agencies ({((admin as any).recruitedAgencies || []).length})
-                                            </Button>
+                                            <Link href={`/recruited-members?parentId=${admin._id}&parentName=${encodeURIComponent(admin.name)}&targetRole=agency`}>
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+                                                >
+                                                    View Recruited Agencies ({((admin as any).recruitedAgencies || []).length})
+                                                </Button>
+                                            </Link>
                                         </TableCell>
 
                                         {/* 11. Data (View Recruited Admin) */}
                                         <TableCell className="text-center whitespace-nowrap">
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                onClick={() => setSelectedAdmin(admin)}
-                                                className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-                                            >
-                                                View Recruited Admin ({((admin as any).recruitedAdmins || []).length})
-                                            </Button>
+                                            <Link href={`/recruited-members?parentId=${admin._id}&parentName=${encodeURIComponent(admin.name)}&targetRole=admin`}>
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+                                                >
+                                                    View Recruited Admin ({((admin as any).recruitedAdmins || []).length})
+                                                </Button>
+                                            </Link>
                                         </TableCell>
                                     </TableRow>
                                 ))}

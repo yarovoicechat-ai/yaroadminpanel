@@ -51,7 +51,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         document.cookie = `admin_token=${data.token}; path=/; max-age=86400; SameSite=Strict`;
         document.cookie = `admin_refresh_token=${data.refreshToken}; path=/; max-age=86400; SameSite=Strict`;
         setUser(data.user);
-        router.push('/');
+        // If first login, force password change before dashboard access
+        if (data.mustChangePassword === true) {
+            router.push('/change-password');
+        } else {
+            router.push('/');
+        }
     };
 
     const logout = async () => {

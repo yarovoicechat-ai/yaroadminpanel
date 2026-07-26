@@ -282,12 +282,16 @@ export default function AdminsPage() {
 
                                         {/* 4. Active Host */}
                                         <TableCell className="text-center font-semibold text-violet-400 whitespace-nowrap">
-                                            {(admin as any).activeHostsCount ?? 0}
+                                            <Link href={`/recruited-members?parentId=${admin._id}&parentName=${encodeURIComponent(admin.name)}&targetRole=host`} className="hover:underline">
+                                                {(admin as any).activeHostsCount ?? 0}
+                                            </Link>
                                         </TableCell>
 
                                         {/* 5. New Host */}
                                         <TableCell className="text-center font-semibold text-pink-400 whitespace-nowrap">
-                                            {(admin as any).newHostsCount ?? 0}
+                                            <Link href={`/recruited-members?parentId=${admin._id}&parentName=${encodeURIComponent(admin.name)}&targetRole=host`} className="hover:underline">
+                                                {(admin as any).newHostsCount ?? 0}
+                                            </Link>
                                         </TableCell>
 
                                         {/* 6. Date Added */}
@@ -329,14 +333,15 @@ export default function AdminsPage() {
 
                                         {/* 8. Data (View Recruited Agencies) */}
                                         <TableCell className="text-center whitespace-nowrap">
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                onClick={() => setSelectedAdmin(admin)}
-                                                className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-                                            >
-                                                View Recruited Agencies ({((admin as any).recruitedAgencies || []).length})
-                                            </Button>
+                                            <Link href={`/recruited-members?parentId=${admin._id}&parentName=${encodeURIComponent(admin.name)}&targetRole=agency`}>
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+                                                >
+                                                    View Recruited Agencies ({((admin as any).recruitedAgencies || []).length})
+                                                </Button>
+                                            </Link>
                                         </TableCell>
                                     </TableRow>
                                 ))}

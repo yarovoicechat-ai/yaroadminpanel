@@ -11,30 +11,19 @@ function RootContent() {
     const roleParam = searchParams.get('role')?.toLowerCase() || '';
 
     useEffect(() => {
-        // If a referral / special code is present in URL (e.g. ?referrer=SPECIAL_CODE)
-        if (refCode) {
-            if (roleParam === 'agency') {
-                router.replace(`/apply/agency?referrer=${refCode}`);
-            } else if (roleParam === 'operator') {
-                router.replace(`/apply/operator?referrer=${refCode}`);
-            } else if (roleParam === 'super-admin' || roleParam === 'superadmin') {
-                router.replace(`/apply/super-admin?referrer=${refCode}`);
-            } else if (roleParam === 'host') {
-                router.replace(`/apply/host?referrer=${refCode}`);
-            } else {
-                // Default: Open Admin form with special code
-                router.replace(`/apply/admin?referrer=${refCode}`);
-            }
-            return;
-        }
+        const getTargetRoute = (role: string, ref: string) => {
+            const query = ref ? `?referrer=${ref}` : '';
+            if (role === 'agency') return `/apply/agency${query}`;
+            if (role === 'operator') return `/apply/operator${query}`;
+            if (role === 'super-admin' || role === 'superadmin') return `/apply/super-admin${query}`;
+            if (role === 'host') return `/apply/host${query}`;
+            if (role === 'coinseller' || role === 'seller') return `/apply/seller${query}`;
+            if (role === 'customer-service' || role === 'customerservice' || role === 'support') return `/apply/customer-service${query}`;
+            return `/apply/admin${query}`;
+        };
 
-        // If role parameter is present without explicit referrer
-        if (roleParam) {
-            if (roleParam === 'agency') router.replace('/apply/agency');
-            else if (roleParam === 'operator') router.replace('/apply/operator');
-            else if (roleParam === 'super-admin' || roleParam === 'superadmin') router.replace('/apply/super-admin');
-            else if (roleParam === 'host') router.replace('/apply/host');
-            else router.replace('/apply/admin');
+        if (refCode || roleParam) {
+            router.replace(getTargetRoute(roleParam, refCode));
             return;
         }
 

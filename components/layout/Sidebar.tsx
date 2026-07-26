@@ -8,7 +8,7 @@ import {
     Users, UserCheck, ShieldAlert, Video, Plus, Flag, HelpCircle,
     Ban, AlertOctagon, Calendar, MessageSquare, Bell,
     CheckSquare, FileCheck, DollarSign, Coins, ChevronDown, ChevronRight,
-    Crown, Briefcase, Terminal, ShieldCheck, Settings
+    Crown, Briefcase, Terminal, ShieldCheck, Settings, Headphones, Globe
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -57,25 +57,7 @@ const sidebarSections: SidebarSection[] = [
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' }
         ]
     },
-    {
-        title: 'Recruitment Portal',
-        category: 'Dashboard',
-        items: [
-            {
-                name: 'Recruitment Apps',
-                icon: Briefcase,
-                category: 'Dashboard',
-                submenu: [
-                    { name: 'All Applications', href: '/recruitment' },
-                    { name: 'Agency Applications', href: '/recruitment/agency' },
-                    { name: 'Operator Applications', href: '/recruitment/operator' },
-                    { name: 'Admin Applications', href: '/recruitment/admin' },
-                    { name: 'Customer Service Apps', href: '/recruitment/customer-service' },
-                    { name: 'Super Admin Apps', href: '/recruitment/super-admin' },
-                ]
-            }
-        ]
-    },
+
     {
         title: 'Users & Roles',
         category: 'Users',
@@ -93,8 +75,9 @@ const sidebarSections: SidebarSection[] = [
                 icon: UserCheck,
                 category: 'Users',
                 submenu: [
-                    { name: 'Operator Requests', href: '/operators/request' },
-                    { name: 'Operator List', href: '/operators' }
+                    { name: 'Create', href: '/operators/create' },
+                    { name: 'Requests', href: '/operators/request' },
+                    { name: 'List', href: '/operators' }
                 ]
             },
             {
@@ -102,70 +85,60 @@ const sidebarSections: SidebarSection[] = [
                 icon: ShieldAlert,
                 category: 'Users',
                 submenu: [
-                    { name: 'Super Admin Requests', href: '/super-admins/request' },
-                    { name: 'Super Admin List', href: '/super-admins' }
+                    { name: 'Create', href: '/super-admins/create' },
+                    { name: 'Requests', href: '/super-admins/request' },
+                    { name: 'List', href: '/super-admins' }
+                ]
+            },
+            {
+                name: 'Admin',
+                icon: ShieldCheck,
+                category: 'Users',
+                submenu: [
+                    { name: 'Create', href: '/admins/create' },
+                    { name: 'Requests', href: '/admins/request' },
+                    { name: 'List', href: '/admins' }
+                ]
+            },
+            {
+                name: 'Agency',
+                icon: Briefcase,
+                category: 'Users',
+                submenu: [
+                    { name: 'Create', href: '/agencies/create' },
+                    { name: 'Requests', href: '/agencies/request' },
+                    { name: 'List', href: '/agencies' }
+                ]
+            },
+            {
+                name: 'Host',
+                icon: Video,
+                category: 'Users',
+                submenu: [
+                    { name: 'Create', href: '/hosts/create' },
+                    { name: 'Requests', href: '/hosts/request' },
+                    { name: 'List', href: '/hosts' },
+                    { name: 'Host Management', href: '/host-management' }
                 ]
             },
             {
                 name: 'Seller',
-                icon: ShieldAlert,
-                category: 'Coin Seller',
+                icon: Coins,
+                category: 'Users',
                 submenu: [
-                    { name: 'Add Seller', href: '/sellers/add' },
-                    { name: 'Request', href: '/sellers/request' },
-                    { name: 'List - Seller', href: '/sellers' }
-                ]
-            }
-        ]
-    },
-    {
-        title: 'Admin Module',
-        category: 'Admin',
-        items: [
-            { name: 'Create Admin', href: '/admins/create', icon: Plus, category: 'Admin' },
-            { name: 'Admin Requests', href: '/admins/request', icon: FileCheck, category: 'Admin' },
-            { name: 'Admin List', href: '/admins', icon: Users, category: 'Admin' }
-        ]
-    },
-    {
-        title: 'Super Admin Module',
-        category: 'SuperAdmin',
-        items: [
-            { name: 'Create Super Admin', href: '/super-admins/create', icon: Plus, category: 'SuperAdmin' },
-            { name: 'Super Admin Requests', href: '/super-admins/request', icon: FileCheck, category: 'SuperAdmin' },
-            { name: 'Super Admin List', href: '/super-admins', icon: Users, category: 'SuperAdmin' }
-        ]
-    },
-
-
-    {
-        title: 'Hosts & Performance',
-        category: 'Host',
-        items: [
-            {
-                name: 'Hosts',
-                icon: Video,
-                category: 'Host',
-                submenu: [
-                    { name: 'Add Host', href: '/hosts/add' },
-                    { name: 'Host Request', href: '/hosts/request' },
-                    { name: 'Host List', href: '/hosts' }
+                    { name: 'Create', href: '/sellers/create' },
+                    { name: 'Requests', href: '/sellers/request' },
+                    { name: 'List', href: '/sellers' }
                 ]
             },
-            { name: 'Host Management', href: '/host-management', icon: Video, category: 'Host' }
-        ]
-    },
-    {
-        title: 'Agencies Office',
-        category: 'Agency',
-        items: [
             {
-                name: 'Agency',
-                icon: Briefcase,
-                category: 'Agency',
+                name: 'Customer Support',
+                icon: Headphones,
+                category: 'Users',
                 submenu: [
-                    { name: 'Agency List', href: '/agencies' },
-                    { name: 'Agency Requests', href: '/agencies/requests' }
+                    { name: 'Create', href: '/customer-support/create' },
+                    { name: 'Requests', href: '/customer-support/request' },
+                    { name: 'List', href: '/customer-support' }
                 ]
             }
         ]
@@ -175,7 +148,6 @@ const sidebarSections: SidebarSection[] = [
         title: 'Operations & Support',
         category: 'Reports',
         items: [
-            { name: 'Add New', href: '/add-new', icon: Plus, category: 'Reports' },
             { name: 'Reports', href: '/reports', icon: Flag, category: 'Reports' },
             { name: 'Help & Support', href: '/help-support', icon: HelpCircle, category: 'Reports' },
             { name: 'Account Deletions', href: '/deletions', icon: UserX, category: 'Reports' }
@@ -211,22 +183,61 @@ const sidebarSections: SidebarSection[] = [
         ]
     },
     {
-        title: 'System & Control',
+        title: 'Enterprise Management',
+        category: 'Users',
+        items: [
+            { name: 'Organization Chart', href: '/organization/chart', icon: Users, category: 'Users' },
+            { name: 'Branches', href: '/organization/branches', icon: Briefcase, category: 'Users' },
+            { name: 'Departments', href: '/organization/departments', icon: Users, category: 'Users' },
+            { name: 'Teams', href: '/organization/teams', icon: UserCheck, category: 'Users' },
+            { name: 'Task Management', href: '/tasks', icon: CheckSquare, category: 'Users' },
+            { name: 'Calendar & Events', href: '/events', icon: Calendar, category: 'Users' }
+        ]
+    },
+    {
+        title: 'Enterprise V3 Suite',
         category: 'Settings',
         items: [
             { name: 'Settings', href: '/settings', icon: Settings, category: 'Settings' },
             { name: 'Workflows', href: '/settings/workflows', category: 'Settings', icon: Calendar },
-            { name: 'Permissions Builder', href: '/security/permissions', category: 'Settings', icon: ShieldAlert },
+            { name: 'Permission Builder', href: '/security/permissions', category: 'Settings', icon: ShieldAlert },
+            { name: 'Role Templates', href: '/security/templates', category: 'Settings', icon: ShieldCheck },
             { name: 'Compare Users', href: '/security/compare', category: 'Settings', icon: Users },
             { name: 'Referral Links', href: '/referrals/links', category: 'Settings', icon: Plus }
         ]
     },
     {
-        title: 'Developer Center',
+        title: 'AI Command Center 4.0',
+        category: 'Dashboard',
+        items: [
+            { name: 'AI Insights & Copilot', href: '/ai/insights', icon: Terminal, category: 'Dashboard' },
+            { name: 'AI Automation Hub', href: '/ai/automation', icon: ShieldCheck, category: 'Dashboard' }
+        ]
+    },
+    {
+        title: 'Live Analytics & Health',
+        category: 'Reports',
+        items: [
+            { name: 'Live User Map', href: '/analytics/live-map', icon: Globe, category: 'Reports' },
+            { name: 'System Health Monitor', href: '/health', icon: Terminal, category: 'Reports' }
+        ]
+    },
+    {
+        title: 'Executive Command 5.0',
+        category: 'Dashboard',
+        items: [
+            { name: 'Owner Console', href: '/owner', icon: Crown, category: 'Dashboard' },
+            { name: 'Finance & Wallet Ledger', href: '/finance/ledger', icon: DollarSign, category: 'Dashboard' },
+            { name: 'Compliance & GDPR', href: '/compliance', icon: ShieldCheck, category: 'Dashboard' }
+        ]
+    },
+    {
+        title: 'Developer & System Control',
         category: 'Developer',
         items: [
             { name: 'System Logs', href: '/logs', icon: Terminal, category: 'Developer' },
-            { name: 'Audit Logs', href: '/security/logs', icon: ShieldCheck, category: 'Developer' }
+            { name: 'Audit Logs', href: '/security/logs', icon: ShieldCheck, category: 'Developer' },
+            { name: 'API Center', href: '/api-center', icon: Terminal, category: 'Developer' }
         ]
     }
 ];
@@ -249,6 +260,20 @@ export default function Sidebar() {
         window.addEventListener('resize', checkMobile);
         return () => window.removeEventListener('resize', checkMobile);
     }, []);
+
+    // Auto-expand submenus if active route
+    useEffect(() => {
+        sidebarSections.forEach(section => {
+            section.items.forEach(item => {
+                if (item.submenu) {
+                    const isSubActive = item.submenu.some(sub => pathname === sub.href || (sub.href !== '/' && pathname.startsWith(sub.href)));
+                    if (isSubActive) {
+                        setExpandedMenus(prev => ({ ...prev, [item.name]: true }));
+                    }
+                }
+            });
+        });
+    }, [pathname]);
 
     // Load permitted menus dynamically
     useEffect(() => {

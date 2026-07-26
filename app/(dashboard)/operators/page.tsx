@@ -270,40 +270,43 @@ export default function OperatorsPage() {
                                             </div>
                                         </TableCell>
 
-                                        {/* 12. Data (View Recruited Agencies) */}
+                                         {/* 12. Data (View Recruited Agencies) */}
                                         <TableCell className="text-center whitespace-nowrap">
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                onClick={() => setSelectedOperator(opr)}
-                                                className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-                                            >
-                                                View Recruited Agencies ({(opr.recruitedAgencies || []).length})
-                                            </Button>
+                                            <Link href={`/recruited-members?parentId=${opr._id}&parentName=${encodeURIComponent(opr.name)}&targetRole=agency`}>
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+                                                >
+                                                    View Recruited Agencies ({(opr.recruitedAgencies || []).length})
+                                                </Button>
+                                            </Link>
                                         </TableCell>
 
                                         {/* 13. Data (View Recruited Admin) */}
                                         <TableCell className="text-center whitespace-nowrap">
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                onClick={() => setSelectedOperator(opr)}
-                                                className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-                                            >
-                                                View Recruited Admin ({(opr.recruitedAdmins || []).length})
-                                            </Button>
+                                            <Link href={`/recruited-members?parentId=${opr._id}&parentName=${encodeURIComponent(opr.name)}&targetRole=admin`}>
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+                                                >
+                                                    View Recruited Admin ({(opr.recruitedAdmins || []).length})
+                                                </Button>
+                                            </Link>
                                         </TableCell>
 
                                         {/* 14. Data (View Recruited Super Admin) */}
                                         <TableCell className="text-center whitespace-nowrap">
-                                            <Button
-                                                size="sm"
-                                                variant="secondary"
-                                                onClick={() => setSelectedOperator(opr)}
-                                                className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
-                                            >
-                                                View Recruited Super Admin ({(opr.recruitedSuperAdmins || []).length})
-                                            </Button>
+                                            <Link href={`/recruited-members?parentId=${opr._id}&parentName=${encodeURIComponent(opr.name)}&targetRole=superAdmin`}>
+                                                <Button
+                                                    size="sm"
+                                                    variant="secondary"
+                                                    className="h-7 px-2 text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700"
+                                                >
+                                                    View Recruited Super Admin ({(opr.recruitedSuperAdmins || []).length})
+                                                </Button>
+                                            </Link>
                                         </TableCell>
                                     </TableRow>
                                 ))}

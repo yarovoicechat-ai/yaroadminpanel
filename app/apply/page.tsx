@@ -41,17 +41,25 @@ function ApplyPageContent() {
         return null;
     }
 
-    if (roleParam === 'team-leader' || roleParam === 'teamleader') {
+    if (roleParam === 'coinseller' || roleParam === 'seller') {
         if (typeof window !== 'undefined') {
-            window.location.href = `/apply/team-leader${refCode ? `?referrer=${refCode}` : ''}`;
+            window.location.href = `/apply/seller${refCode ? `?referrer=${refCode}` : ''}`;
+        }
+        return null;
+    }
+
+    if (roleParam === 'customer-service' || roleParam === 'customerservice' || roleParam === 'support') {
+        if (typeof window !== 'undefined') {
+            window.location.href = `/apply/customer-service${refCode ? `?referrer=${refCode}` : ''}`;
         }
         return null;
     }
 
     const ROLES = [
-        { name: 'Team Leader Form', href: `/apply/team-leader${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-pink-600 to-purple-600', desc: 'Apply for Team Leader role' },
+        { name: 'Seller Form', href: `/apply/seller${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-amber-600 to-orange-600', desc: 'Apply to become a Coin Seller / Merchant' },
+        { name: 'Customer Service Form', href: `/apply/customer-service${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-cyan-600 to-blue-600', desc: 'Apply for Customer Support Executive' },
         { name: 'Agency Form', href: `/apply/agency${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-purple-600 to-pink-600', desc: 'Apply to register an Agency' },
-        { name: 'Operator Form', href: `/apply/operator${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-pink-600 to-rose-600', desc: 'Apply to register an Operator' },
+        { name: 'Operator Form', href: `/apply/operator${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-emerald-600 to-teal-600', desc: 'Apply to register an Operator' },
         { name: 'Super Admin Form', href: `/apply/super-admin${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-violet-600 to-indigo-600', desc: 'Apply for Super Admin role' },
         { name: 'Admin Form', href: `/apply/admin${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-indigo-600 to-blue-600', desc: 'Apply for Admin role' },
         { name: 'Host Form', href: `/apply/host${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-fuchsia-600 to-purple-600', desc: 'Apply to become a Live Host' },

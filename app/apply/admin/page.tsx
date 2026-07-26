@@ -2,8 +2,9 @@
 
 import { useState, Suspense } from 'react';
 import { toast } from 'sonner';
-import { RecruitmentFormLayout, FormStep } from '@/components/recruitment/RecruitmentFormLayout';
-import { ReferralState } from '@/components/recruitment/ReferralBanner';
+import { RoleCreateLayout, FormStep } from '@/components/role-create/RoleCreateLayout';
+import { ReferralState } from '@/components/role-create/ReferralBanner';
+import { FileUpload } from '@/components/role-create/FileUpload';
 import { apiClient } from '@/lib/apiClient';
 
 const ADMIN_STEPS: FormStep[] = [
@@ -81,6 +82,11 @@ function AdminFormContent() {
     const handleSubmit = async () => {
         if (!validateCurrentStep()) return;
 
+        if (!referral.code || !referral.isVerified) {
+            toast.error('A valid, verified Referral Code (e.g. D07A24) is required to apply.');
+            return;
+        }
+
         if (!formData.agreedToTerms) {
             toast.error('You must sign the Administrative Code of Conduct to submit.');
             return;
@@ -139,11 +145,11 @@ function AdminFormContent() {
     };
 
     return (
-        <RecruitmentFormLayout
+        <RoleCreateLayout
             roleKey="admin"
-            roleTitle="Admin Recruitment Portal"
+            roleTitle="Admin Application Portal"
             roleSubtitle="Apply for Platform Administrator & Governance clearance on MithiChat."
-            badgeText="Platform Administrator Recruitment"
+            badgeText="Platform Administrator Application"
             themeGradient="from-slate-950 via-blue-950 to-indigo-950"
             accentColor="blue"
             steps={ADMIN_STEPS}
@@ -327,59 +333,85 @@ function AdminFormContent() {
             {/* Step 4: Oath */}
             {currentStep === 3 && (
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-white mb-2">4. Identity & Security Oath</h3>
+                    <h3 className="text-lg font-bold text-white mb-2">4. Identity Verification & Security Documents</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Front Side Document URL / File</label>
-                            <input
-                                type="url"
-                                value={formData.adharFrontUrl}
-                                onChange={e => updateField('adharFrontUrl', e.target.value)}
-                                placeholder="https://drive.google.com/..."
-                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Back Side Document URL / File</label>
-                            <input
-                                type="url"
-                                value={formData.adharBackUrl}
-                                onChange={e => updateField('adharBackUrl', e.target.value)}
-                                placeholder="https://drive.google.com/..."
-                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
-                            />
-                        </div>
+                        <FileUpload
+                            label="Aadhaar Card Front Side Document"
+                            name="adharFrontUrl"
+                            required
+                            value={formData.adharFrontUrl}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('adharFrontUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('adharFrontUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
+                        />
+                        <FileUpload
+                            label="Aadhaar Card Back Side Document"
+                            name="adharBackUrl"
+                            required
+                            value={formData.adharBackUrl}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('adharBackUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('adharBackUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
+                        />
                     </div>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">PAN Card Document URL / File</label>
-                        <input
-                            type="url"
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FileUpload
+                            label="PAN Card Document"
+                            name="panCardUrl"
+                            required
                             value={formData.panCardUrl}
-                            onChange={e => updateField('panCardUrl', e.target.value)}
-                            placeholder="https://drive.google.com/..."
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('panCardUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('panCardUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
                         />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">Government ID Copy URL</label>
-                        <input
-                            type="url"
-                            value={formData.govtIdUrl}
-                            onChange={e => updateField('govtIdUrl', e.target.value)}
-                            placeholder="Passport / ID link"
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">Background Check Consent Form URL</label>
-                        <input
-                            type="url"
+                        <FileUpload
+                            label="Admin Resume / CV Document"
+                            name="securityConsentUrl"
+                            required
                             value={formData.securityConsentUrl}
-                            onChange={e => updateField('securityConsentUrl', e.target.value)}
-                            placeholder="Signed consent document link"
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-blue-400"
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('securityConsentUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('securityConsentUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
                         />
                     </div>
+                    <FileUpload
+                        label="Government ID / Passport Copy (Optional)"
+                        name="govtIdUrl"
+                        value={formData.govtIdUrl}
+                        onChange={(fileOrUrl) => {
+                            if (typeof fileOrUrl === 'string') {
+                                updateField('govtIdUrl', fileOrUrl);
+                            } else if (fileOrUrl instanceof File) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => updateField('govtIdUrl', reader.result as string);
+                                reader.readAsDataURL(fileOrUrl);
+                            }
+                        }}
+                    />
 
                     <div className="pt-3">
                         <label className="flex items-start gap-3 cursor-pointer bg-white/5 p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
@@ -396,7 +428,7 @@ function AdminFormContent() {
                     </div>
                 </div>
             )}
-        </RecruitmentFormLayout>
+        </RoleCreateLayout>
     );
 }
 

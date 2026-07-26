@@ -2,8 +2,9 @@
 
 import { useState, Suspense } from 'react';
 import { toast } from 'sonner';
-import { RecruitmentFormLayout, FormStep } from '@/components/recruitment/RecruitmentFormLayout';
-import { ReferralState } from '@/components/recruitment/ReferralBanner';
+import { RoleCreateLayout, FormStep } from '@/components/role-create/RoleCreateLayout';
+import { ReferralState } from '@/components/role-create/ReferralBanner';
+import { FileUpload } from '@/components/role-create/FileUpload';
 import { apiClient } from '@/lib/apiClient';
 
 const SUPER_ADMIN_STEPS: FormStep[] = [
@@ -79,6 +80,11 @@ function SuperAdminFormContent() {
     const handleSubmit = async () => {
         if (!validateCurrentStep()) return;
 
+        if (!referral.code || !referral.isVerified) {
+            toast.error('A valid, verified Referral Code (e.g. D07A24) is required to apply.');
+            return;
+        }
+
         if (!formData.agreedToNda) {
             toast.error('You must sign the Enterprise Non-Disclosure Agreement (NDA) to submit.');
             return;
@@ -135,9 +141,9 @@ function SuperAdminFormContent() {
     };
 
     return (
-        <RecruitmentFormLayout
+        <RoleCreateLayout
             roleKey="super-admin"
-            roleTitle="Super Admin Executive Portal"
+            roleTitle="Super Admin Application Portal"
             roleSubtitle="Executive Recruitment for Senior Operations, Platform Governance & Super Admin Clearances."
             badgeText="Confidential Super Admin Clearance"
             themeGradient="from-slate-950 via-rose-950 to-violet-950"
@@ -310,62 +316,89 @@ function SuperAdminFormContent() {
                 </div>
             )}
 
-            {/* Step 4: Enterprise NDA */}
+            {/* Step 4: Identity Verification & Enterprise NDA */}
             {currentStep === 3 && (
                 <div className="space-y-4">
-                    <h3 className="text-lg font-bold text-white mb-2">4. Legal NDA & Executive Oath</h3>
+                    <h3 className="text-lg font-bold text-white mb-2">4. Identity Verification Documents & Executive Oath</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div>
-                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Front Side Document URL / File</label>
-                            <input
-                                type="url"
-                                value={formData.adharFrontUrl}
-                                onChange={e => updateField('adharFrontUrl', e.target.value)}
-                                placeholder="https://drive.google.com/..."
-                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-rose-400"
-                            />
-                        </div>
-                        <div>
-                            <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Card Back Side Document URL / File</label>
-                            <input
-                                type="url"
-                                value={formData.adharBackUrl}
-                                onChange={e => updateField('adharBackUrl', e.target.value)}
-                                placeholder="https://drive.google.com/..."
-                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-rose-400"
-                            />
-                        </div>
+                        <FileUpload
+                            label="Aadhaar Card Front Side Document"
+                            name="adharFrontUrl"
+                            required
+                            value={formData.adharFrontUrl}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('adharFrontUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('adharFrontUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
+                        />
+                        <FileUpload
+                            label="Aadhaar Card Back Side Document"
+                            name="adharBackUrl"
+                            required
+                            value={formData.adharBackUrl}
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('adharBackUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('adharBackUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
+                        />
                     </div>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">PAN Card Document URL / File</label>
-                        <input
-                            type="url"
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <FileUpload
+                            label="PAN Card Document"
+                            name="panCardUrl"
+                            required
                             value={formData.panCardUrl}
-                            onChange={e => updateField('panCardUrl', e.target.value)}
-                            placeholder="https://drive.google.com/..."
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-rose-400"
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('panCardUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('panCardUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
                         />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">Passport / National ID Document URL</label>
-                        <input
-                            type="url"
-                            value={formData.passportDocUrl}
-                            onChange={e => updateField('passportDocUrl', e.target.value)}
-                            placeholder="Passport copy link"
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-rose-400"
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">Signed Enterprise Non-Disclosure Agreement (NDA) URL</label>
-                        <input
-                            type="url"
+                        <FileUpload
+                            label="Executive Resume / CV Document"
+                            name="signedNdaUrl"
+                            required
                             value={formData.signedNdaUrl}
-                            onChange={e => updateField('signedNdaUrl', e.target.value)}
-                            placeholder="Signed NDA PDF link"
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-rose-400"
+                            onChange={(fileOrUrl) => {
+                                if (typeof fileOrUrl === 'string') {
+                                    updateField('signedNdaUrl', fileOrUrl);
+                                } else if (fileOrUrl instanceof File) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => updateField('signedNdaUrl', reader.result as string);
+                                    reader.readAsDataURL(fileOrUrl);
+                                }
+                            }}
                         />
                     </div>
+
+                    <FileUpload
+                        label="Passport / National Identity Document (Optional)"
+                        name="passportDocUrl"
+                        value={formData.passportDocUrl}
+                        onChange={(fileOrUrl) => {
+                            if (typeof fileOrUrl === 'string') {
+                                updateField('passportDocUrl', fileOrUrl);
+                            } else if (fileOrUrl instanceof File) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => updateField('passportDocUrl', reader.result as string);
+                                reader.readAsDataURL(fileOrUrl);
+                            }
+                        }}
+                    />
 
                     <div className="pt-3">
                         <label className="flex items-start gap-3 cursor-pointer bg-white/5 p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
@@ -382,7 +415,7 @@ function SuperAdminFormContent() {
                     </div>
                 </div>
             )}
-        </RecruitmentFormLayout>
+        </RoleCreateLayout>
     );
 }
 
