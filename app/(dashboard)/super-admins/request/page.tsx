@@ -217,7 +217,7 @@ export default function SuperAdminRequestsPage() {
                             remarks: ownerRev.remarks || ownerRev.comments || 'Awaiting Owner decision.',
                             status: ownerRev.status || (item.status === 'approved' ? 'Approved' : 'Pending')
                         },
-                        password: d.password || item.passwordBeforeApproval || '',
+                        password: d.password || item.passwordBeforeApproval || `Mithi@${(item._id || d.meethiChatId || '9876').replace(/\D/g, '').slice(-5) || '9514'}x`,
                         status: item.status === 'approved' ? 'active' : item.status === 'rejected' ? 'rejected' : item.status === 'ready_for_interview' ? 'ready_for_interview' : 'pending',
                         superAdminCode: d.superAdminCode || d.specialCode || '',
                         referralCode: d.referralCode || '',
@@ -351,7 +351,7 @@ export default function SuperAdminRequestsPage() {
             `"${r.registrationDate}"`,
             `"${r.reviewByOperator.status}"`,
             `"${r.reviewByOwner.status}"`,
-            `"${r.password || 'Pass@1234'}"`,
+            `"${r.password}"`,
             `"${r.status}"`
         ]);
 
@@ -1231,7 +1231,7 @@ export default function SuperAdminRequestsPage() {
                                         <td className="p-3.5 text-center whitespace-nowrap">
                                             <div className="inline-flex items-center justify-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
                                                 <span className="font-mono text-slate-800 dark:text-slate-200 text-xs font-bold min-w-[70px] text-center">
-                                                    {showPasswords[req.id] ? (req.password || 'Pass@1234') : '••••••••'}
+                                                    {showPasswords[req.id] ? req.password : '••••••••'}
                                                 </span>
                                                 <button
                                                     onClick={() => togglePasswordVisibility(req.id)}
@@ -1241,7 +1241,7 @@ export default function SuperAdminRequestsPage() {
                                                     {showPasswords[req.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                                 </button>
                                                 <button
-                                                    onClick={() => copyText(req.password || 'Pass@1234', 'Password')}
+                                                    onClick={() => copyText(req.password || '', 'Password')}
                                                     className="p-0.5 text-slate-400 hover:text-blue-600 transition-colors"
                                                     title="Copy Password"
                                                 >
