@@ -15,6 +15,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/apiClient';
+import { isRouteAllowed } from '@/config/rbacMatrix';
 
 interface SubmenuItem {
     name: string;
@@ -305,15 +306,22 @@ export default function Sidebar() {
         }));
     };
 
-    // Filter layout sections based on loaded permissions
+    // Filter layout sections strictly based on ROLE_PERMISSION_MATRIX
     const filteredSections = sidebarSections.map(section => {
-        const isOwnerOrAdmin = !user || ['owner', 'superAdmin', 'admin', 'operator'].includes(user.role);
-        const isCategoryAllowed = isOwnerOrAdmin || allowedMenus.includes(section.category);
-        if (!isCategoryAllowed) return null;
-
-        const filteredItems = section.items.filter(item => {
-            return isOwnerOrAdmin || allowedMenus.includes(item.category);
-        });
+        const filteredItems = section.items.map(item => {
+            if (item.submenu && item.submenu.length > 0) {
+                const validSubmenu = item.submenu.filter(sub => isRouteAllowed(user?.role || 'user', sub.href));
+                if (validSubmenu.length === 0) return null;
+                return {
+                    ...item,
+                    submenu: validSubmenu
+                };
+            }
+            if (item.href && isRouteAllowed(user?.role || 'user', item.href)) {
+                return item;
+            }
+            return null;
+        }).filter(Boolean) as SidebarItem[];
 
         if (filteredItems.length === 0) return null;
 
