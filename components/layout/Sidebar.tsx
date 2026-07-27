@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import {
     LayoutDashboard, Menu, X, LogOut, User, Award, Gift, UserX,
     Users, UserCheck, ShieldAlert, Video, Plus, Flag, HelpCircle,
-    Ban, AlertOctagon, Calendar, MessageSquare, Bell,
+    Ban, AlertOctagon, Calendar, MessageSquare, Bell, Share2,
     CheckSquare, FileCheck, DollarSign, Coins, ChevronDown, ChevronRight,
     Crown, Briefcase, Terminal, ShieldCheck, Settings, Headphones, Globe
 } from 'lucide-react';
@@ -149,6 +149,7 @@ const sidebarSections: SidebarSection[] = [
         title: 'Operations & Support',
         category: 'Reports',
         items: [
+            { name: 'Referral Center', href: '/referrals', icon: Share2, category: 'Reports' },
             { name: 'Reports', href: '/reports', icon: Flag, category: 'Reports' },
             { name: 'Help & Support', href: '/help-support', icon: HelpCircle, category: 'Reports' },
             { name: 'Account Deletions', href: '/deletions', icon: UserX, category: 'Reports' }
