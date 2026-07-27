@@ -132,19 +132,33 @@ export default function EnterprisePermissionBuilder4() {
   const fetchRegisteredPages = async () => {
     try {
       const res = await apiClient.get('/api/ems/pages');
-      if (res.success && res.data) {
-        setModules(res.data);
-        // Pre-expand dynamic tree nodes
+      const payload: any = res.data;
+      const pageList = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload?.pages)
+            ? payload.pages
+            : [];
+
+      if (res.success && pageList.length > 0) {
+        setModules(pageList);
         const defaultOpen: Record<string, boolean> = {};
-        res.data.forEach((m: any) => {
+        pageList.forEach((m: any) => {
           defaultOpen[m.pageId] = true;
-          defaultOpen[m.pageId + '_actions'] = true;
-          defaultOpen[m.pageId + '_columns'] = true;
+          ['actions', 'columns', 'buttons', 'tabs', 'filters', 'widgets'].forEach(section => {
+            defaultOpen[`${m.pageId}_${section}`] = true;
+          });
         });
         setOpenTreeNodes(defaultOpen);
+      } else {
+        setModules([]);
+        toast.error('Permission registry is empty. Use Sync Registry to rebuild it.');
       }
     } catch (err) {
       console.error('Failed to load registered pages', err);
+      setModules([]);
+      toast.error('Could not load sidebar, pages and field permissions.');
     }
   };
 
@@ -489,13 +503,21 @@ export default function EnterprisePermissionBuilder4() {
     }
   };
 
+  const availableCategories = useMemo(
+    () => ['All', ...Array.from(new Set(modules.map(mod => mod.category).filter(Boolean)))],
+    [modules]
+  );
+
   // Search filter registered tree modules
   const filteredModules = useMemo(() => {
     return modules.filter(mod => {
       const matchesCategory = selectedCategory === 'All' || mod.category === selectedCategory;
       const matchesSearch = !searchQuery.trim() || (
-        mod.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        mod.actions.some((a: string) => a.toLowerCase().includes(searchQuery.toLowerCase()))
+        String(mod.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(mod.metadata?.menu || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(mod.metadata?.submenu || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (mod.actions || []).some((a: string) => a.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (mod.fields || []).some((f: any) => String(f.label || f.key).toLowerCase().includes(searchQuery.toLowerCase()))
       );
       return matchesCategory && matchesSearch;
     });
@@ -506,7 +528,7 @@ export default function EnterprisePermissionBuilder4() {
   };
 
   const isFieldChecked = (dbKey: string, key: string) => {
-    return columnsGranted[dbKey]?.includes(key) ?? true;
+    return columnsGranted[dbKey]?.includes(key) ?? false;
   };
 
   const toggleFieldCheckbox = (dbKey: string, key: string, defaultFieldsList: string[]) => {
@@ -796,7 +818,7 @@ export default function EnterprisePermissionBuilder4() {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-xs font-bold text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              {categories.map(c => (
+              {availableCategories.map(c => (
                 <option key={c} value={c}>{c}</option>
               ))}
             </select>
@@ -814,8 +836,41 @@ export default function EnterprisePermissionBuilder4() {
         </div>
       </div>
 
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Sidebar / Pages', value: modules.length, color: 'text-indigo-300' },
+          { label: 'Fields / Columns', value: modules.reduce((sum, mod) => sum + (mod.fields?.length || 0), 0), color: 'text-cyan-300' },
+          { label: 'Buttons / Actions', value: modules.reduce((sum, mod) => sum + (mod.buttons?.length || 0) + (mod.actions?.length || 0), 0), color: 'text-pink-300' },
+          { label: 'Tabs / Filters', value: modules.reduce((sum, mod) => sum + (mod.tabs?.length || 0) + (mod.filters?.length || 0), 0), color: 'text-emerald-300' },
+        ].map(stat => (
+          <div key={stat.label} className="rounded-2xl border border-slate-800 bg-slate-900/70 p-4">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{stat.label}</p>
+            <p className={`mt-1 text-2xl font-black ${stat.color}`}>{stat.value}</p>
+          </div>
+        ))}
+      </div>
+
       {/* Hierarchical Tree View Permission Matrix builder */}
       <div className="space-y-4 bg-slate-950/40 p-4 rounded-3xl border border-slate-900 shadow-inner">
+        {modules.length === 0 && (
+          <div className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-8 text-center">
+            <AlertTriangle className="mx-auto h-9 w-9 text-amber-400" />
+            <h3 className="mt-3 text-base font-black text-white">Permission registry is not loaded</h3>
+            <p className="mx-auto mt-1 max-w-xl text-xs leading-5 text-slate-400">
+              Sidebar pages, sub-pages, fields, buttons and tabs will appear here after the registry is synchronized.
+            </p>
+            <button type="button" onClick={handleSyncPermissions} disabled={isSyncing}
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-500 disabled:opacity-50">
+              <RefreshCw className={`h-4 w-4 ${isSyncing ? 'animate-spin' : ''}`} />
+              Sync Registry
+            </button>
+          </div>
+        )}
+        {modules.length > 0 && filteredModules.length === 0 && (
+          <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-8 text-center text-sm text-slate-400">
+            No page, field, button or tab matches the selected filter.
+          </div>
+        )}
         {filteredModules.map(mod => {
           const ModIcon = getModIcon(mod.icon);
           const isNodeOpen = openTreeNodes[mod.pageId] ?? true;

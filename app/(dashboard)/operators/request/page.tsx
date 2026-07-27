@@ -74,22 +74,6 @@ export interface OperatorRequestData {
     referralCode?: string;
 }
 
-// Sample SVG Image Generator for realistic document placeholders when images aren't uploaded
-const createCardSVG = (title: string, idNum: string, color: string, bg: string) => {
-    const svgStr = `<svg xmlns="http://www.w3.org/2000/svg" width="400" height="260" viewBox="0 0 400 260">
-        <rect width="400" height="260" rx="16" fill="${bg}"/>
-        <rect x="20" y="20" width="360" height="40" rx="8" fill="${color}" fill-opacity="0.15"/>
-        <text x="40" y="46" font-family="sans-serif" font-size="18" font-weight="bold" fill="${color}">${title}</text>
-        <circle cx="60" cy="120" r="30" fill="${color}" fill-opacity="0.2"/>
-        <rect x="110" y="100" width="230" height="12" rx="6" fill="${color}" fill-opacity="0.2"/>
-        <rect x="110" y="122" width="170" height="10" rx="5" fill="${color}" fill-opacity="0.15"/>
-        <rect x="110" y="140" width="140" height="10" rx="5" fill="${color}" fill-opacity="0.15"/>
-        <rect x="40" y="190" width="320" height="45" rx="8" fill="${color}" fill-opacity="0.1"/>
-        <text x="55" y="218" font-family="monospace" font-size="16" font-weight="bold" fill="${color}">${idNum}</text>
-    </svg>`;
-    return `data:image/svg+xml;utf8,${encodeURIComponent(svgStr)}`;
-};
-
 
 export default function OperatorRequestsPage() {
     const { user: currentUser } = useAuth();
@@ -173,7 +157,7 @@ export default function OperatorRequestsPage() {
                     const ownerRev = item.approvedBy?.find((a: any) => a.role === 'owner') || item.reviewByOwner || {};
                     
                     return {
-                        id: item._id || `OPR-${idx + 100}`,
+                        id: item._id || '',
                         srNo: idx + 1,
                         invitedBy: d.invitedBy || item.createdByRole || 'Direct Application',
                         name: d.name || 'Applicant',
@@ -193,7 +177,7 @@ export default function OperatorRequestsPage() {
                         city: d.city || '',
                         pincode: d.pincode || '',
                         fullAddress: d.fullAddress || '',
-                        registrationDate: item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN') : new Date().toLocaleString('en-IN'),
+                        registrationDate: item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN') : '—',
                         aadhaarNo: d.aadhaarNo || '',
                         panNo: d.panNo || '',
                         aadhaarFront: d.adharFront || d.aadhaarFront || '',
