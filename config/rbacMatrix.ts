@@ -17,6 +17,8 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     name: 'Operator',
     allowedRoutes: [
       '/dashboard',
+      '/referrals',
+      '/referrals/links',
       '/super-admins',
       '/super-admins/request',
       '/admins',
@@ -92,6 +94,8 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     name: 'Super Admin',
     allowedRoutes: [
       '/dashboard',
+      '/referrals',
+      '/referrals/links',
       '/admins/create',
       '/admins/request',
       '/admins',
@@ -111,7 +115,6 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
       '/help-support',
       '/calls',
       '/rooms',
-      '/users',
       '/messages/system',
       '/messages/activity',
       '/events',
@@ -127,7 +130,6 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
       'Reports',
       'Calls',
       'Rooms',
-      'Users',
       'Notifications',
       'Profile',
     ],
@@ -148,6 +150,8 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     name: 'Admin',
     allowedRoutes: [
       '/dashboard',
+      '/referrals',
+      '/referrals/links',
       '/agencies/create',
       '/agencies/request',
       '/agencies',
@@ -193,6 +197,8 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     name: 'Agency',
     allowedRoutes: [
       '/dashboard',
+      '/referrals',
+      '/referrals/links',
       '/hosts/create',
       '/hosts/request',
       '/hosts',
@@ -233,6 +239,8 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     name: 'Coin Seller',
     allowedRoutes: [
       '/dashboard',
+      '/referrals',
+      '/referrals/links',
       '/seller/wallet',
       '/wallet',
       '/recharges/user',
@@ -262,9 +270,10 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     name: 'Customer Support',
     allowedRoutes: [
       '/dashboard',
+      '/referrals',
+      '/referrals/links',
       '/help-support',
       '/support-tickets',
-      '/users',
       '/reports',
       '/complaints',
       '/profile',
@@ -272,7 +281,6 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     allowedModules: [
       'Dashboard',
       'CustomerSupport',
-      'UserSearch',
       'Complaints',
       'Reports',
       'Profile',

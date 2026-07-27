@@ -80,6 +80,7 @@ export default function EnterprisePermissionBuilder4() {
   // Actions and columns visibility mappings
   const [actionsGranted, setActionsGranted] = useState<Record<string, boolean>>({});
   const [columnsGranted, setColumnsGranted] = useState<Record<string, string[]>>({});
+  const [pagesGranted, setPagesGranted] = useState<Record<string, boolean>>({});
 
   // Compare Mode state
   const [showCompareModal, setShowCompareModal] = useState(false);
@@ -168,6 +169,12 @@ export default function EnterprisePermissionBuilder4() {
           loadedActions[act] = true;
         });
         setActionsGranted(loadedActions);
+        const loadedPages: Record<string, boolean> = {};
+        (res.data.pages || []).forEach((page: string) => {
+          loadedPages[page] = true;
+          loadedPages[page.replace(/^\//, '')] = true;
+        });
+        setPagesGranted(loadedPages);
 
         const loadedColumns: Record<string, string[]> = {};
         if (res.data.columns) {
@@ -382,14 +389,28 @@ export default function EnterprisePermissionBuilder4() {
     try {
       setLoading(true);
       const grantedActionList = Object.keys(actionsGranted).filter(k => actionsGranted[k]);
+      const grantedModules = modules.filter((mod) => pagesGranted[mod.pageId]);
+      const grantedPages = grantedModules.map((mod) => mod.metadata?.route || `/${mod.pageId}`);
+      const grantedMenus = [...new Set(grantedModules.map((mod) => mod.metadata?.menu || mod.category))];
+      const fields: Record<string, boolean> = {};
+      modules.forEach((mod) => {
+        const dbKey = mod.pageId === 'users' ? 'user' : mod.pageId;
+        const allowed = columnsGranted[dbKey] || [];
+        (mod.fields || []).forEach((field: any) => {
+          fields[field.key] = allowed.includes(field.key);
+        });
+      });
 
       const res = await apiClient.post('/api/ems/permissions', {
         targetType,
         targetId: id,
         reason: auditLogReason,
         permissions: {
-          menus: ['Dashboard', 'Users', 'Host', 'Agency', 'Coin Seller', 'Reports', 'Notifications', 'Finance', 'Settings', 'Developer'],
+          menus: grantedMenus,
+          pages: grantedPages,
+          modules: grantedModules.map((mod) => mod.pageId),
           actions: grantedActionList,
+          fields,
           buttons: grantedActionList,
           columns: columnsGranted,
           expiresAt: expiresAt ? new Date(expiresAt) : undefined
@@ -824,6 +845,15 @@ export default function EnterprisePermissionBuilder4() {
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
+                  <label className="flex items-center gap-2 text-[10px] font-bold text-cyan-300">
+                    <input
+                      type="checkbox"
+                      checked={pagesGranted[mod.pageId] ?? false}
+                      onChange={() => setPagesGranted(prev => ({ ...prev, [mod.pageId]: !prev[mod.pageId] }))}
+                      className="accent-cyan-500"
+                    />
+                    Page access
+                  </label>
                   <button
                     onClick={() => {
                       const updated = { ...actionsGranted };

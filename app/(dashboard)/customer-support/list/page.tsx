@@ -152,9 +152,10 @@ export default function CSListPage() {
     const fetchCSData = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await apiClient.get('/api/customer-support').catch(() => null);
-            if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
-                const mapped: CSListItem[] = res.data.map((item: any, idx: number) => ({
+            const res = await apiClient.get('/api/v1/admin/customer-support').catch(() => null);
+            const staff = Array.isArray(res?.data) ? res.data : res?.data?.staff;
+            if (res && res.success && Array.isArray(staff)) {
+                const mapped: CSListItem[] = staff.map((item: any, idx: number) => ({
                     id: item._id || `CS-${idx + 1000}`,
                     srNo: idx + 1,
                     invitedBy: item.invitedBy || 'Super Admin Team',
@@ -179,11 +180,11 @@ export default function CSListPage() {
                 }));
                 setCsList(mapped);
             } else {
-                setCsList(MOCK_CS_LIST);
+                setCsList([]);
             }
         } catch (err) {
             console.error('Failed to load CS list:', err);
-            setCsList(MOCK_CS_LIST);
+            setCsList([]);
         } finally {
             setLoading(false);
         }
@@ -575,6 +576,7 @@ export default function CSListPage() {
                                 <th className="p-3.5 whitespace-nowrap text-center">Action</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">View Data</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">Transfer</th>
+                                <th className="p-3.5 whitespace-nowrap text-center">Permissions</th>
                             </tr>
                         </thead>
 
@@ -703,7 +705,6 @@ export default function CSListPage() {
                                                 <span>{cs.onlineStatus === 'online' ? '🟢 Online' : '⚪ Offline'}</span>
                                             </span>
                                         </td>
-
                                         {/* 12. Remove */}
                                         <td className="p-3.5 text-center whitespace-nowrap">
                                             <button
@@ -760,6 +761,13 @@ export default function CSListPage() {
                                             >
                                                 <ArrowLeftRight className="w-3.5 h-3.5" /> Transfer
                                             </button>
+                                        </td>
+                                        <td className="p-3.5 text-center whitespace-nowrap">
+                                            <Link href={`/security/permissions?targetType=user&targetId=${cs.id}&name=${encodeURIComponent(cs.name)}`}>
+                                                <button className="inline-flex items-center gap-1 rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-2.5 py-1.5 text-[11px] font-bold text-cyan-400 hover:bg-cyan-500/20">
+                                                    <Key className="h-3.5 w-3.5" /> Permission
+                                                </button>
+                                            </Link>
                                         </td>
                                     </tr>
                                 ))

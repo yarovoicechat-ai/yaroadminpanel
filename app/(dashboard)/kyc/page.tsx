@@ -1,10 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { useCallback, useEffect, useState } from 'react';
+import { CheckCircle, FileText, RefreshCw, ShieldCheck, XCircle } from 'lucide-react';
+import { toast } from 'sonner';
+import { apiClient } from '@/lib/apiClient';
+import { API_ENDPOINTS } from '@/lib/apiEndpoints';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import {
     Table,
     TableBody,
@@ -12,97 +15,165 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from "@/components/ui/Table";
-import { CheckSquare, ShieldAlert, Award, FileText, CheckCircle, XCircle } from "lucide-react";
-import { toast } from 'sonner';
+} from '@/components/ui/Table';
+
+type KycSubmission = {
+    _id: string;
+    userId: number;
+    panNumber: string;
+    panImage: string;
+    aadharNumber: string;
+    aadharFrontImage: string;
+    aadharBackImage: string;
+    status: 'pending' | 'approved' | 'rejected';
+    createdAt: string;
+    user?: {
+        name?: string;
+        userName?: string;
+        meethiId?: string;
+        role?: string;
+    } | null;
+};
 
 export default function KycPage() {
-    // Mock KYC Submissions
-    const [kycList, setKycList] = useState<any[]>([
-        { id: '1', name: 'Alina Dsouza', docType: 'Passport', docNumber: 'L8891023', fileUrl: 'https://images.unsplash.com/photo-1554774853-aae0a22c8aa4?auto=format&fit=crop&w=150&q=80', status: 'pending' },
-        { id: '2', name: 'Kiara Advani', docType: 'National ID Card', docNumber: '3902-1182-9011', fileUrl: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80', status: 'pending' },
-        { id: '3', name: 'Sonam Kapoor', docType: 'Driver License', docNumber: 'DL-9938012A', fileUrl: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80', status: 'approved' }
-    ]);
+    const [kycList, setKycList] = useState<KycSubmission[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [processingId, setProcessingId] = useState<string | null>(null);
 
-    const handleKycReview = (id: string, action: 'approved' | 'rejected') => {
-        setKycList(prev => prev.map(k => {
-            if (k.id === id) {
-                toast.success(`KYC Submission for ${k.name} was ${action}`);
-                return { ...k, status: action };
+    const fetchKyc = useCallback(async () => {
+        try {
+            setLoading(true);
+            const response = await apiClient.get<KycSubmission[]>(API_ENDPOINTS.KYC.PENDING);
+            setKycList(Array.isArray(response.data) ? response.data : []);
+        } catch (error: any) {
+            toast.error(error.message || 'Failed to fetch KYC requests');
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        void fetchKyc();
+    }, [fetchKyc]);
+
+    const reviewKyc = async (item: KycSubmission, status: 'approved' | 'rejected') => {
+        let reason = '';
+        if (status === 'rejected') {
+            reason = window.prompt('Enter rejection reason')?.trim() || '';
+            if (!reason) return;
+        }
+
+        try {
+            setProcessingId(item._id);
+            const response = await apiClient.post(API_ENDPOINTS.KYC.PROCESS, {
+                kycId: item._id,
+                status,
+                reason,
+            });
+            if (response.success) {
+                toast.success(`KYC ${status}`);
+                setKycList((items) => items.filter((entry) => entry._id !== item._id));
             }
-            return k;
-        }));
+        } catch (error: any) {
+            toast.error(error.message || 'Unable to update KYC');
+        } finally {
+            setProcessingId(null);
+        }
     };
+
+    const documentLink = (url: string, label: string) => (
+        <a
+            href={url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-xs font-semibold text-cyan-300 hover:text-cyan-200"
+        >
+            <FileText size={13} />
+            {label}
+        </a>
+    );
 
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Identity Verifications (KYC)</h2>
-                    <p className="text-muted-foreground mt-1 font-medium font-sans">Approve national identity papers and business files uploaded by hosts</p>
+                    <h2 className="bg-gradient-to-r from-cyan-300 via-violet-300 to-fuchsia-300 bg-clip-text text-3xl font-bold tracking-tight text-transparent">
+                        Identity Verification
+                    </h2>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Real KYC submissions from hosts in your permitted team.
+                    </p>
                 </div>
+                <Button variant="outline" size="sm" onClick={() => void fetchKyc()} disabled={loading}>
+                    <RefreshCw className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                </Button>
             </div>
 
-            <Card className="glass-card">
+            <Card glass>
                 <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-slate-200">
-                        <CheckSquare size={20} className="text-primary animate-pulse" />
-                        Host KYC Validation Queue
+                    <CardTitle className="flex items-center gap-2">
+                        <ShieldCheck className="h-5 w-5 text-cyan-300" />
+                        Pending KYC ({kycList.length})
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="font-bold text-slate-300">Applicant Name</TableHead>
-                                <TableHead className="font-bold text-slate-300">Identity Document Type</TableHead>
-                                <TableHead className="font-bold text-slate-300">Document ID Number</TableHead>
-                                <TableHead className="font-bold text-slate-300">Document Scan File</TableHead>
-                                <TableHead className="font-bold text-slate-300">KYC Status</TableHead>
-                                <TableHead className="text-right font-bold text-slate-300">Action Queue</TableHead>
+                                <TableHead>Applicant</TableHead>
+                                <TableHead>PAN</TableHead>
+                                <TableHead>Aadhaar</TableHead>
+                                <TableHead>Documents</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {kycList.map((kyc) => (
-                                <TableRow key={kyc.id} className="hover:bg-muted/30">
-                                    <TableCell className="font-bold text-slate-200">{kyc.name}</TableCell>
-                                    <TableCell className="font-semibold text-slate-300 capitalize">{kyc.docType}</TableCell>
-                                    <TableCell className="font-mono text-xs text-primary font-bold">{kyc.docNumber}</TableCell>
+                            {!loading && kycList.length === 0 ? (
+                                <TableRow>
+                                    <TableCell colSpan={6} className="h-32 text-center text-muted-foreground">
+                                        No pending KYC submissions.
+                                    </TableCell>
+                                </TableRow>
+                            ) : kycList.map((kyc) => (
+                                <TableRow key={kyc._id}>
                                     <TableCell>
-                                        <div className="h-10 w-16 rounded overflow-hidden bg-slate-800 border border-slate-700">
-                                            <img src={kyc.fileUrl} alt="doc scan" className="h-full w-full object-cover" />
+                                        <p className="font-semibold">{kyc.user?.name || kyc.user?.userName || `User ${kyc.userId}`}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {kyc.user?.meethiId || kyc.userId} · {kyc.user?.role || 'user'}
+                                        </p>
+                                    </TableCell>
+                                    <TableCell className="font-mono text-xs">{kyc.panNumber}</TableCell>
+                                    <TableCell className="font-mono text-xs">{kyc.aadharNumber}</TableCell>
+                                    <TableCell>
+                                        <div className="flex flex-col gap-1">
+                                            {documentLink(kyc.panImage, 'PAN')}
+                                            {documentLink(kyc.aadharFrontImage, 'Aadhaar front')}
+                                            {documentLink(kyc.aadharBackImage, 'Aadhaar back')}
                                         </div>
                                     </TableCell>
+                                    <TableCell><Badge variant="secondary">{kyc.status}</Badge></TableCell>
                                     <TableCell>
-                                        <Badge variant={kyc.status === 'approved' ? 'success' : kyc.status === 'pending' ? 'secondary' : 'destructive'} className="font-semibold capitalize">
-                                            {kyc.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {kyc.status === 'pending' ? (
-                                            <div className="flex items-center justify-end gap-1.5">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    onClick={() => handleKycReview(kyc.id, 'approved')}
-                                                    className="flex items-center gap-1 font-bold text-xs hover:bg-emerald-500/10 border-emerald-500/20 text-emerald-400"
-                                                >
-                                                    <CheckCircle size={12} />
-                                                    Approve
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="destructive"
-                                                    onClick={() => handleKycReview(kyc.id, 'rejected')}
-                                                    className="flex items-center gap-1 font-bold text-xs"
-                                                >
-                                                    <XCircle size={12} />
-                                                    Reject
-                                                </Button>
-                                            </div>
-                                        ) : (
-                                            <span className="text-xs text-muted-foreground font-semibold uppercase">{kyc.status}</span>
-                                        )}
+                                        <div className="flex justify-end gap-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                disabled={processingId === kyc._id}
+                                                onClick={() => void reviewKyc(kyc, 'approved')}
+                                                className="text-emerald-400"
+                                            >
+                                                <CheckCircle className="mr-1 h-4 w-4" /> Approve
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="destructive"
+                                                disabled={processingId === kyc._id}
+                                                onClick={() => void reviewKyc(kyc, 'rejected')}
+                                            >
+                                                <XCircle className="mr-1 h-4 w-4" /> Reject
+                                            </Button>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                             ))}

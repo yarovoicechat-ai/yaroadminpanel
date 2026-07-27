@@ -149,7 +149,6 @@ const sidebarSections: SidebarSection[] = [
         title: 'Operations & Support',
         category: 'Reports',
         items: [
-            { name: 'Referral Center', href: '/referrals', icon: Share2, category: 'Reports' },
             { name: 'Reports', href: '/reports', icon: Flag, category: 'Reports' },
             { name: 'Help & Support', href: '/help-support', icon: HelpCircle, category: 'Reports' },
             { name: 'Account Deletions', href: '/deletions', icon: UserX, category: 'Reports' }
@@ -164,8 +163,7 @@ const sidebarSections: SidebarSection[] = [
             { name: 'Event', href: '/events', icon: Calendar, category: 'Notifications' },
             { name: 'System Message', href: '/messages/system', icon: MessageSquare, category: 'Notifications' },
             { name: 'Activity', href: '/messages/activity', icon: Bell, category: 'Notifications' },
-            { name: 'KYC Verification', href: '/kyc', icon: CheckSquare, category: 'Notifications' },
-            { name: 'Requests Approval', href: '/verification/requests', icon: FileCheck, category: 'Notifications' }
+            { name: 'KYC Verification', href: '/kyc', icon: CheckSquare, category: 'Notifications' }
         ]
     },
     {
@@ -251,6 +249,8 @@ export default function Sidebar() {
     const [isMobile, setIsMobile] = useState(false);
     const [expandedMenus, setExpandedMenus] = useState<Record<string, boolean>>({});
     const [allowedMenus, setAllowedMenus] = useState<string[]>([]);
+    const [allowedPages, setAllowedPages] = useState<string[]>([]);
+    const [permissionsLoaded, setPermissionsLoaded] = useState(false);
 
     useEffect(() => {
         const checkMobile = () => {
@@ -281,19 +281,25 @@ export default function Sidebar() {
     useEffect(() => {
         const fetchPermissions = async () => {
             try {
-                const ALL_CATEGORIES = ['Dashboard', 'Users', 'Host', 'Agency', 'Coin Seller', 'Finance', 'Reports', 'Notifications', 'Settings', 'Developer', 'Admin', 'SuperAdmin'];
-                setAllowedMenus(ALL_CATEGORIES);
-                
-                if (!user || ['owner', 'superAdmin', 'admin', 'operator'].includes(user.role)) {
+                if (!user) {
+                    return;
+                }
+                if (user.role === 'owner') {
+                    setAllowedMenus(['*']);
+                    setAllowedPages(['*']);
+                    setPermissionsLoaded(true);
                     return;
                 }
 
                 const res = await apiClient.get('/api/ems/my-permissions');
-                if (res.success && res.data && Array.isArray(res.data.menus) && res.data.menus.length > 0) {
-                    setAllowedMenus(res.data.menus);
+                if (res.success && res.data) {
+                    setAllowedMenus(Array.isArray(res.data.menus) ? res.data.menus : []);
+                    setAllowedPages(Array.isArray(res.data.pages) ? res.data.pages : []);
                 }
             } catch (err) {
                 console.error('Failed to load menu permissions', err);
+            } finally {
+                setPermissionsLoaded(true);
             }
         };
 
@@ -308,17 +314,33 @@ export default function Sidebar() {
     };
 
     // Filter layout sections strictly based on ROLE_PERMISSION_MATRIX
+    const hasDynamicRoute = (href: string) => {
+        if (!permissionsLoaded || user?.role === 'owner') return true;
+        return allowedPages.includes('*') ||
+            allowedPages.includes(href) ||
+            allowedPages.includes(href.replace(/^\//, ''));
+    };
+
+    const hasDynamicMenu = (category: string) => {
+        if (!permissionsLoaded || user?.role === 'owner') return true;
+        if (allowedPages.length > 0) return true;
+        return allowedMenus.includes('*') || allowedMenus.includes(category);
+    };
+
     const filteredSections = sidebarSections.map(section => {
+        if (!hasDynamicMenu(section.category)) return null;
         const filteredItems = section.items.map(item => {
             if (item.submenu && item.submenu.length > 0) {
-                const validSubmenu = item.submenu.filter(sub => isRouteAllowed(user?.role || 'user', sub.href));
+                const validSubmenu = item.submenu.filter(sub =>
+                    isRouteAllowed(user?.role || 'user', sub.href) && hasDynamicRoute(sub.href)
+                );
                 if (validSubmenu.length === 0) return null;
                 return {
                     ...item,
                     submenu: validSubmenu
                 };
             }
-            if (item.href && isRouteAllowed(user?.role || 'user', item.href)) {
+            if (item.href && isRouteAllowed(user?.role || 'user', item.href) && hasDynamicRoute(item.href)) {
                 return item;
             }
             return null;

@@ -249,11 +249,11 @@ export default function HostListPage() {
                 }));
                 setHosts(mapped);
             } else {
-                setHosts(MOCK_HOST_LIST);
+                setHosts([]);
             }
         } catch (err) {
             console.error('Failed to fetch hosts list:', err);
-            setHosts(MOCK_HOST_LIST);
+            setHosts([]);
         } finally {
             setLoading(false);
         }

@@ -1019,7 +1019,11 @@ export default function OperatorRequestsPage() {
                                                     onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarFront, title: `${req.name} - Aadhaar Front`, zoom: 1, rotate: 0 })}
                                                     className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-blue-500 transition-all"
                                                 >
-                                                    <img src={req.aadhaarFront} alt="Aadhaar Front" className="w-12 h-8 object-cover" />
+                                                    {req.aadhaarFront ? (
+                                                        <img src={req.aadhaarFront} alt="Aadhaar Front" className="w-12 h-8 object-cover" />
+                                                    ) : (
+                                                        <div className="w-12 h-8 bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-400 flex items-center justify-center font-medium">No Doc</div>
+                                                    )}
                                                     <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
                                                         <Eye className="w-3.5 h-3.5" />
                                                     </div>
@@ -1040,7 +1044,11 @@ export default function OperatorRequestsPage() {
                                                     onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarBack, title: `${req.name} - Aadhaar Back`, zoom: 1, rotate: 0 })}
                                                     className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-blue-500 transition-all"
                                                 >
-                                                    <img src={req.aadhaarBack} alt="Aadhaar Back" className="w-12 h-8 object-cover" />
+                                                    {req.aadhaarBack ? (
+                                                        <img src={req.aadhaarBack} alt="Aadhaar Back" className="w-12 h-8 object-cover" />
+                                                    ) : (
+                                                        <div className="w-12 h-8 bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-400 flex items-center justify-center font-medium">No Doc</div>
+                                                    )}
                                                     <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
                                                         <Eye className="w-3.5 h-3.5" />
                                                     </div>
@@ -1061,7 +1069,11 @@ export default function OperatorRequestsPage() {
                                                     onClick={() => setImageZoom({ isOpen: true, url: req.panCard, title: `${req.name} - PAN Card`, zoom: 1, rotate: 0 })}
                                                     className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-emerald-500 transition-all"
                                                 >
-                                                    <img src={req.panCard} alt="PAN Card" className="w-12 h-8 object-cover" />
+                                                    {req.panCard ? (
+                                                        <img src={req.panCard} alt="PAN Card" className="w-12 h-8 object-cover" />
+                                                    ) : (
+                                                        <div className="w-12 h-8 bg-slate-100 dark:bg-slate-800 text-[10px] text-slate-400 flex items-center justify-center font-medium">No Doc</div>
+                                                    )}
                                                     <div className="absolute inset-0 bg-emerald-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
                                                         <Eye className="w-3.5 h-3.5" />
                                                     </div>

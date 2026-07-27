@@ -198,11 +198,11 @@ export default function SellersPage() {
                 }));
                 setSellers(mapped);
             } else {
-                setSellers(MOCK_SELLERS_LIST);
+                setSellers([]);
             }
         } catch (err) {
             console.error('Failed to fetch seller list:', err);
-            setSellers(MOCK_SELLERS_LIST);
+            setSellers([]);
         } finally {
             setLoading(false);
         }

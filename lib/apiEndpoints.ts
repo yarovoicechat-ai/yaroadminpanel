@@ -104,8 +104,13 @@ export const API_ENDPOINTS = {
 
     // Withdrawals
     WITHDRAWALS: {
-        PENDING: '/api/admin/withdrawals/pending',
-        PROCESS: '/api/admin/withdrawals/process',
+        PENDING: '/api/withdrawal/pending',
+        PROCESS: '/api/withdrawal/process',
+    },
+
+    KYC: {
+        PENDING: '/api/kyc/pending',
+        PROCESS: '/api/kyc/update-status',
     },
 
     // Gifts

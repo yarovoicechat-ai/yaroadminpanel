@@ -72,6 +72,21 @@ export default function ReferralLinks() {
     }
   ];
 
+  const roleAllowedLinksMap: Record<string, string[]> = {
+    owner: ['Super Admin', 'Admin', 'Operator', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
+    operator: ['Super Admin', 'Admin', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
+    superAdmin: ['Admin', 'Agency', 'Host', 'Customer Service Support'],
+    admin: ['Agency', 'Host', 'Customer Service Support'],
+    agency: ['Agency', 'Host'],
+    coinSeller: ['Coin Seller'],
+    customerSupport: ['Customer Service Support'],
+  };
+
+  const userRole = user?.role || 'user';
+  const allowedRoleNames = roleAllowedLinksMap[userRole] || ['Admin', 'Agency', 'Host', 'Customer Service Support'];
+
+  const visibleLinks = links.filter(link => allowedRoleNames.includes(link.role));
+
   const handleCopy = (url: string, key: string) => {
     navigator.clipboard.writeText(url);
     setCopiedKey(key);
@@ -114,7 +129,7 @@ export default function ReferralLinks() {
 
         {/* Links Grid */}
         <div className="md:col-span-2 space-y-4">
-          {links.map(link => {
+          {visibleLinks.map(link => {
             const LinkIcon = link.icon;
             return (
               <div
