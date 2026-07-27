@@ -1,14 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Lock } from 'lucide-react';
 import { FileUpload } from '@/components/role-create/FileUpload';
 import { ReferralBanner, ReferralState } from '@/components/role-create/ReferralBanner';
 import { apiClient } from '@/lib/apiClient';
-
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.mithichat.live';
 
 function HostFormContent() {
     const searchParams = useSearchParams();
@@ -41,13 +39,24 @@ function HostFormContent() {
 
     const [referralState, setReferralState] = useState<ReferralState | null>(null);
 
+    const handleReferralVerified = (state: ReferralState) => {
+        setReferralState(state);
+        setForm(current => ({
+            ...current,
+            referralCode: state.isVerified ? state.code.trim() : '',
+        }));
+    };
+
     const handleReset = () => {
         setForm(initialFormState);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!form.referralCode || !form.referralCode.trim()) {
+        const verifiedReferralCode = referralState?.isVerified
+            ? referralState.code.trim()
+            : '';
+        if (!verifiedReferralCode) {
             toast.error('A valid Referral Code is required to submit host application.');
             return;
         }
@@ -59,33 +68,37 @@ function HostFormContent() {
 
         try {
             setSubmitting(true);
-            const res = await fetch(`${API_BASE}/api/public/apply`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name: form.name,
-                    email: form.email,
-                    phoneNumber: form.phone,
-                    role: 'host',
-                    referralCode: form.referralCode,
-                    documents: [form.resume, form.adharFront, form.adharBack, form.pan, form.portfolio, form.experienceLetter, form.addressProof, form.idProof].filter(Boolean),
-                    city: form.city,
-                    state: form.state,
-                    district: form.district,
-                    country: form.country,
-                    linkedin: form.linkedin,
-                    personalNote: form.personalNote,
-                }),
+            const documents = [
+                { name: 'Resume', documentType: 'Resume', url: form.resume },
+                { name: 'Aadhaar Front', documentType: 'GovtID', url: form.adharFront || form.idProof },
+                { name: 'Aadhaar Back', documentType: 'GovtID', url: form.adharBack || form.addressProof },
+                { name: 'PAN Card', documentType: 'Certificate', url: form.pan },
+                { name: 'Portfolio', documentType: 'Portfolio', url: form.portfolio },
+                { name: 'Experience Letter', documentType: 'Experience', url: form.experienceLetter },
+            ].filter(document => Boolean(document.url));
+
+            const data = await apiClient.post('/api/recruitment/host', {
+                name: form.name.trim(),
+                email: form.email.trim(),
+                phone: form.phone.trim(),
+                role: 'host',
+                referralCode: verifiedReferralCode,
+                documents,
+                city: form.city.trim(),
+                state: form.state.trim(),
+                district: form.district.trim(),
+                country: form.country.trim(),
+                linkedin: form.linkedin.trim(),
+                personalNote: form.personalNote.trim(),
             });
-            const data = await res.json();
             if (data.success) {
                 setSuccess(true);
                 toast.success('Host application submitted successfully!');
             } else {
                 toast.error(data.message || 'Submission failed');
             }
-        } catch {
-            toast.error('Network error. Please try again.');
+        } catch (error: any) {
+            toast.error(error?.message || 'Unable to submit host application. Please try again.');
         } finally {
             setSubmitting(false);
         }
@@ -137,7 +150,7 @@ function HostFormContent() {
                 </div>
 
                 {/* Referral Banner */}
-                <ReferralBanner onReferralVerified={setReferralState} />
+                <ReferralBanner onReferralVerified={handleReferralVerified} />
 
                 {!referralState?.isVerified ? (
                     <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-8 text-center space-y-4 my-6 backdrop-blur-md">

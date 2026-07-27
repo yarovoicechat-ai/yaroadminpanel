@@ -72,16 +72,15 @@ export function ReferralBanner({ onReferralVerified }: ReferralBannerProps) {
                 setReferralState(unverifiedState);
                 onReferralVerified(unverifiedState);
             }
-        } catch {
-            const fallbackVerifiedState: ReferralState = {
+        } catch (error: any) {
+            const failedState: ReferralState = {
                 code: codeToVerify.toUpperCase(),
-                referrerName: `Authorized Inviter (${codeToVerify.toUpperCase()})`,
-                referrerRole: 'Executive Network',
-                isVerified: true,
+                isVerified: false,
                 isLocked: isFromUrl,
             };
-            setReferralState(fallbackVerifiedState);
-            onReferralVerified(fallbackVerifiedState);
+            setErrorMessage(error?.message || 'Unable to verify referral code. Please try again.');
+            setReferralState(failedState);
+            onReferralVerified(failedState);
         } finally {
             setLoading(false);
         }

@@ -99,7 +99,7 @@ function SellerFormContent() {
                 state: formData.state,
                 district: formData.district,
                 city: formData.city,
-                role: 'coinSeller',
+                role: 'seller',
                 referralCode: referral.code,
                 documents: [
                     formData.adharFrontUrl ? { name: 'Aadhaar Front', documentType: 'AdharFront', url: formData.adharFrontUrl } : null,
@@ -119,13 +119,14 @@ function SellerFormContent() {
                 gstNo: formData.gstNo,
             };
 
-            const res = await apiClient.post('/api/ems/requests', {
-                requestType: 'Seller Request',
-                data: payload
-            }).catch(() => null);
+            const res = await apiClient.post('/api/recruitment/seller', payload);
+            if (!res.success || !res.data?.applicationId) {
+                throw new Error(res.message || 'Seller application could not be submitted.');
+            }
 
-            setApplicationId(`SLR-${Math.floor(100000 + Math.random() * 900000)}`);
+            setApplicationId(res.data.applicationId);
             setSuccess(true);
+            localStorage.removeItem('recruitment_draft_seller');
             toast.success('Coin Seller Application Submitted Successfully!');
         } catch (error: any) {
             toast.error(error.message || 'Network error. Please try again.');

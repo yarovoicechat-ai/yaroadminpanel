@@ -15,7 +15,7 @@ export default function ReferralLinks() {
   const agencyDomain = 'agency.mithichat.live';
   const adminDomain = 'admin.mithichat.live';
   const operatorDomain = 'operator.mithichat.live';
-  const sellerDomain = 'seller.mithichat.live';
+  const sellerFormBaseUrl = 'https://admin.mithichat.live/apply/seller';
   const supportDomain = 'support.mithichat.live';
 
   const referralCode = (user as any)?.mithiId || user?.meethiId || user?.id?.substring(18).toUpperCase() || 'AGY8X92';
@@ -66,7 +66,7 @@ export default function ReferralLinks() {
     {
       role: 'Coin Seller',
       desc: 'Register subordinate coin sellers.',
-      url: `https://${sellerDomain}/?referrer=${referralCode}&role=coinSeller`,
+      url: `${sellerFormBaseUrl}?referrer=${referralCode}`,
       icon: Award,
       color: 'text-pink-400 border-pink-500/20 bg-pink-500/5'
     }
