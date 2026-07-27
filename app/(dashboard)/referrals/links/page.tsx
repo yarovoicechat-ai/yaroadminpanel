@@ -9,64 +9,65 @@ import { toast } from 'sonner';
 export default function ReferralLinks() {
   const { user } = useAuth();
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
-  
-  // Base domains (Could be configurable via global settings)
-  const hostDomain = 'host.mithichat.live';
-  const agencyDomain = 'agency.mithichat.live';
-  const adminDomain = 'admin.mithichat.live';
-  const operatorDomain = 'operator.mithichat.live';
-  const sellerFormBaseUrl = 'https://admin.mithichat.live/apply/seller';
-  const supportDomain = 'support.mithichat.live';
+  const [localOrigin, setLocalOrigin] = useState('');
 
-  const referralCode = (user as any)?.referralCode || (user as any)?.employeeCode || (user as any)?.specialCode || (user as any)?.mithiId || user?.meethiId || '';
+  useEffect(() => {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      setLocalOrigin(window.location.origin);
+    }
+  }, []);
+
+  const adminFormBaseUrl = localOrigin || 'https://admin.mithichat.live';
+
+  const referralCode = (user as any)?.referralCode || (user as any)?.employeeCode || (user as any)?.specialCode || (user as any)?.mithiId || user?.meethiId || (user?.role === 'owner' ? 'OS000001' : '');
 
   const links = [
     {
       role: 'Super Admin',
       desc: 'Recruit executive Super Administrators for board & platform governance.',
-      url: `https://${adminDomain}/apply/super-admin?referrer=${referralCode}`,
+      url: `${adminFormBaseUrl}/apply/super-admin?referrer=${referralCode}`,
       icon: Key,
       color: 'text-rose-400 border-rose-500/20 bg-rose-500/5'
     },
     {
       role: 'Admin',
       desc: 'Recruit sub-administrators directly under your organization.',
-      url: `https://${adminDomain}/apply/admin?referrer=${referralCode}`,
+      url: `${adminFormBaseUrl}/apply/admin?referrer=${referralCode}`,
       icon: Briefcase,
       color: 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5'
     },
     {
       role: 'Operator',
       desc: 'Link operators directly to your organization.',
-      url: `https://${operatorDomain}/?referrer=${referralCode}&role=operator`,
+      url: `${localOrigin ? `${localOrigin}/apply/operator` : 'https://operator.mithichat.live/'}?referrer=${referralCode}&role=operator`,
       icon: Key,
       color: 'text-purple-400 border-purple-500/20 bg-purple-500/5'
     },
     {
       role: 'Agency',
       desc: 'Recruit sub-agencies. They inherit you as their parent node.',
-      url: `https://${agencyDomain}/?referrer=${referralCode}&role=agency`,
+      url: `${localOrigin ? `${localOrigin}/apply/agency` : 'https://agency.mithichat.live/'}?referrer=${referralCode}&role=agency`,
       icon: Briefcase,
       color: 'text-amber-400 border-amber-500/20 bg-amber-500/5'
     },
     {
       role: 'Host',
       desc: 'Sign up new hosts under your agency hierarchy automatically.',
-      url: `https://${hostDomain}/?referrer=${referralCode}&role=host`,
+      url: `${localOrigin ? `${localOrigin}/apply/host` : 'https://host.mithichat.live/'}?referrer=${referralCode}&role=host`,
       icon: Video,
       color: 'text-lime-400 border-lime-500/20 bg-lime-500/5'
     },
     {
       role: 'Customer Service Support',
       desc: 'Register customer support & helpdesk staff candidates.',
-      url: `https://${adminDomain}/apply/customer-service?referrer=${referralCode}`,
+      url: `${adminFormBaseUrl}/apply/customer-service?referrer=${referralCode}`,
       icon: Users,
       color: 'text-cyan-400 border-cyan-500/20 bg-cyan-500/5'
     },
     {
       role: 'Coin Seller',
       desc: 'Register subordinate coin sellers.',
-      url: `${sellerFormBaseUrl}?referrer=${referralCode}`,
+      url: `${adminFormBaseUrl}/apply/seller?referrer=${referralCode}`,
       icon: Award,
       color: 'text-pink-400 border-pink-500/20 bg-pink-500/5'
     }

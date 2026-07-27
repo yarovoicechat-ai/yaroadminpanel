@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
 import { User, Briefcase, Share2, Upload, FileText, CheckCircle, Plus, X, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -54,7 +53,6 @@ const initialFormData: ApplicationFormData = {
 };
 
 function TeamLeaderApplicationContent() {
-    const router = useRouter();
     const [formData, setFormData] = useState<ApplicationFormData>(initialFormData);
     const [skillInput, setSkillInput] = useState('');
     const [submitting, setSubmitting] = useState(false);
@@ -99,9 +97,6 @@ function TeamLeaderApplicationContent() {
             if (response.success) {
                 setSuccess(true);
                 toast.success('Application Submitted Successfully!');
-                setTimeout(() => {
-                    router.push('/apply');
-                }, 3000);
             } else {
                 toast.error(response.message || 'Application submission failed.');
             }

@@ -7,6 +7,14 @@ import { ReferralState } from '@/components/role-create/ReferralBanner';
 import { FileUpload } from '@/components/role-create/FileUpload';
 import { apiClient } from '@/lib/apiClient';
 
+const normalizeEmail = (value: string) => value
+    .normalize('NFKC')
+    .trim()
+    .replace(/\s+/g, '')
+    .toLowerCase();
+
+const isValidEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(normalizeEmail(value));
+
 const AGENCY_STEPS: FormStep[] = [
     { id: 'business', title: 'Business Profile', description: 'Company & registration details' },
     { id: 'leadership', title: 'Agency Manager', description: 'Manager contact details' },
@@ -64,7 +72,7 @@ function AgencyFormContent() {
                 toast.error('Manager Name, Email, and Phone Number are required.');
                 return false;
             }
-            if (!/\S+@\S+\.\S+/.test(formData.email)) {
+            if (!isValidEmail(formData.email)) {
                 toast.error('Please enter a valid email address.');
                 return false;
             }
@@ -101,7 +109,7 @@ function AgencyFormContent() {
             setSubmitting(true);
             const payload = {
                 name: formData.businessName,
-                email: formData.email,
+                email: normalizeEmail(formData.email),
                 phone: formData.phone,
                 role: 'agency',
                 city: formData.city,
@@ -267,6 +275,10 @@ function AgencyFormContent() {
                                 type="email"
                                 value={formData.email}
                                 onChange={e => updateField('email', e.target.value)}
+                                onBlur={e => updateField('email', normalizeEmail(e.target.value))}
+                                inputMode="email"
+                                autoCapitalize="none"
+                                autoCorrect="off"
                                 placeholder="agency@example.com"
                                 className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
                             />

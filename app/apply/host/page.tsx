@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Lock } from 'lucide-react';
@@ -104,14 +104,6 @@ function HostFormContent() {
         }
     };
 
-    useEffect(() => {
-        if (success) {
-            const timer = setTimeout(() => {
-                window.location.href = '/hosts/request';
-            }, 2500);
-            return () => clearTimeout(timer);
-        }
-    }, [success]);
 
     if (success) {
         return (
@@ -124,12 +116,13 @@ function HostFormContent() {
                     </div>
                     <h2 className="text-3xl font-black">Saved as Pending Request! 🎉</h2>
                     <p className="text-white/80 text-sm">Your Host application has been saved to the Host Request Queue.</p>
-                    <a
-                        href="/hosts/request"
-                        className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-white font-black text-sm rounded-xl transition-all border border-emerald-400/30 flex items-center justify-center gap-2 shadow-lg"
+                    <button
+                        type="button"
+                        onClick={() => window.location.reload()}
+                        className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 text-white font-black text-sm rounded-xl transition-all border border-emerald-400/30 shadow-lg"
                     >
-                        Go to Host Request Page (/hosts/request) →
-                    </a>
+                        Submit Another Application
+                    </button>
                 </div>
             </div>
         );

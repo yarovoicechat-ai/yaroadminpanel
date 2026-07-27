@@ -72,41 +72,6 @@ export function RoleCreateLayout({
         }
     }, [formData, roleKey, success]);
 
-    const getRequestPageUrl = (key: string): string => {
-        switch (key.toLowerCase()) {
-            case 'super-admin':
-            case 'superadmin':
-                return '/super-admins/request';
-            case 'admin':
-                return '/admins/request';
-            case 'operator':
-                return '/operators/request';
-            case 'agency':
-                return '/agencies/request';
-            case 'host':
-                return '/hosts/request';
-            case 'seller':
-            case 'coinseller':
-                return '/sellers/request';
-            case 'customer-service':
-            case 'customer-support':
-            case 'support':
-                return '/customer-support/request';
-            default:
-                return '/dashboard';
-        }
-    };
-
-    useEffect(() => {
-        if (success) {
-            const targetUrl = getRequestPageUrl(roleKey);
-            const timer = setTimeout(() => {
-                window.location.href = targetUrl;
-            }, 2500);
-            return () => clearTimeout(timer);
-        }
-    }, [success, roleKey]);
-
     const handleClearDraft = () => {
         const key = `recruitment_draft_${roleKey}`;
         localStorage.removeItem(key);
@@ -114,7 +79,6 @@ export function RoleCreateLayout({
     };
 
     if (success) {
-        const targetRequestUrl = getRequestPageUrl(roleKey);
         return (
             <div className={`min-h-screen bg-gradient-to-br ${themeGradient} flex items-center justify-center p-4 text-white font-sans`}>
                 <div className="max-w-md w-full bg-white/10 backdrop-blur-2xl border border-white/20 p-8 rounded-3xl text-center shadow-2xl space-y-6 animate-fadeIn">
@@ -140,20 +104,14 @@ export function RoleCreateLayout({
                     )}
 
                     <div className="text-xs text-white/60 leading-relaxed bg-white/5 p-4 rounded-xl border border-white/10 text-left space-y-1">
-                        <p className="font-semibold text-white">Redirecting to Request Page...</p>
+                        <p className="font-semibold text-white">You can safely stay on this page.</p>
                         <ul className="list-disc pl-4 space-y-1">
-                            <li>Application is saved as <strong>PENDING</strong> in the Request Page.</li>
-                            <li>Authorized reviewers will inspect documents & approve account creation.</li>
+                            <li>Application is saved as <strong>PENDING</strong> for authorized reviewers.</li>
+                            <li>You will be contacted after review and account approval.</li>
                         </ul>
                     </div>
 
                     <div className="space-y-2.5 pt-2">
-                        <a
-                            href={targetRequestUrl}
-                            className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-sm rounded-xl transition-all border border-emerald-400/30 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20"
-                        >
-                            Go to Request Page ({targetRequestUrl}) →
-                        </a>
                         <button
                             onClick={() => window.location.reload()}
                             className="w-full py-2.5 bg-white/10 hover:bg-white/20 text-white/80 font-semibold text-xs rounded-xl transition-all border border-white/20"

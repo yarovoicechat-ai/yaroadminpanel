@@ -10,6 +10,21 @@ export interface User {
     meethiId?: string;
     employeeCode?: string;
     specialCode?: string;
+    referralCode?: string;
+}
+
+function normalizeUser(user: any): User {
+    return {
+        id: user._id || user.id || user.userId,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        mithiId: user.mithiId || user.meethiId,
+        meethiId: user.meethiId || user.mithiId,
+        employeeCode: user.employeeCode,
+        specialCode: user.specialCode,
+        referralCode: user.referralCode,
+    };
 }
 
 export async function login(email: string, password: string): Promise<{ user: User; token: string; refreshToken: string }> {
@@ -28,16 +43,8 @@ export async function login(email: string, password: string): Promise<{ user: Us
             localStorage.setItem('admin_user', JSON.stringify(user));
 
             return {
-                user: {
-                    id: user._id || user.userId,
-                    name: user.name,
-                    email: user.email,
-                    role: user.role,
-                    mithiId: user.mithiId || user.meethiId,
-                    meethiId: user.meethiId || user.mithiId,
-                    employeeCode: user.employeeCode || user.specialCode,
-                    specialCode: user.specialCode,
-                },
+                user: normalizeUser(user),
+
                 token,
                 refreshToken,
             };
@@ -63,38 +70,20 @@ export async function logout(): Promise<void> {
 }
 
 export async function getUser(token: string): Promise<User | null> {
+    const storedUser = localStorage.getItem('admin_user');
     try {
-        // Try to get user from localStorage first
-        const storedUser = localStorage.getItem('admin_user');
-        if (storedUser) {
-            const user = JSON.parse(storedUser);
-            return {
-                id: user._id || user.userId,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                employeeCode: user.employeeCode || user.specialCode,
-                specialCode: user.specialCode,
-            };
-        }
-
-        // If not in localStorage, fetch from API
+        // Refresh from the API so server-side role/code updates are reflected
+        // without forcing the user to log out and back in.
         const response = await apiClient.get(API_ENDPOINTS.ADMIN.PROFILE);
         if (response.success && response.data) {
             const user = response.data;
             localStorage.setItem('admin_user', JSON.stringify(user));
-            return {
-                id: user._id || user.userId,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                employeeCode: user.employeeCode || user.specialCode,
-                specialCode: user.specialCode,
-            };
+            return normalizeUser(user);
         }
 
-        return null;
-    } catch (error) {
-        return null;
+        return storedUser ? normalizeUser(JSON.parse(storedUser)) : null;
+    } catch {
+        // Keep the authenticated session usable during a temporary API outage.
+        return storedUser ? normalizeUser(JSON.parse(storedUser)) : null;
     }
 }

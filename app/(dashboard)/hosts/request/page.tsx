@@ -85,11 +85,21 @@ function HostAudioPlayer({ audioUrl, duration, waveform, title }: { audioUrl: st
         }
     };
 
+    const safeAudioUrl = audioUrl?.trim();
+    if (!safeAudioUrl) {
+        return (
+            <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800/80 dark:text-slate-400">
+                <Mic className="h-3.5 w-3.5" />
+                No voice recording
+            </div>
+        );
+    }
+
     return (
         <div className="inline-flex items-center gap-2 bg-slate-100 dark:bg-slate-800/80 p-1.5 pr-3 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs group/audio">
             <audio
                 ref={audioRef}
-                src={audioUrl}
+                src={safeAudioUrl}
                 onEnded={() => setIsPlaying(false)}
                 onPause={() => setIsPlaying(false)}
                 preload="none"
@@ -130,7 +140,7 @@ function HostAudioPlayer({ audioUrl, duration, waveform, title }: { audioUrl: st
 
             {/* Download Icon */}
             <a
-                href={audioUrl}
+                href={safeAudioUrl}
                 download={`${title || 'host-voice-sample'}.mp3`}
                 onClick={(e) => e.stopPropagation()}
                 className="p-1 text-slate-400 hover:text-blue-600 transition-colors ml-1"
