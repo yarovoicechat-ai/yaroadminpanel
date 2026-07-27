@@ -18,7 +18,7 @@ export default function ReferralLinks() {
   const sellerFormBaseUrl = 'https://admin.mithichat.live/apply/seller';
   const supportDomain = 'support.mithichat.live';
 
-  const referralCode = (user as any)?.mithiId || user?.meethiId || user?.id?.substring(18).toUpperCase() || 'AGY8X92';
+  const referralCode = (user as any)?.referralCode || (user as any)?.employeeCode || (user as any)?.specialCode || (user as any)?.mithiId || user?.meethiId || '';
 
   const links = [
     {
