@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApprovalSuccessDialog, ApprovalCredentials } from '@/components/requests/ApprovalSuccessDialog';
+import { DeleteRequestButton } from '@/components/requests/DeleteRequestButton';
 import CreateAgencyPage from '../add/page';
 
 // Types Definition
@@ -1235,6 +1236,14 @@ export default function AgencyRequestsPage() {
                                                     <span>Transfer</span>
                                                 </button>
 
+                                                <DeleteRequestButton
+                                                    requestId={req.id}
+                                                    applicantName={req.name}
+                                                    onDeleted={(requestId) => {
+                                                        setRequests(prev => prev.filter(item => item.id !== requestId));
+                                                        setSelectedReq(current => current?.id === requestId ? null : current);
+                                                    }}
+                                                />
                                                 {/* View Details Icon Button */}
                                                 <button
                                                     onClick={() => setSelectedReq(req)}

@@ -13,7 +13,7 @@ export interface User {
     hobbies?: string[];
     emailVerified: boolean;
     phoneVerified: boolean;
-    role: 'owner' | 'superAdmin' | 'admin' | 'coinSeller' | 'host' | 'user';
+    role: 'owner' | 'operator' | 'superAdmin' | 'admin' | 'agency' | 'coinSeller' | 'customerSupport' | 'host' | 'user';
     authType: 'phone' | 'google' | 'email';
     coins: number;
     diamonds: number;

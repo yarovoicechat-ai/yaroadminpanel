@@ -31,7 +31,7 @@ export default function UserDetailPage() {
     const [age, setAge] = useState<number>(18);
     const [coins, setCoins] = useState<number>(0);
     const [diamonds, setDiamonds] = useState<number>(0);
-    const [role, setRole] = useState<'owner' | 'superAdmin' | 'admin' | 'coinSeller' | 'host' | 'user'>('user');
+    const [role, setRole] = useState<User['role']>('user');
     const [countryName, setCountryName] = useState('');
     const [countryCode, setCountryCode] = useState('');
     const [isBlocked, setIsBlocked] = useState(false);

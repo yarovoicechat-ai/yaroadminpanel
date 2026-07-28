@@ -5,7 +5,7 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    role: 'owner' | 'superAdmin' | 'admin' | 'coinSeller' | 'host' | 'user';
+    role: 'owner' | 'operator' | 'superAdmin' | 'admin' | 'agency' | 'coinSeller' | 'customerSupport' | 'host' | 'user';
     mithiId?: string;
     meethiId?: string;
     employeeCode?: string;

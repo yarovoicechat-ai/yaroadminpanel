@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApprovalSuccessDialog, ApprovalCredentials } from '@/components/requests/ApprovalSuccessDialog';
+import { DeleteRequestButton } from '@/components/requests/DeleteRequestButton';
 
 // Types Definition
 export type StatusType = 'active' | 'pending' | 'ready_for_interview' | 'rejected';
@@ -1236,6 +1237,14 @@ export default function AdminRequestsPage() {
                                                     <span>Transfer</span>
                                                 </button>
 
+                                                <DeleteRequestButton
+                                                    requestId={req.id}
+                                                    applicantName={req.name}
+                                                    onDeleted={(requestId) => {
+                                                        setRequests(prev => prev.filter(item => item.id !== requestId));
+                                                        setSelectedReq(current => current?.id === requestId ? null : current);
+                                                    }}
+                                                />
                                                 {/* View Details Icon Button */}
                                                 <button
                                                     onClick={() => setSelectedReq(req)}

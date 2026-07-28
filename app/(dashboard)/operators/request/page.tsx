@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApprovalSuccessDialog, ApprovalCredentials } from '@/components/requests/ApprovalSuccessDialog';
+import { DeleteRequestButton } from '@/components/requests/DeleteRequestButton';
 
 // Types Definition
 export type StatusType = 'active' | 'pending' | 'ready_for_interview' | 'rejected';
@@ -357,6 +358,10 @@ export default function OperatorRequestsPage() {
 
     // Action Handlers (Accept / Reject)
     const handleOpenConfirm = (req: OperatorRequestData, type: 'accept' | 'reject') => {
+        if (currentUser?.role === 'operator' && type === 'accept') {
+            toast.error('Operators cannot approve or create another Operator account.');
+            return;
+        }
         setConfirmModal({
             isOpen: true,
             type,
@@ -1138,6 +1143,14 @@ export default function OperatorRequestsPage() {
                                                 </button>
 
                                                 {/* View Details Icon Button */}
+                                                <DeleteRequestButton
+                                                    requestId={req.id}
+                                                    applicantName={req.name}
+                                                    onDeleted={(requestId) => {
+                                                        setRequests(prev => prev.filter(item => item.id !== requestId));
+                                                        setSelectedReq(current => current?.id === requestId ? null : current);
+                                                    }}
+                                                />
                                                 <button
                                                     onClick={() => setSelectedReq(req)}
                                                     className="p-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/50 dark:hover:bg-blue-900/60 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/80 transition-all"

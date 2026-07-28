@@ -10,9 +10,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function AddUserPage() {
     const router = useRouter();
+    const { user: currentUser } = useAuth();
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -26,6 +28,9 @@ export default function AddUserPage() {
         e.preventDefault();
         if (!name || !email) {
             return toast.error("Name and Email are required");
+        }
+        if (currentUser?.role === 'operator' && role === 'operator') {
+            return toast.error('Operators cannot create another Operator account.');
         }
         setLoading(true);
         try {
@@ -153,7 +158,7 @@ export default function AddUserPage() {
                                     <option value="coinSeller">Coin Seller</option>
                                     <option value="admin">Admin</option>
                                     <option value="superAdmin">Super Admin</option>
-                                    <option value="operator">Operator</option>
+                                    {currentUser?.role !== 'operator' && <option value="operator">Operator</option>}
                                 </select>
                             </div>
                             <div className="space-y-2">

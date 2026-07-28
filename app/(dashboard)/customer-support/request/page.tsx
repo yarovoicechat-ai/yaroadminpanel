@@ -14,6 +14,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApprovalSuccessDialog, ApprovalCredentials } from '@/components/requests/ApprovalSuccessDialog';
+import { DeleteRequestButton } from '@/components/requests/DeleteRequestButton';
 
 // CS Request Status Definition
 export type CSStatusType = 'approved' | 'pending' | 'rejected';
@@ -1096,6 +1097,14 @@ export default function CustomerSupportRequestsPage() {
                                                     <span>Transfer</span>
                                                 </button>
 
+                                                <DeleteRequestButton
+                                                    requestId={req.id}
+                                                    applicantName={req.name}
+                                                    onDeleted={(requestId) => {
+                                                        setRequests(prev => prev.filter(item => item.id !== requestId));
+                                                        setSelectedReq(current => current?.id === requestId ? null : current);
+                                                    }}
+                                                />
                                                 <button
                                                     onClick={() => setSelectedReq(req)}
                                                     className="p-1.5 rounded-lg bg-cyan-50 hover:bg-cyan-100 dark:bg-cyan-950/50 text-cyan-600 border border-cyan-200 dark:border-cyan-800"
