@@ -1,0 +1,3 @@
+{
+  "/(dashboard)/security/permissions/page": "app/(dashboard)/security/permissions/page.js"
+}

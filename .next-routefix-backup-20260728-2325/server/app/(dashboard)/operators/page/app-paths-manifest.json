@@ -1,0 +1,3 @@
+{
+  "/(dashboard)/operators/page": "app/(dashboard)/operators/page.js"
+}

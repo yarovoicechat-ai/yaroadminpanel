@@ -1,0 +1,3 @@
+{
+  "/(dashboard)/analytics/live-map/page": "app/(dashboard)/analytics/live-map/page.js"
+}

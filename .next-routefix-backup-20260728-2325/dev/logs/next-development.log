@@ -1,0 +1,10 @@
+[00:00:11.650] Server  WARN     ⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+[00:00:12.399] Server  LOG      ✓ Ready in 10.6s
+[00:00:15.465] Server  LOG      ○ Compiling /users ...
+[00:00:26.042] Server  LOG     API_BASE_URL = "https://api.mithichat.live"
+[00:00:26.057] Server  LOG     Providers mounting
+[00:00:26.281] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:26.281] Browser LOG     API_BASE_URL = https://api.mithichat.live
+[00:00:26.391] Browser LOG     Providers mounting
+[00:00:26.392] Browser LOG     Providers mounting
+[00:00:26.851] Browser LOG     ✅ Connected to IAM Realtime Sync Engine
