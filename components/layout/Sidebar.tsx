@@ -321,7 +321,7 @@ export default function Sidebar() {
                 if (!user) {
                     return;
                 }
-                if (user.role === 'owner') {
+                if (['owner', 'superAdmin', 'admin', 'operator'].includes(user.role)) {
                     setAllowedMenus(['*']);
                     setAllowedPages(['*']);
                     setPermissionsLoaded(true);
