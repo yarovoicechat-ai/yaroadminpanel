@@ -51,9 +51,9 @@ export const roleConfig: Record<string, { label: string; color: string; bg: stri
 
 const defaultRoleConfig = { label: 'Staff', color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/25', icon: User };
 
-const sidebarSections: SidebarSection[] = [
+const managementSidebarSections: SidebarSection[] = [
     {
-        title: 'Core Console',
+        title: 'CORE CONSOLE',
         category: 'Dashboard',
         items: [
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
@@ -62,7 +62,7 @@ const sidebarSections: SidebarSection[] = [
         ]
     },
     {
-        title: 'App Content & Economy',
+        title: 'APP CONTENT & ECONOMY',
         category: 'Dashboard',
         items: [
             { name: 'CMS Editor', href: '/cms', icon: FileText, category: 'Dashboard' },
@@ -77,7 +77,51 @@ const sidebarSections: SidebarSection[] = [
             { name: 'Content Moderation', href: '/moderation/violations', icon: ShieldAlert, category: 'Dashboard' }
         ]
     },
+    {
+        title: 'EVENTS & MESSAGING',
+        category: 'Notifications',
+        items: [
+            { name: 'Events', href: '/events', icon: Calendar, category: 'Notifications' },
+            { name: 'System Messages', href: '/messages/system', icon: MessageSquare, category: 'Notifications' },
+            { name: 'Activity Messages', href: '/messages/activity', icon: Bell, category: 'Notifications' }
+        ]
+    },
+    {
+        title: 'ENTERPRISE V3 SUITE',
+        category: 'Settings',
+        items: [
+            { name: 'Organization Chart', href: '/organization/chart', icon: Users, category: 'Users' },
+            { name: 'Workflows', href: '/settings/workflows', category: 'Settings', icon: Calendar },
+            { name: 'Permission Builder', href: '/security/permissions', category: 'Settings', icon: ShieldAlert },
+            { name: 'Role Templates', href: '/security/templates', category: 'Settings', icon: ShieldCheck },
+            { name: 'Compare Users', href: '/security/compare', category: 'Settings', icon: Users }
+        ]
+    },
+    {
+        title: 'EXECUTIVE COMMAND',
+        category: 'Dashboard',
+        items: [
+            { name: 'Owner Console', href: '/owner', icon: Crown, category: 'Dashboard' },
+            { name: 'Finance & Wallet Ledger', href: '/finance/ledger', icon: DollarSign, category: 'Dashboard' },
+            { name: 'Compliance & GDPR', href: '/compliance', icon: ShieldCheck, category: 'Dashboard' },
+            { name: 'AI Insights & Copilot', href: '/ai/insights', icon: Terminal, category: 'Dashboard' },
+            { name: 'AI Automation Hub', href: '/ai/automation', icon: ShieldCheck, category: 'Dashboard' },
+            { name: 'Live User Map', href: '/analytics/live-map', icon: Globe, category: 'Reports' },
+            { name: 'System Health Monitor', href: '/health', icon: Terminal, category: 'Reports' },
+            { name: 'Audit Logs', href: '/security/logs', icon: ShieldCheck, category: 'Developer' },
+            { name: 'API Center', href: '/api-center', icon: Terminal, category: 'Developer' }
+        ]
+    }
+];
 
+const adminSidebarSections: SidebarSection[] = [
+    {
+        title: 'Core Console',
+        category: 'Dashboard',
+        items: [
+            { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' }
+        ]
+    },
     {
         title: 'Users & Roles',
         category: 'Users',
@@ -180,7 +224,6 @@ const sidebarSections: SidebarSection[] = [
             }
         ]
     },
-
     {
         title: 'Operations & Support',
         category: 'Reports',
@@ -228,64 +271,6 @@ const sidebarSections: SidebarSection[] = [
                 ]
             }
         ]
-    },
-    {
-        title: 'Enterprise Management',
-        category: 'Users',
-        items: [
-            { name: 'Organization Chart', href: '/organization/chart', icon: Users, category: 'Users' },
-            { name: 'Branches', href: '/organization/branches', icon: Briefcase, category: 'Users' },
-            { name: 'Departments', href: '/organization/departments', icon: Users, category: 'Users' },
-            { name: 'Teams', href: '/organization/teams', icon: UserCheck, category: 'Users' },
-            { name: 'Task Management', href: '/tasks', icon: CheckSquare, category: 'Users' },
-            { name: 'Calendar & Events', href: '/events', icon: Calendar, category: 'Users' }
-        ]
-    },
-    {
-        title: 'Enterprise V3 Suite',
-        category: 'Settings',
-        items: [
-            { name: 'Settings', href: '/settings', icon: Settings, category: 'Settings' },
-            { name: 'Workflows', href: '/settings/workflows', category: 'Settings', icon: Calendar },
-            { name: 'Permission Builder', href: '/security/permissions', category: 'Settings', icon: ShieldAlert },
-            { name: 'Role Templates', href: '/security/templates', category: 'Settings', icon: ShieldCheck },
-            { name: 'Compare Users', href: '/security/compare', category: 'Settings', icon: Users },
-            { name: 'Referral Links', href: '/referrals/links', category: 'Settings', icon: Plus }
-        ]
-    },
-    {
-        title: 'AI Command Center 4.0',
-        category: 'Dashboard',
-        items: [
-            { name: 'AI Insights & Copilot', href: '/ai/insights', icon: Terminal, category: 'Dashboard' },
-            { name: 'AI Automation Hub', href: '/ai/automation', icon: ShieldCheck, category: 'Dashboard' }
-        ]
-    },
-    {
-        title: 'Live Analytics & Health',
-        category: 'Reports',
-        items: [
-            { name: 'Live User Map', href: '/analytics/live-map', icon: Globe, category: 'Reports' },
-            { name: 'System Health Monitor', href: '/health', icon: Terminal, category: 'Reports' }
-        ]
-    },
-    {
-        title: 'Executive Command 5.0',
-        category: 'Dashboard',
-        items: [
-            { name: 'Owner Console', href: '/owner', icon: Crown, category: 'Dashboard' },
-            { name: 'Finance & Wallet Ledger', href: '/finance/ledger', icon: DollarSign, category: 'Dashboard' },
-            { name: 'Compliance & GDPR', href: '/compliance', icon: ShieldCheck, category: 'Dashboard' }
-        ]
-    },
-    {
-        title: 'Developer & System Control',
-        category: 'Developer',
-        items: [
-            { name: 'System Logs', href: '/logs', icon: Terminal, category: 'Developer' },
-            { name: 'Audit Logs', href: '/security/logs', icon: ShieldCheck, category: 'Developer' },
-            { name: 'API Center', href: '/api-center', icon: Terminal, category: 'Developer' }
-        ]
     }
 ];
 
@@ -321,7 +306,7 @@ export default function Sidebar() {
 
     // Auto-expand submenus if active route
     useEffect(() => {
-        sidebarSections.forEach(section => {
+        [...managementSidebarSections, ...adminSidebarSections].forEach(section => {
             section.items.forEach(item => {
                 if (item.submenu) {
                     const isSubActive = item.submenu.some(sub => pathname === sub.href || (sub.href !== '/' && pathname.startsWith(sub.href)));
@@ -383,7 +368,16 @@ export default function Sidebar() {
         return allowedMenus.includes('*') || allowedMenus.includes(category);
     };
 
-    const filteredSections = sidebarSections.map(section => {
+    const isManagementPanel = user?.role === 'owner' ||
+        (typeof window !== 'undefined' && (
+            window.location.hostname.includes('management') ||
+            window.location.pathname.startsWith('/management')
+        ));
+
+    const activeSections = isManagementPanel ? managementSidebarSections : adminSidebarSections;
+    const panelTitle = isManagementPanel ? 'App Management Panel' : 'Mithi Chat EMS';
+
+    const filteredSections = activeSections.map(section => {
         if (!hasDynamicMenu(section.category)) return null;
         const filteredItems = section.items.map(item => {
             if (item.submenu && item.submenu.length > 0) {
@@ -447,7 +441,7 @@ export default function Sidebar() {
             >
                 <div className="px-6 mb-6 mt-4 md:mt-0 flex items-center justify-between">
                     <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                        Mithi Chat EMS
+                        {panelTitle}
                     </h1>
                 </div>
 
