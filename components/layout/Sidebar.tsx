@@ -372,12 +372,11 @@ export default function Sidebar() {
 
     useEffect(() => {
         if (typeof window !== 'undefined') {
-            const isMgmt = user?.role === 'owner' ||
-                window.location.hostname.includes('management') ||
+            const isMgmt = window.location.hostname.includes('management') ||
                 window.location.pathname.startsWith('/management');
             setIsManagementPanel(!!isMgmt);
         }
-    }, [user, pathname]);
+    }, [pathname]);
 
     const activeSections = isManagementPanel ? managementSidebarSections : adminSidebarSections;
     const panelTitle = isManagementPanel ? 'App Management Panel' : 'Mithi Chat EMS';
