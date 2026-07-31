@@ -442,6 +442,7 @@ export default function Sidebar() {
         };
     }).filter(Boolean) as SidebarSection[];
 
+    const displayedSections = mounted ? filteredSections : activeSections;
     const currentRole = user?.role ? (roleConfig[user.role] || defaultRoleConfig) : defaultRoleConfig;
     const RoleIcon = currentRole.icon;
 
@@ -484,7 +485,7 @@ export default function Sidebar() {
                 </div>
 
                 <nav className="flex-1 px-4 space-y-4 overflow-y-auto pb-6">
-                    {filteredSections.map((section, idx) => (
+                    {displayedSections.map((section, idx) => (
                         <div key={idx} className="space-y-1">
                             <h3 className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                                 {section.title}
