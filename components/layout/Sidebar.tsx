@@ -400,9 +400,11 @@ export default function Sidebar() {
         return allowedMenus.includes('*') || allowedMenus.includes(category);
     };
 
+    const [mounted, setMounted] = useState(false);
     const [isManagementPanel, setIsManagementPanel] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
         if (typeof window !== 'undefined') {
             const isMgmt = window.location.hostname.includes('management') ||
                 window.location.pathname.startsWith('/management');
@@ -410,8 +412,8 @@ export default function Sidebar() {
         }
     }, [pathname]);
 
-    const activeSections = isManagementPanel ? managementSidebarSections : adminSidebarSections;
-    const panelTitle = isManagementPanel ? 'App Management Panel' : 'Mithi Chat EMS';
+    const activeSections = (mounted && isManagementPanel) ? managementSidebarSections : adminSidebarSections;
+    const panelTitle = (mounted && isManagementPanel) ? 'App Management Panel' : 'Mithi Chat EMS';
 
     const filteredSections = activeSections.map(section => {
         if (!hasDynamicMenu(section.category)) return null;
@@ -476,7 +478,7 @@ export default function Sidebar() {
                 )}
             >
                 <div className="px-6 mb-6 mt-4 md:mt-0 flex items-center justify-between">
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+                    <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent" suppressHydrationWarning>
                         {panelTitle}
                     </h1>
                 </div>
