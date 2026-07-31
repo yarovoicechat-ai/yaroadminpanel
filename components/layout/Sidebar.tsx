@@ -8,7 +8,8 @@ import {
     Users, UserCheck, ShieldAlert, Video, Plus, Flag, HelpCircle,
     Ban, AlertOctagon, Calendar, MessageSquare, Bell, Share2,
     CheckSquare, FileCheck, DollarSign, Coins, ChevronDown, ChevronRight,
-    Crown, Briefcase, Terminal, ShieldCheck, Settings, Headphones, Globe
+    Crown, Briefcase, Terminal, ShieldCheck, Settings, Headphones, Globe,
+    FileText, Layers, Radio, Sliders, Image as ImageIcon
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -55,7 +56,25 @@ const sidebarSections: SidebarSection[] = [
         title: 'Core Console',
         category: 'Dashboard',
         items: [
-            { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' }
+            { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
+            { name: 'App Settings', href: '/settings', icon: Settings, category: 'Settings' },
+            { name: 'System Logs', href: '/logs', icon: Terminal, category: 'Developer' }
+        ]
+    },
+    {
+        title: 'App Content & Economy',
+        category: 'Dashboard',
+        items: [
+            { name: 'CMS Editor', href: '/cms', icon: FileText, category: 'Dashboard' },
+            { name: 'Banners', href: '/banners', icon: Layers, category: 'Dashboard' },
+            { name: 'Ads', href: '/ads', icon: Radio, category: 'Dashboard' },
+            { name: 'Referrals', href: '/referrals/links', icon: Share2, category: 'Dashboard' },
+            { name: 'VIP Program', href: '/vip', icon: Crown, category: 'Dashboard' },
+            { name: 'Levels', href: '/host-levels', icon: Award, category: 'Dashboard' },
+            { name: 'Gifts', href: '/gifts', icon: Gift, category: 'Dashboard' },
+            { name: 'Frames', href: '/frames', icon: Sliders, category: 'Dashboard' },
+            { name: 'Avatars', href: '/avatars', icon: ImageIcon, category: 'Dashboard' },
+            { name: 'Content Moderation', href: '/moderation/violations', icon: ShieldAlert, category: 'Dashboard' }
         ]
     },
 
