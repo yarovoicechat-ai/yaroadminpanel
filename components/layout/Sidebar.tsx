@@ -245,6 +245,64 @@ const adminSidebarSections: SidebarSection[] = [
                 ]
             }
         ]
+    },
+    {
+        title: 'Enterprise Management',
+        category: 'Users',
+        items: [
+            { name: 'Organization Chart', href: '/organization/chart', icon: Users, category: 'Users' },
+            { name: 'Branches', href: '/organization/branches', icon: Briefcase, category: 'Users' },
+            { name: 'Departments', href: '/organization/departments', icon: Users, category: 'Users' },
+            { name: 'Teams', href: '/organization/teams', icon: UserCheck, category: 'Users' },
+            { name: 'Task Management', href: '/tasks', icon: CheckSquare, category: 'Users' },
+            { name: 'Calendar & Events', href: '/events', icon: Calendar, category: 'Users' }
+        ]
+    },
+    {
+        title: 'Enterprise V3 Suite',
+        category: 'Settings',
+        items: [
+            { name: 'Settings', href: '/settings', icon: Settings, category: 'Settings' },
+            { name: 'Workflows', href: '/settings/workflows', category: 'Settings', icon: Calendar },
+            { name: 'Permission Builder', href: '/security/permissions', category: 'Settings', icon: ShieldAlert },
+            { name: 'Role Templates', href: '/security/templates', category: 'Settings', icon: ShieldCheck },
+            { name: 'Compare Users', href: '/security/compare', category: 'Settings', icon: Users },
+            { name: 'Referral Links', href: '/referrals/links', category: 'Settings', icon: Plus }
+        ]
+    },
+    {
+        title: 'AI Command Center 4.0',
+        category: 'Dashboard',
+        items: [
+            { name: 'AI Insights & Copilot', href: '/ai/insights', icon: Terminal, category: 'Dashboard' },
+            { name: 'AI Automation Hub', href: '/ai/automation', icon: ShieldCheck, category: 'Dashboard' }
+        ]
+    },
+    {
+        title: 'Live Analytics & Health',
+        category: 'Reports',
+        items: [
+            { name: 'Live User Map', href: '/analytics/live-map', icon: Globe, category: 'Reports' },
+            { name: 'System Health Monitor', href: '/health', icon: Terminal, category: 'Reports' }
+        ]
+    },
+    {
+        title: 'Executive Command 5.0',
+        category: 'Dashboard',
+        items: [
+            { name: 'Owner Console', href: '/owner', icon: Crown, category: 'Dashboard' },
+            { name: 'Finance & Wallet Ledger', href: '/finance/ledger', icon: DollarSign, category: 'Dashboard' },
+            { name: 'Compliance & GDPR', href: '/compliance', icon: ShieldCheck, category: 'Dashboard' }
+        ]
+    },
+    {
+        title: 'Developer & System Control',
+        category: 'Developer',
+        items: [
+            { name: 'System Logs', href: '/logs', icon: Terminal, category: 'Developer' },
+            { name: 'Audit Logs', href: '/security/logs', icon: ShieldCheck, category: 'Developer' },
+            { name: 'API Center', href: '/api-center', icon: Terminal, category: 'Developer' }
+        ]
     }
 ];
 
