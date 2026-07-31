@@ -85,32 +85,6 @@ const managementSidebarSections: SidebarSection[] = [
             { name: 'System Messages', href: '/messages/system', icon: MessageSquare, category: 'Notifications' },
             { name: 'Activity Messages', href: '/messages/activity', icon: Bell, category: 'Notifications' }
         ]
-    },
-    {
-        title: 'ENTERPRISE V3 SUITE',
-        category: 'Settings',
-        items: [
-            { name: 'Organization Chart', href: '/organization/chart', icon: Users, category: 'Users' },
-            { name: 'Workflows', href: '/settings/workflows', category: 'Settings', icon: Calendar },
-            { name: 'Permission Builder', href: '/security/permissions', category: 'Settings', icon: ShieldAlert },
-            { name: 'Role Templates', href: '/security/templates', category: 'Settings', icon: ShieldCheck },
-            { name: 'Compare Users', href: '/security/compare', category: 'Settings', icon: Users }
-        ]
-    },
-    {
-        title: 'EXECUTIVE COMMAND',
-        category: 'Dashboard',
-        items: [
-            { name: 'Owner Console', href: '/owner', icon: Crown, category: 'Dashboard' },
-            { name: 'Finance & Wallet Ledger', href: '/finance/ledger', icon: DollarSign, category: 'Dashboard' },
-            { name: 'Compliance & GDPR', href: '/compliance', icon: ShieldCheck, category: 'Dashboard' },
-            { name: 'AI Insights & Copilot', href: '/ai/insights', icon: Terminal, category: 'Dashboard' },
-            { name: 'AI Automation Hub', href: '/ai/automation', icon: ShieldCheck, category: 'Dashboard' },
-            { name: 'Live User Map', href: '/analytics/live-map', icon: Globe, category: 'Reports' },
-            { name: 'System Health Monitor', href: '/health', icon: Terminal, category: 'Reports' },
-            { name: 'Audit Logs', href: '/security/logs', icon: ShieldCheck, category: 'Developer' },
-            { name: 'API Center', href: '/api-center', icon: Terminal, category: 'Developer' }
-        ]
     }
 ];
 
