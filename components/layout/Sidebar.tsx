@@ -368,11 +368,16 @@ export default function Sidebar() {
         return allowedMenus.includes('*') || allowedMenus.includes(category);
     };
 
-    const isManagementPanel = user?.role === 'owner' ||
-        (typeof window !== 'undefined' && (
-            window.location.hostname.includes('management') ||
-            window.location.pathname.startsWith('/management')
-        ));
+    const [isManagementPanel, setIsManagementPanel] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const isMgmt = user?.role === 'owner' ||
+                window.location.hostname.includes('management') ||
+                window.location.pathname.startsWith('/management');
+            setIsManagementPanel(!!isMgmt);
+        }
+    }, [user, pathname]);
 
     const activeSections = isManagementPanel ? managementSidebarSections : adminSidebarSections;
     const panelTitle = isManagementPanel ? 'App Management Panel' : 'Mithi Chat EMS';

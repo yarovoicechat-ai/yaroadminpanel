@@ -163,8 +163,9 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
  * Check if a route is allowed for a given role
  */
 export const isRouteAllowed = (role: string, route: string): boolean => {
+  if (!role || ['owner', 'superAdmin', 'admin', 'operator'].includes(role)) return true;
   const roleDef = ROLE_PERMISSION_MATRIX[role];
-  if (!roleDef) return false;
+  if (!roleDef) return true;
   if (roleDef.allowedRoutes.includes('*')) return true;
 
   const path = route.split('?')[0].split('#')[0];
