@@ -176,9 +176,10 @@ export default function WithdrawalsPage() {
                                             <TableCell>
                                                 <div className="flex items-center text-emerald-400 font-medium">
                                                     <DollarSign className="h-3 w-3 mr-1" />
-                                                    {w.amount}
+                                                    <span>&#8377;</span>{w.amount} net payout
                                                 </div>
-                                                <div className="text-xs text-slate-500">{w.coinsDeducted} coins</div>
+                                                {w.grossAmount !== undefined && <div className="text-xs text-slate-400">Gross {String.fromCharCode(8377)}{w.grossAmount} | Fee {String.fromCharCode(8377)}{w.platformFee} ({w.platformFeePercent || 5}%)</div>}
+                                                <div className="text-xs text-slate-500">{w.coinsDeducted} coins deducted</div>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="outline" className="capitalize border-slate-700 text-slate-300">

@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
+import { ImageZoomModal } from '@/components/ui/ImageZoomModal';
 
 interface HostUser {
     _id: string;
@@ -31,6 +32,8 @@ interface HostUser {
     isBlocked?: boolean;
     isOnline?: boolean;
     isActive?: boolean;
+    faceVerificationStatus?: string;
+    kycVerificationStatus?: string;
     country?: { name?: string; code?: string };
     language?: string[];
     agencyId?: string;
@@ -71,6 +74,7 @@ export default function HostManagementPage() {
     const [levelHost, setLevelHost] = useState<HostUser | null>(null);
     const [newLevel, setNewLevel] = useState<number>(1);
     const [levelLoading, setLevelLoading] = useState(false);
+    const [previewData, setPreviewData] = useState<{ url: string; title: string } | null>(null);
 
     const fetchHosts = useCallback(async () => {
         setLoading(true);
@@ -101,6 +105,29 @@ export default function HostManagementPage() {
         const t = setTimeout(() => { setSearch(searchInput); setPage(1); }, 400);
         return () => clearTimeout(t);
     }, [searchInput]);
+
+    const toggleVerification = async (host: HostUser, type: 'face' | 'kyc', targetStatus: string) => {
+        try {
+            const payload = type === 'face'
+                ? { faceVerificationStatus: targetStatus }
+                : { kycVerificationStatus: targetStatus };
+
+            const res = await apiClient.patch(`/api/user/${host.userId}`, payload);
+            if (res.success) {
+                const label = type === 'face' ? 'Face Verification' : 'KYC Verification';
+                const statusText = targetStatus === 'APPROVED' ? 'Active' : 'Inactive';
+                toast.success(`✅ ${label} set to ${statusText} for ${host.name}`);
+                setHosts(prev => prev.map(h => h.userId === host.userId ? {
+                    ...h,
+                    ...(type === 'face' ? { faceVerificationStatus: targetStatus } : { kycVerificationStatus: targetStatus })
+                } : h));
+            } else {
+                toast.error(res.message || 'Failed to update verification status');
+            }
+        } catch (err: any) {
+            toast.error(err?.message || 'Error updating verification');
+        }
+    };
 
     const openLevel = (host: HostUser) => {
         setLevelHost(host);
@@ -236,13 +263,15 @@ export default function HostManagementPage() {
                                     <TableHead className="text-slate-300 font-bold">Level</TableHead>
                                     <TableHead className="text-slate-300 font-bold">Online</TableHead>
                                     <TableHead className="text-slate-300 font-bold">Status</TableHead>
+                                    <TableHead className="text-slate-300 font-bold">Face Verification</TableHead>
+                                    <TableHead className="text-slate-300 font-bold">KYC Verification</TableHead>
                                     <TableHead className="text-slate-300 font-bold text-center">Change Level</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {loading ? (
                                     <TableRow>
-                                        <TableCell colSpan={15} className="text-center py-20">
+                                        <TableCell colSpan={17} className="text-center py-20">
                                             <div className="flex flex-col items-center gap-3 text-slate-500">
                                                 <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
                                                 <span>Loading hosts...</span>
@@ -251,7 +280,7 @@ export default function HostManagementPage() {
                                     </TableRow>
                                 ) : hosts.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={15} className="text-center py-20">
+                                        <TableCell colSpan={17} className="text-center py-20">
                                             <div className="flex flex-col items-center gap-3 text-slate-500">
                                                 <AlertTriangle className="h-8 w-8 text-amber-400" />
                                                 <span>No hosts found{search ? ` for "${search}"` : ''}</span>
@@ -284,7 +313,9 @@ export default function HostManagementPage() {
                                                 <div className="relative w-10 h-10">
                                                     {host.image ? (
                                                         <img src={host.image} alt={host.name}
-                                                            className="h-10 w-10 rounded-full object-cover ring-2 ring-violet-500/30" />
+                                                            className="h-10 w-10 rounded-full object-cover ring-2 ring-violet-500/30 cursor-pointer hover:scale-110 transition-all"
+                                                            title="Click to view & zoom photo"
+                                                            onClick={() => setPreviewData({ url: host.image!, title: `Host Photo - ${host.name} (#${host.userId})` })} />
                                                     ) : (
                                                         <div className="h-10 w-10 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm ring-2 ring-violet-500/20">
                                                             {host.name?.charAt(0)?.toUpperCase() || 'H'}
@@ -378,6 +409,44 @@ export default function HostManagementPage() {
                                                     : host.isActive
                                                         ? <Badge variant="success" className="text-xs">Active</Badge>
                                                         : <Badge variant="secondary" className="text-xs">Inactive</Badge>}
+                                            </TableCell>
+
+                                            {/* Face Verification */}
+                                            <TableCell>
+                                                <button
+                                                    onClick={() => toggleVerification(host, 'face', host.faceVerificationStatus === 'APPROVED' ? 'NOT_SUBMITTED' : 'APPROVED')}
+                                                    className="transition-transform active:scale-95 text-left"
+                                                    title="Click to toggle Face Verification Active/Inactive"
+                                                >
+                                                    {host.faceVerificationStatus === 'APPROVED' ? (
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 transition-all shadow-sm">
+                                                            <CheckCircle2 className="h-3.5 w-3.5" /> Active
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800/80 text-slate-400 border border-slate-700 hover:border-slate-500 hover:text-slate-200 transition-all">
+                                                            <XCircle className="h-3.5 w-3.5 text-slate-500" /> Inactive
+                                                        </span>
+                                                    )}
+                                                </button>
+                                            </TableCell>
+
+                                            {/* KYC Verification */}
+                                            <TableCell>
+                                                <button
+                                                    onClick={() => toggleVerification(host, 'kyc', host.kycVerificationStatus === 'APPROVED' ? 'NOT_SUBMITTED' : 'APPROVED')}
+                                                    className="transition-transform active:scale-95 text-left"
+                                                    title="Click to toggle KYC Verification Active/Inactive"
+                                                >
+                                                    {host.kycVerificationStatus === 'APPROVED' ? (
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30 transition-all shadow-sm">
+                                                            <CheckCircle2 className="h-3.5 w-3.5" /> Active
+                                                        </span>
+                                                    ) : (
+                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800/80 text-slate-400 border border-slate-700 hover:border-slate-500 hover:text-slate-200 transition-all">
+                                                            <XCircle className="h-3.5 w-3.5 text-slate-500" /> Inactive
+                                                        </span>
+                                                    )}
+                                                </button>
                                             </TableCell>
 
                                             {/* Change Level */}
@@ -489,6 +558,15 @@ export default function HostManagementPage() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Image Zoom Preview Modal */}
+            {previewData && (
+                <ImageZoomModal
+                    imageUrl={previewData.url}
+                    title={previewData.title}
+                    onClose={() => setPreviewData(null)}
+                />
             )}
         </div>
     );

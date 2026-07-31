@@ -176,12 +176,23 @@ export default function SettingsPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-300">Default Chat Message Cost (Coins)</label>
+                            <label className="text-sm font-semibold text-slate-300">Default 1 Chat Message Cost (Coins)</label>
                             <Input
                                 type="number"
-                                value={settings.chatMessageCost}
-                                onChange={(e) => handleChange('chatMessageCost', parseInt(e.target.value))}
+                                value={settings.chatMessageCost ?? 10}
+                                onChange={(e) => handleChange('chatMessageCost', parseInt(e.target.value) || 0)}
                                 required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-300">Chat Message Character Limit (Max Letters per Message)</label>
+                            <Input
+                                type="number"
+                                value={settings.chatMessageLimit ?? 50}
+                                onChange={(e) => handleChange('chatMessageLimit', parseInt(e.target.value) || 50)}
+                                required
+                                min={1}
+                                max={5000}
                             />
                         </div>
                     </CardContent>

@@ -8,6 +8,7 @@ import { RevenueChart, EarningsChart, CallChart, DistributionChart } from "@/com
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 import { toast } from 'sonner';
+import { AvatarRequestsWidget } from '@/components/dashboard/AvatarRequestsWidget';
 
 export type StatsCardProps = {
   title: string;
@@ -218,6 +219,9 @@ export default function Home() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Pending Host Avatar Verification Requests */}
+      <AvatarRequestsWidget />
 
       {/* Recent Activity */}
       <Card className="glass-card">

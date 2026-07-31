@@ -1,13 +1,10 @@
 // API Client with automatic token injection and error handling
 
 const getApiBaseUrl = () => {
-    if (process.env.NEXT_PUBLIC_API_BASE_URL) {
-        return process.env.NEXT_PUBLIC_API_BASE_URL;
+    if (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+        return process.env.NEXT_PUBLIC_LOCAL_API_BASE_URL || 'http://localhost:3001';
     }
-    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-        return 'http://localhost:3001';
-    }
-    return 'https://api.mithichat.live';
+    return process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.mithichat.live';
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -34,13 +31,10 @@ class ApiClient {
     }
 
     private getEffectiveBaseUrl(): string {
-        if (process.env.NEXT_PUBLIC_API_BASE_URL) {
-            return process.env.NEXT_PUBLIC_API_BASE_URL;
+        if (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+            return process.env.NEXT_PUBLIC_LOCAL_API_BASE_URL || 'http://localhost:3001';
         }
-        if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-            return 'http://localhost:3001';
-        }
-        return this.baseURL || 'https://api.mithichat.live';
+        return process.env.NEXT_PUBLIC_API_BASE_URL || this.baseURL || 'https://api.mithichat.live';
     }
 
     private getHeaders(): HeadersInit {
@@ -109,87 +103,120 @@ class ApiClient {
         return data;
     }
 
-    async get<T = any>(endpoint: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
-        const baseUrl = this.getEffectiveBaseUrl();
-        const url = new URL(`${baseUrl}${endpoint}`);
-        if (params) {
-            Object.keys(params).forEach(key => {
-                if (params[key] !== undefined && params[key] !== null) {
-                    url.searchParams.append(key, String(params[key]));
-                }
-            });
+    private catchNetworkError(error: any): never {
+        if (error instanceof TypeError && error.message === 'Failed to fetch') {
+            throw {
+                success: false,
+                message: `Backend server connection failed (${this.getEffectiveBaseUrl()}). Please check if the server is running.`,
+            };
         }
+        throw error;
+    }
 
-        const response = await fetch(url.toString(), {
-            method: 'GET',
-            headers: this.getHeaders(),
-        });
+    async get<T = any>(endpoint: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
+        try {
+            const baseUrl = this.getEffectiveBaseUrl();
+            const url = new URL(`${baseUrl}${endpoint}`);
+            if (params) {
+                Object.keys(params).forEach(key => {
+                    if (params[key] !== undefined && params[key] !== null) {
+                        url.searchParams.append(key, String(params[key]));
+                    }
+                });
+            }
 
-        return this.handleResponse<T>(response);
+            const response = await fetch(url.toString(), {
+                method: 'GET',
+                headers: this.getHeaders(),
+            });
+
+            return await this.handleResponse<T>(response);
+        } catch (error) {
+            this.catchNetworkError(error);
+        }
     }
 
     async post<T = any>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
-        const baseUrl = this.getEffectiveBaseUrl();
-        const response = await fetch(`${baseUrl}${endpoint}`, {
-            method: 'POST',
-            headers: this.getHeaders(),
-            body: JSON.stringify(body),
-        });
+        try {
+            const baseUrl = this.getEffectiveBaseUrl();
+            const response = await fetch(`${baseUrl}${endpoint}`, {
+                method: 'POST',
+                headers: this.getHeaders(),
+                body: JSON.stringify(body),
+            });
 
-        return this.handleResponse<T>(response);
+            return await this.handleResponse<T>(response);
+        } catch (error) {
+            this.catchNetworkError(error);
+        }
     }
 
     async patch<T = any>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
-        const baseUrl = this.getEffectiveBaseUrl();
-        const response = await fetch(`${baseUrl}${endpoint}`, {
-            method: 'PATCH',
-            headers: this.getHeaders(),
-            body: JSON.stringify(body),
-        });
+        try {
+            const baseUrl = this.getEffectiveBaseUrl();
+            const response = await fetch(`${baseUrl}${endpoint}`, {
+                method: 'PATCH',
+                headers: this.getHeaders(),
+                body: JSON.stringify(body),
+            });
 
-        return this.handleResponse<T>(response);
+            return await this.handleResponse<T>(response);
+        } catch (error) {
+            this.catchNetworkError(error);
+        }
     }
 
     async put<T = any>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
-        const baseUrl = this.getEffectiveBaseUrl();
-        const response = await fetch(`${baseUrl}${endpoint}`, {
-            method: 'PUT',
-            headers: this.getHeaders(),
-            body: JSON.stringify(body),
-        });
+        try {
+            const baseUrl = this.getEffectiveBaseUrl();
+            const response = await fetch(`${baseUrl}${endpoint}`, {
+                method: 'PUT',
+                headers: this.getHeaders(),
+                body: JSON.stringify(body),
+            });
 
-        return this.handleResponse<T>(response);
+            return await this.handleResponse<T>(response);
+        } catch (error) {
+            this.catchNetworkError(error);
+        }
     }
 
     async delete<T = any>(endpoint: string): Promise<ApiResponse<T>> {
-        const baseUrl = this.getEffectiveBaseUrl();
-        const response = await fetch(`${baseUrl}${endpoint}`, {
-            method: 'DELETE',
-            headers: this.getHeaders(),
-        });
+        try {
+            const baseUrl = this.getEffectiveBaseUrl();
+            const response = await fetch(`${baseUrl}${endpoint}`, {
+                method: 'DELETE',
+                headers: this.getHeaders(),
+            });
 
-        return this.handleResponse<T>(response);
+            return await this.handleResponse<T>(response);
+        } catch (error) {
+            this.catchNetworkError(error);
+        }
     }
 
     async uploadFile<T = any>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
-        const baseUrl = this.getEffectiveBaseUrl();
-        const headers: HeadersInit = {};
+        try {
+            const baseUrl = this.getEffectiveBaseUrl();
+            const headers: HeadersInit = {};
 
-        // Get token from localStorage (don't set Content-Type for FormData)
-        if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('admin_token');
-            if (token) {
-                headers['Authorization'] = `Bearer ${token}`;
+            if (typeof window !== 'undefined') {
+                const token = localStorage.getItem('admin_token');
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
             }
+
+            const response = await fetch(`${baseUrl}${endpoint}`, {
+                method: 'POST',
+                headers,
+                body: formData,
+            });
+
+            return await this.handleResponse<T>(response);
+        } catch (error) {
+            this.catchNetworkError(error);
         }
-
-        const response = await fetch(`${baseUrl}${endpoint}`, {
-            method: 'POST',
-            headers,
-            body: formData,
-        });
-
-        return this.handleResponse<T>(response);
     }
 }
 

@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Lock } from 'lucide-react';
 import { FileUpload } from '@/components/role-create/FileUpload';
+import { Audio30SecRecorder } from '@/components/role-create/Audio30SecRecorder';
 import { ReferralBanner, ReferralState } from '@/components/role-create/ReferralBanner';
 import { apiClient } from '@/lib/apiClient';
 
@@ -14,6 +15,8 @@ function HostFormContent() {
 
     const initialFormState = {
         name: '',
+        age: '',
+        gender: 'female',
         email: '',
         phone: '',
         city: '',
@@ -79,6 +82,8 @@ function HostFormContent() {
 
             const data = await apiClient.post('/api/recruitment/host', {
                 name: form.name.trim(),
+                age: form.age ? Number(form.age) : undefined,
+                gender: form.gender,
                 email: form.email.trim(),
                 phone: form.phone.trim(),
                 role: 'host',
@@ -88,7 +93,6 @@ function HostFormContent() {
                 state: form.state.trim(),
                 district: form.district.trim(),
                 country: form.country.trim(),
-                linkedin: form.linkedin.trim(),
                 personalNote: form.personalNote.trim(),
             });
             if (data.success) {
@@ -161,17 +165,48 @@ function HostFormContent() {
                     <form onSubmit={handleSubmit} className="space-y-5">
                     
                     {/* Applicant name */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Applicant&apos;s name *
-                        </label>
-                        <input
-                            type="text"
-                            required
-                            value={form.name}
-                            onChange={e => setForm({ ...form, name: e.target.value })}
-                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        />
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/90 mb-1.5 block">
+                                Applicant&apos;s name *
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                value={form.name}
+                                onChange={e => setForm({ ...form, name: e.target.value })}
+                                className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/90 mb-1.5 block">
+                                Age *
+                            </label>
+                            <input
+                                type="number"
+                                required
+                                min="18"
+                                max="100"
+                                placeholder="e.g. 21"
+                                value={form.age}
+                                onChange={e => setForm({ ...form, age: e.target.value })}
+                                className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/90 mb-1.5 block">
+                                Gender
+                            </label>
+                            <select
+                                value={form.gender}
+                                onChange={e => setForm({ ...form, gender: e.target.value })}
+                                className="w-full bg-slate-900 border border-white/30 text-white rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                            >
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
                     </div>
 
                     {/* Email */}
@@ -258,90 +293,6 @@ function HostFormContent() {
                         />
                     </div>
 
-                    {/* Resume / CV */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Resume / CV
-                        </label>
-                        <div className="bg-white/20 border border-white/30 rounded-full px-3 py-1.5 flex items-center justify-between">
-                            <label className="cursor-pointer bg-white/20 hover:bg-white/30 text-white font-semibold text-xs px-3 py-1.5 rounded-full shrink-0 flex items-center gap-1.5 transition-all border border-white/30">
-                                Choose File
-                                <input
-                                    type="file"
-                                    accept=".pdf,.doc,.docx,.png,.jpg,.jpeg"
-                                    className="hidden"
-                                    onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) setForm({ ...form, resume: file.name });
-                                    }}
-                                />
-                            </label>
-                            <input
-                                type="text"
-                                placeholder={form.resume || "No file chosen"}
-                                value={form.resume}
-                                onChange={e => setForm({ ...form, resume: e.target.value })}
-                                className="bg-transparent text-white placeholder-white/60 text-xs w-full ml-3 focus:outline-none truncate"
-                            />
-                        </div>
-                    </div>
-                    {/* Aadhaar Front */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Aadhaar Card Front Side Document URL / File
-                        </label>
-                        <input
-                            type="url"
-                            placeholder="Aadhaar Front URL"
-                            value={form.adharFront}
-                            onChange={e => setForm({ ...form, adharFront: e.target.value })}
-                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        />
-                    </div>
-
-                    {/* Aadhaar Back */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Aadhaar Card Back Side Document URL / File
-                        </label>
-                        <input
-                            type="url"
-                            placeholder="Aadhaar Back URL"
-                            value={form.adharBack}
-                            onChange={e => setForm({ ...form, adharBack: e.target.value })}
-                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        />
-                    </div>
-
-                    {/* PAN Card */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            PAN Card Document URL / File
-                        </label>
-                        <input
-                            type="url"
-                            placeholder="PAN Card URL"
-                            value={form.pan}
-                            onChange={e => setForm({ ...form, pan: e.target.value })}
-                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        />
-                    </div>
-
-                    {/* LinkedIn / Social URL */}
-                    <div>
-                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            LinkedIn Profile URL / Social Handle *
-                        </label>
-                        <input
-                            type="url"
-                            required
-                            placeholder="https://linkedin.com/in/username"
-                            value={form.linkedin}
-                            onChange={e => setForm({ ...form, linkedin: e.target.value })}
-                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
-                        />
-                    </div>
-
                     {/* Documents Upload Section */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FileUpload
@@ -392,21 +343,11 @@ function HostFormContent() {
                                 }
                             }}
                         />
-                        <FileUpload
-                            label="Host Voice Sample / Audition Video"
-                            name="portfolio"
+                        <Audio30SecRecorder
+                            label="Host 30-Second Voice Sample / Audition"
                             required
-                            acceptedFormats={['mp3', 'wav', 'm4a', 'mp4', 'mov', 'png', 'jpg', 'pdf']}
                             value={form.portfolio}
-                            onChange={(fileOrUrl) => {
-                                if (typeof fileOrUrl === 'string') {
-                                    setForm(prev => ({ ...prev, portfolio: fileOrUrl }));
-                                } else if (fileOrUrl instanceof File) {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => setForm(prev => ({ ...prev, portfolio: reader.result as string }));
-                                    reader.readAsDataURL(fileOrUrl);
-                                }
-                            }}
+                            onChange={(base64Data) => setForm(prev => ({ ...prev, portfolio: base64Data }))}
                         />
                     </div>
 

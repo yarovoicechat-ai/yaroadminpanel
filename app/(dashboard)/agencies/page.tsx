@@ -22,7 +22,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/Dialog";
-import { Plus, Trash2, ShieldAlert, Award, UserCheck, Percent, DollarSign, Settings, Key, Users } from "lucide-react";
+import { Plus, Trash2, ShieldAlert, Award, UserCheck, Percent, DollarSign, Settings, Key, Users, Image, X } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 
@@ -33,8 +33,48 @@ export default function AgenciesPage() {
     // Form states
     const [name, setName] = useState('');
     const [ownerId, setOwnerId] = useState('');
+    const [agencyLogo, setAgencyLogo] = useState('');
+    const [uploadingLogo, setUploadingLogo] = useState(false);
+    const [age, setAge] = useState('');
     const [commissionRate, setCommissionRate] = useState('10');
     const [submitting, setSubmitting] = useState(false);
+
+    const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select a valid image file (PNG, JPG, WEBP)');
+            return;
+        }
+
+        setUploadingLogo(true);
+        try {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const base64Url = event.target?.result as string;
+                setAgencyLogo(base64Url);
+
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('folder', 'Agencies/Logos');
+                    const res = await apiClient.uploadFile('/api/upload', formData);
+                    if (res.success && res.data?.url) {
+                        setAgencyLogo(res.data.url);
+                    }
+                } catch {
+                    // Keep base64 if server upload fails
+                }
+            };
+            reader.readAsDataURL(file);
+            toast.success('Agency logo image selected!');
+        } catch (err: any) {
+            toast.error('Failed to process image file');
+        } finally {
+            setUploadingLogo(false);
+        }
+    };
 
     // Assign Host states
     const [selectedAgency, setSelectedAgency] = useState<any | null>(null);
@@ -72,6 +112,8 @@ export default function AgenciesPage() {
             const response = await apiClient.post('/api/admin/agencies', {
                 name,
                 ownerId,
+                logo: agencyLogo,
+                age: age ? Number(age) : undefined,
                 commissionRate
             });
 
@@ -79,6 +121,8 @@ export default function AgenciesPage() {
                 toast.success('Agency created successfully');
                 setName('');
                 setOwnerId('');
+                setAgencyLogo('');
+                setAge('');
                 setCommissionRate('10');
                 fetchAgencies();
             }
@@ -153,12 +197,56 @@ export default function AgenciesPage() {
                                 />
                             </div>
                             <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-300">Agency Logo (Upload Image)</label>
+                                <div className="flex items-center gap-3">
+                                    {agencyLogo ? (
+                                        <div className="relative w-12 h-12 rounded-xl border border-amber-500/40 overflow-hidden shrink-0 bg-slate-800 shadow-md">
+                                            <img src={agencyLogo} alt="Logo" className="w-full h-full object-cover" />
+                                            <button
+                                                type="button"
+                                                onClick={() => setAgencyLogo('')}
+                                                className="absolute top-0.5 right-0.5 bg-black/70 text-white rounded-full p-0.5 hover:bg-red-600 transition-colors"
+                                                title="Remove image"
+                                            >
+                                                <X className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-xl border-2 border-dashed border-slate-700 flex items-center justify-center bg-slate-800 text-slate-400 shrink-0">
+                                            <Image className="w-5 h-5" />
+                                        </div>
+                                    )}
+                                    <div className="flex-1">
+                                        <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold cursor-pointer transition-all">
+                                            <Image className="w-4 h-4 text-amber-500" />
+                                            <span>{uploadingLogo ? 'Processing...' : agencyLogo ? 'Change Image' : 'Select Logo Image'}</span>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                className="hidden"
+                                                onChange={handleLogoFileChange}
+                                            />
+                                        </label>
+                                        <p className="text-[11px] text-slate-400 mt-1">Select PNG, JPG, WEBP file</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
                                 <label className="text-sm font-semibold text-slate-300">Owner User ID (MongoDB Object ID)</label>
                                 <Input
                                     placeholder="65a7f28..."
                                     value={ownerId}
                                     onChange={(e) => setOwnerId(e.target.value)}
                                     required
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-300">Owner Age</label>
+                                <Input
+                                    type="number"
+                                    placeholder="e.g. 28"
+                                    value={age}
+                                    onChange={(e) => setAge(e.target.value)}
                                 />
                             </div>
                             <div className="space-y-2">

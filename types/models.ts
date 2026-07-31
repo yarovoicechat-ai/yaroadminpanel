@@ -152,6 +152,9 @@ export interface Withdrawal {
     _id: string;
     userId: number;
     amount: number;
+    grossAmount?: number;
+    platformFee?: number;
+    platformFeePercent?: number;
     coinsDeducted: number;
     method: 'bank' | 'upi';
     details: {

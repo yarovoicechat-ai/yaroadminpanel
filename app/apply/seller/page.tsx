@@ -20,6 +20,8 @@ function SellerFormContent() {
 
     const [formData, setFormData] = useState({
         fullName: '',
+        age: '',
+        gender: 'female',
         email: '',
         phone: '',
         country: 'India',
@@ -93,6 +95,8 @@ function SellerFormContent() {
             setSubmitting(true);
             const payload = {
                 name: formData.fullName,
+                age: formData.age ? Number(formData.age) : undefined,
+                gender: formData.gender,
                 email: formData.email,
                 phone: formData.phone,
                 country: formData.country,
@@ -157,15 +161,41 @@ function SellerFormContent() {
             {currentStep === 0 && (
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-white mb-2">1. Merchant Identity & Contact</h3>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">Merchant / Owner Full Name *</label>
-                        <input
-                            type="text"
-                            value={formData.fullName}
-                            onChange={e => updateField('fullName', e.target.value)}
-                            placeholder="Full Legal Name"
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-amber-400"
-                        />
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Merchant / Owner Full Name *</label>
+                            <input
+                                type="text"
+                                value={formData.fullName}
+                                onChange={e => updateField('fullName', e.target.value)}
+                                placeholder="Full Legal Name"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-amber-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Merchant Age</label>
+                            <input
+                                type="number"
+                                min="18"
+                                max="100"
+                                value={formData.age}
+                                onChange={e => updateField('age', e.target.value)}
+                                placeholder="e.g. 28"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-amber-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Gender</label>
+                            <select
+                                value={formData.gender}
+                                onChange={e => updateField('gender', e.target.value)}
+                                className="w-full bg-slate-900 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white focus:ring-2 focus:ring-amber-400"
+                            >
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>

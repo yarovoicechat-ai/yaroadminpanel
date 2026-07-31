@@ -683,6 +683,20 @@ export default function UsersPage() {
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-2">
+                                                    {showBtn('Edit') && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
+                                                            onClick={() => {
+                                                                setEditingUser(user);
+                                                                setIsEditOpen(true);
+                                                            }}
+                                                            title="Edit User Name & Details"
+                                                        >
+                                                            <Edit2 className="h-4 w-4" />
+                                                        </Button>
+                                                    )}
                                                     <Link
                                                         href={`/security/permissions?targetType=user&targetId=${user._id}&name=${encodeURIComponent(user.name)}`}
                                                         className="inline-flex p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 transition-colors"

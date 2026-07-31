@@ -20,6 +20,7 @@ function OperatorFormContent() {
 
     const [formData, setFormData] = useState({
         fullName: '',
+        age: '',
         email: '',
         phone: '',
         gender: 'female',
@@ -97,6 +98,7 @@ function OperatorFormContent() {
             setSubmitting(true);
             const payload = {
                 name: formData.fullName,
+                age: formData.age ? Number(formData.age) : undefined,
                 email: formData.email,
                 phone: formData.phone,
                 gender: formData.gender,
@@ -167,15 +169,29 @@ function OperatorFormContent() {
             {currentStep === 0 && (
                 <div className="space-y-4">
                     <h3 className="text-lg font-bold text-white mb-2">1. Personal & Contact Information</h3>
-                    <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">Full Name *</label>
-                        <input
-                            type="text"
-                            value={formData.fullName}
-                            onChange={e => updateField('fullName', e.target.value)}
-                            placeholder="Your Full Name"
-                            className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
-                        />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Full Name *</label>
+                            <input
+                                type="text"
+                                value={formData.fullName}
+                                onChange={e => updateField('fullName', e.target.value)}
+                                placeholder="Your Full Name"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
+                            />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Age</label>
+                            <input
+                                type="number"
+                                min="18"
+                                max="100"
+                                value={formData.age}
+                                onChange={e => updateField('age', e.target.value)}
+                                placeholder="e.g. 24"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-emerald-400"
+                            />
+                        </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>

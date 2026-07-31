@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
     Briefcase, User, Mail, Phone, Lock, MapPin,
-    ArrowLeft, CheckCircle2, Building2, ShieldCheck
+    ArrowLeft, CheckCircle2, Building2, ShieldCheck, Image, Calendar, X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
@@ -14,7 +14,48 @@ export default function CreateAgencyPage() {
     const [loading, setLoading] = useState(false);
 
     const [agencyName, setAgencyName] = useState('');
+    const [agencyLogo, setAgencyLogo] = useState('');
+    const [uploadingLogo, setUploadingLogo] = useState(false);
+
+    const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            toast.error('Please select a valid image file (PNG, JPG, WEBP)');
+            return;
+        }
+
+        setUploadingLogo(true);
+        try {
+            const reader = new FileReader();
+            reader.onload = async (event) => {
+                const base64Url = event.target?.result as string;
+                setAgencyLogo(base64Url);
+
+                try {
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    formData.append('folder', 'Agencies/Logos');
+                    const res = await apiClient.uploadFile('/api/upload', formData);
+                    if (res.success && res.data?.url) {
+                        setAgencyLogo(res.data.url);
+                    }
+                } catch {
+                    // Keep base64 if server upload endpoint fails
+                }
+            };
+            reader.readAsDataURL(file);
+            toast.success('Agency logo image selected!');
+        } catch (err: any) {
+            toast.error('Failed to process image file');
+        } finally {
+            setUploadingLogo(false);
+        }
+    };
     const [ownerName, setOwnerName] = useState('');
+    const [age, setAge] = useState('');
+    const [gender, setGender] = useState('female');
     const [agencyCode, setAgencyCode] = useState('');
     const [email, setEmail] = useState('');
     const [mobile, setMobile] = useState('');
@@ -38,6 +79,9 @@ export default function CreateAgencyPage() {
                 data: {
                     name: ownerName,
                     agencyName,
+                    agencyLogo,
+                    age: age ? Number(age) : undefined,
+                    gender,
                     email,
                     phoneNumber: mobile,
                     agencyCode: agencyCode || `AGY_${Math.floor(1000 + Math.random() * 9000)}`,
@@ -116,6 +160,44 @@ export default function CreateAgencyPage() {
 
                         <div>
                             <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                Agency Logo (Upload Image)
+                            </label>
+                            <div className="flex items-center gap-3">
+                                {agencyLogo ? (
+                                    <div className="relative w-12 h-12 rounded-xl border border-amber-500/40 overflow-hidden shrink-0 bg-slate-800 shadow-md">
+                                        <img src={agencyLogo} alt="Logo" className="w-full h-full object-cover" />
+                                        <button
+                                            type="button"
+                                            onClick={() => setAgencyLogo('')}
+                                            className="absolute top-0.5 right-0.5 bg-black/70 text-white rounded-full p-0.5 hover:bg-red-600 transition-colors"
+                                            title="Remove image"
+                                        >
+                                            <X className="w-3 h-3" />
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="w-12 h-12 rounded-xl border-2 border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center bg-slate-100 dark:bg-slate-800 text-slate-400 shrink-0">
+                                        <Image className="w-5 h-5" />
+                                    </div>
+                                )}
+                                <div className="flex-1">
+                                    <label className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 text-xs font-bold cursor-pointer transition-all">
+                                        <Image className="w-4 h-4 text-amber-500" />
+                                        <span>{uploadingLogo ? 'Processing...' : agencyLogo ? 'Change Image' : 'Select Logo Image'}</span>
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            className="hidden"
+                                            onChange={handleLogoFileChange}
+                                        />
+                                    </label>
+                                    <p className="text-[11px] text-slate-400 mt-1">Select PNG, JPG, WEBP image file</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
                                 Agency Owner Name *
                             </label>
                             <div className="relative">
@@ -129,6 +211,39 @@ export default function CreateAgencyPage() {
                                     className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-amber-500"
                                 />
                             </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                Owner Age
+                            </label>
+                            <div className="relative">
+                                <Calendar className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                                <input
+                                    type="number"
+                                    min="18"
+                                    max="100"
+                                    value={age}
+                                    onChange={(e) => setAge(e.target.value)}
+                                    placeholder="e.g. 28"
+                                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                Owner Gender
+                            </label>
+                            <select
+                                value={gender}
+                                onChange={(e) => setGender(e.target.value)}
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+                            >
+                                <option value="female">Female</option>
+                                <option value="male">Male</option>
+                                <option value="other">Other</option>
+                            </select>
                         </div>
 
                         <div>

@@ -118,9 +118,26 @@ const sidebarSections: SidebarSection[] = [
                 submenu: [
                     { name: 'Create', href: '/hosts/create' },
                     { name: 'Requests', href: '/hosts/request' },
-                    { name: 'List', href: '/hosts' },
-                    { name: 'Host Management', href: '/host-management' }
+                    { name: 'List', href: '/hosts' }
                 ]
+            },
+            {
+                name: 'Avatar Requests',
+                href: '/avatar-requests',
+                icon: User,
+                category: 'Users'
+            },
+            {
+                name: 'Default Bios',
+                href: '/bios',
+                icon: MessageSquare,
+                category: 'Users'
+            },
+            {
+                name: 'Host Management',
+                href: '/host-management',
+                icon: Video,
+                category: 'Users'
             },
             {
                 name: 'Seller',
@@ -158,12 +175,23 @@ const sidebarSections: SidebarSection[] = [
         title: 'Security & Verification',
         category: 'Notifications',
         items: [
+            { name: 'Chat Violations', href: '/moderation/violations', icon: ShieldAlert, category: 'Notifications' },
             { name: 'ID Ban', href: '/bans/id', icon: Ban, category: 'Notifications' },
             { name: 'Device Ban', href: '/bans/device', icon: AlertOctagon, category: 'Notifications' },
             { name: 'Event', href: '/events', icon: Calendar, category: 'Notifications' },
             { name: 'System Message', href: '/messages/system', icon: MessageSquare, category: 'Notifications' },
             { name: 'Activity', href: '/messages/activity', icon: Bell, category: 'Notifications' },
-            { name: 'KYC Verification', href: '/kyc', icon: CheckSquare, category: 'Notifications' }
+            {
+                name: 'Verification Management',
+                icon: FileCheck,
+                category: 'Notifications',
+                submenu: [
+                    { name: 'Face Verification Requests', href: '/verification/face' },
+                    { name: 'KYC Verification Requests', href: '/verification/kyc' },
+                    { name: 'Verification Reports', href: '/verification/reports' },
+                    { name: 'Verification Settings', href: '/verification/settings' }
+                ]
+            }
         ]
     },
     {
@@ -251,6 +279,15 @@ export default function Sidebar() {
     const [allowedMenus, setAllowedMenus] = useState<string[]>([]);
     const [allowedPages, setAllowedPages] = useState<string[]>([]);
     const [permissionsLoaded, setPermissionsLoaded] = useState(false);
+    const [verificationCounts, setVerificationCounts] = useState({ face: 0, kyc: 0 });
+
+    useEffect(() => {
+        apiClient.get<any>('/api/v1/admin/verifications/reports/summary').then((response) => {
+            const face = (response.data?.face || []).find((row: any) => row._id === 'PENDING')?.count || 0;
+            const kyc = (response.data?.kyc || []).find((row: any) => row._id === 'PENDING')?.count || 0;
+            setVerificationCounts({ face, kyc });
+        }).catch(() => undefined);
+    }, []);
 
     useEffect(() => {
         const checkMobile = () => {
@@ -448,7 +485,11 @@ export default function Sidebar() {
                                                                                 : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/30"
                                                                         )}
                                                                     >
-                                                                        {sub.name}
+                                                                        <span className="flex items-center justify-between gap-2">
+                                                                            <span>{sub.name}</span>
+                                                                            {sub.href === '/verification/face' && verificationCounts.face > 0 ? <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] text-white">{verificationCounts.face}</span> : null}
+                                                                            {sub.href === '/verification/kyc' && verificationCounts.kyc > 0 ? <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] text-white">{verificationCounts.kyc}</span> : null}
+                                                                        </span>
                                                                     </Link>
                                                                 );
                                                             })}

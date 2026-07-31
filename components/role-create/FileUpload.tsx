@@ -109,21 +109,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
                         )}
                     </div>
                 </div>
-
-                {/* Optional URL paste fallback */}
-                <div className="mt-3 pt-2 border-t border-white/10">
-                    <input
-                        type="text"
-                        placeholder="Or paste document link/URL..."
-                        value={urlInput}
-                        onChange={(e) => {
-                            setUrlInput(e.target.value);
-                            onChange(e.target.value);
-                        }}
-                        onBlur={handleUrlBlur}
-                        className="w-full bg-transparent text-white placeholder-white/40 text-xs focus:outline-none"
-                    />
-                </div>
             </div>
 
             {displayedError && (

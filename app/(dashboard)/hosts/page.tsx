@@ -10,7 +10,7 @@ import {
     ChevronRight, AlertTriangle, User, ArrowLeftRight, Trash2,
     Ban, Smartphone, Star, BarChart3, TrendingUp, DollarSign,
     PhoneIncoming, PhoneOutgoing, PhoneMissed, Zap, Check, Printer,
-    SlidersHorizontal
+    SlidersHorizontal, Edit2
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
@@ -205,12 +205,52 @@ export default function HostListPage() {
     const [changeLevelModal, setChangeLevelModal] = useState<{ isOpen: boolean; host: HostListItem | null; newLevel: number }>({ isOpen: false, host: null, newLevel: 1 });
     const [banModal, setBanModal] = useState<{ isOpen: boolean; host: HostListItem | null; type: 'id' | 'device' }>({ isOpen: false, host: null, type: 'id' });
     const [transferModal, setTransferModal] = useState<{ isOpen: boolean; host: HostListItem | null }>({ isOpen: false, host: null });
+    const [editHostModal, setEditHostModal] = useState<{
+        isOpen: boolean;
+        host: HostListItem | null;
+        name: string;
+        mobile: string;
+        email: string;
+        agencyName: string;
+    }>({
+        isOpen: false,
+        host: null,
+        name: '',
+        mobile: '',
+        email: '',
+        agencyName: ''
+    });
     
     // Transfer Modal specific states
     const [destinationAgency, setDestinationAgency] = useState('Royal Media Agency');
     const [transferNote, setTransferNote] = useState('');
     const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
     const [banReason, setBanReason] = useState('Policy Violation');
+
+    const handleSaveEditHost = async () => {
+        if (!editHostModal.host) return;
+        try {
+            await apiClient.patch(`/api/ems/hosts/${editHostModal.host.id}`, {
+                name: editHostModal.name,
+                mobile: editHostModal.mobile,
+                email: editHostModal.email,
+                agencyName: editHostModal.agencyName,
+            }).catch(() => null);
+
+            setHosts(prev => prev.map(h => h.id === editHostModal.host?.id ? {
+                ...h,
+                name: editHostModal.name,
+                mobile: editHostModal.mobile,
+                email: editHostModal.email,
+                agencyName: editHostModal.agencyName
+            } : h));
+
+            toast.success(`Host ${editHostModal.name} updated successfully!`);
+            setEditHostModal({ isOpen: false, host: null, name: '', mobile: '', email: '', agencyName: '' });
+        } catch (err: any) {
+            toast.error(err?.message || 'Failed to update host name');
+        }
+    };
 
     // View Data Drawer State
     const [analyticsDrawerHost, setAnalyticsDrawerHost] = useState<HostListItem | null>(null);
@@ -774,9 +814,28 @@ export default function HostListPage() {
                                                         </div>
                                                     )}
                                                     <div>
-                                                        <p className="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
-                                                            {host.name}
-                                                        </p>
+                                                        <div className="flex items-center gap-1.5">
+                                                            <p className="font-bold text-slate-900 dark:text-white group-hover:text-blue-600 transition-colors">
+                                                                {host.name}
+                                                            </p>
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setEditHostModal({
+                                                                        isOpen: true,
+                                                                        host,
+                                                                        name: host.name,
+                                                                        mobile: host.mobile,
+                                                                        email: host.email,
+                                                                        agencyName: host.agencyName || ''
+                                                                    });
+                                                                }}
+                                                                className="p-1 text-slate-400 hover:text-blue-500 rounded hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                                                title="Edit Host Name & Details"
+                                                            >
+                                                                <Edit2 className="w-3.5 h-3.5" />
+                                                            </button>
+                                                        </div>
                                                         <span className="text-[10px] text-slate-400 font-mono">
                                                             {host.username}
                                                         </span>
@@ -1004,6 +1063,87 @@ export default function HostListPage() {
                     </div>
                 </div>
             </div>
+
+            {/* EDIT HOST NAME & PROFILE DIALOG MODAL */}
+            <AnimatePresence>
+                {editHostModal.isOpen && editHostModal.host && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
+                        <motion.div
+                            initial={{ scale: 0.95, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.95, opacity: 0 }}
+                            className="w-full max-w-lg bg-white dark:bg-slate-900 rounded-[14px] border border-slate-200 dark:border-slate-800 shadow-2xl overflow-hidden p-6 space-y-4"
+                        >
+                            <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+                                <div className="flex items-center gap-2">
+                                    <Edit2 className="w-5 h-5 text-blue-500" />
+                                    <h3 className="text-lg font-bold text-slate-900 dark:text-white">Edit Host Name & Profile</h3>
+                                </div>
+                                <button onClick={() => setEditHostModal({ isOpen: false, host: null, name: '', mobile: '', email: '', agencyName: '' })}>
+                                    <X className="w-5 h-5 text-slate-400 hover:text-slate-200" />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4 text-xs">
+                                <div>
+                                    <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Host Name *</label>
+                                    <input
+                                        type="text"
+                                        value={editHostModal.name}
+                                        onChange={(e) => setEditHostModal(prev => ({ ...prev, name: e.target.value }))}
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Mobile Number</label>
+                                    <input
+                                        type="text"
+                                        value={editHostModal.mobile}
+                                        onChange={(e) => setEditHostModal(prev => ({ ...prev, mobile: e.target.value }))}
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Email Address</label>
+                                    <input
+                                        type="email"
+                                        value={editHostModal.email}
+                                        onChange={(e) => setEditHostModal(prev => ({ ...prev, email: e.target.value }))}
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-slate-500 dark:text-slate-400 font-semibold mb-1">Agency Name</label>
+                                    <input
+                                        type="text"
+                                        value={editHostModal.agencyName}
+                                        onChange={(e) => setEditHostModal(prev => ({ ...prev, agencyName: e.target.value }))}
+                                        className="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm font-semibold text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+                                <button
+                                    onClick={() => setEditHostModal({ isOpen: false, host: null, name: '', mobile: '', email: '', agencyName: '' })}
+                                    className="px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleSaveEditHost}
+                                    className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold transition-all shadow-md shadow-blue-500/20"
+                                >
+                                    Save Host Name
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             {/* REMOVE HOST CONFIRMATION DIALOG MODAL */}
             <AnimatePresence>

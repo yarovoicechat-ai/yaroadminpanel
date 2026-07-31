@@ -23,6 +23,7 @@ export default function CreateSuperAdminPage() {
         // Personal
         profilePhoto: '',
         name: '',
+        age: '',
         nickName: '',
         gender: 'female',
         dob: '',
@@ -105,6 +106,7 @@ export default function CreateSuperAdminPage() {
                 setForm({
                     profilePhoto: '',
                     name: '',
+                    age: '',
                     nickName: '',
                     gender: 'female',
                     dob: '',
@@ -219,6 +221,15 @@ export default function CreateSuperAdminPage() {
                                 value={form.name}
                                 onChange={e => handleChange('name', e.target.value)}
                                 required
+                            />
+                        </div>
+                        <div>
+                            <Label className="text-xs text-slate-400 block mb-1">Age</Label>
+                            <Input
+                                type="number"
+                                placeholder="e.g. 30"
+                                value={form.age}
+                                onChange={e => handleChange('age', e.target.value)}
                             />
                         </div>
                         <div>

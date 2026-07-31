@@ -31,8 +31,8 @@ export default function HelpSupportPage() {
         setLoading(true);
         try {
             const res = await apiClient.get('/api/admin/help', { search });
-            if (res.data?.success) {
-                setTickets(res.data.data || []);
+            if (res.success) {
+                setTickets((res.data as any[]) || []);
             }
         } catch (error: any) {
             console.error('Error fetching tickets:', error);
@@ -62,13 +62,13 @@ export default function HelpSupportPage() {
             const res = await apiClient.patch(`/api/admin/help/${selectedTicket._id}/reply`, {
                 reply: replyText
             });
-            if (res.data?.success) {
+            if (res.success) {
                 toast.success(`Successfully resolved ticket & sent response.`);
                 setSelectedTicket(null);
                 setReplyText('');
                 fetchTickets();
             } else {
-                toast.error(res.data?.message || 'Failed to update ticket');
+                toast.error(res.message || 'Failed to update ticket');
             }
         } catch (error: any) {
             console.error('Error resolving ticket:', error);
@@ -136,7 +136,7 @@ export default function HelpSupportPage() {
                                     return (
                                         <TableRow key={ticket._id} className="hover:bg-muted/30">
                                             <TableCell className="font-mono text-xs text-slate-300 font-bold">{ticket.ticketNumber || '-'}</TableCell>
-                                            <TableCell className="font-mono text-xs text-primary font-bold">User {ticket.userId}</TableCell>
+                                            <TableCell className="font-mono text-xs text-primary font-bold">{ticket.user?.name || `User ${ticket.userId}`}<div className="text-[10px] text-slate-500">ID: {ticket.userId}</div></TableCell>
                                             <TableCell className="font-semibold text-slate-300">{ticket.reason}</TableCell>
                                             <TableCell className="text-xs text-slate-400 font-medium max-w-xs truncate" title={ticket.message}>{ticket.message}</TableCell>
                                             <TableCell className="text-xs text-slate-500">{new Date(ticket.createdAt).toLocaleDateString()}</TableCell>
@@ -176,7 +176,7 @@ export default function HelpSupportPage() {
                         
                         <div className="space-y-1">
                             <p className="text-xs text-slate-400">Ticket #: <span className="font-mono text-slate-200 font-semibold">{selectedTicket.ticketNumber || '-'}</span></p>
-                            <p className="text-xs text-slate-400">User ID: <span className="font-mono text-primary font-semibold">{selectedTicket.userId}</span></p>
+                            <p className="text-xs text-slate-400">User: <span className="text-slate-200 font-semibold">{selectedTicket.user?.name || `User ${selectedTicket.userId}`}</span> <span className="font-mono text-primary">({selectedTicket.userId})</span></p>
                             <p className="text-xs text-slate-400">Reason: <span className="text-slate-200 font-semibold">{selectedTicket.reason}</span></p>
                         </div>
                         

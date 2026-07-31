@@ -1,14 +1,15 @@
 module.exports = {
   apps: [
     {
-      name: 'admin-panel',
-      cwd: '/root/admin',
+      name: 'app-admin',
+      cwd: '/root/apps/app-admin',
       script: 'npm',
       args: 'start',
       env: {
-        PORT: 5050,
+        PORT: 3002,
         NODE_ENV: 'production'
       }
     }
   ]
 }
+
