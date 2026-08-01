@@ -67,7 +67,7 @@ export function ReferralBanner({ onReferralVerified }: ReferralBannerProps) {
                 const unverifiedState: ReferralState = {
                     code: codeToVerify,
                     isVerified: false,
-                    isLocked: isFromUrl,
+                    isLocked: false,
                 };
                 setReferralState(unverifiedState);
                 onReferralVerified(unverifiedState);
@@ -76,7 +76,7 @@ export function ReferralBanner({ onReferralVerified }: ReferralBannerProps) {
             const failedState: ReferralState = {
                 code: codeToVerify.toUpperCase(),
                 isVerified: false,
-                isLocked: isFromUrl,
+                isLocked: false,
             };
             setErrorMessage(error?.message || 'Unable to verify referral code. Please try again.');
             setReferralState(failedState);
@@ -122,7 +122,7 @@ export function ReferralBanner({ onReferralVerified }: ReferralBannerProps) {
                             <Link2 className="w-3.5 h-3.5 text-amber-400" />
                             Referral Code * (Mandatory)
                         </label>
-                        {referralState.isLocked ? (
+                        {referralState.isLocked && referralState.isVerified ? (
                             <span className="text-[10px] bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded font-medium">
                                 Auto-detected from URL
                             </span>
@@ -137,17 +137,17 @@ export function ReferralBanner({ onReferralVerified }: ReferralBannerProps) {
                         <input
                             type="text"
                             value={inputCode}
-                            disabled={referralState.isLocked || loading}
+                            disabled={(referralState.isLocked && referralState.isVerified) || loading}
                             onChange={(e) => setInputCode(e.target.value.toUpperCase())}
-                            placeholder="Enter Inviter Code (e.g. D07A24 / AGY001 / OPR01)"
+                            placeholder="Enter Inviter Code (e.g. OS000001 / D07A24 / AGY001 / OPR01)"
                             className="flex-1 bg-white/10 border border-amber-500/40 rounded-xl px-3.5 py-2 text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-amber-500/50 disabled:opacity-60"
                         />
-                        {!referralState.isLocked && (
+                        {(!referralState.isVerified || !referralState.isLocked) && (
                             <button
                                 type="button"
                                 onClick={() => verifyCode(inputCode, false)}
                                 disabled={loading || !inputCode.trim()}
-                                className="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs rounded-xl transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-md"
+                                className="px-5 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs rounded-xl transition-all disabled:opacity-50 flex items-center gap-1.5 shadow-md shrink-0"
                             >
                                 {loading ? 'Verifying...' : 'Unlock Form'}
                             </button>
