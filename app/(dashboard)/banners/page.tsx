@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -13,7 +13,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { Plus, Trash2, ToggleLeft, ToggleRight, Layers, Sliders, Calendar } from "lucide-react";
+import { Plus, Trash2, ToggleLeft, ToggleRight, Layers, Sliders, Calendar, UploadCloud, Image as ImageIcon, X, CheckCircle2, Link as LinkIcon } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 
@@ -29,6 +29,9 @@ export default function BannersPage() {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [useUrlMode, setUseUrlMode] = useState(false);
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         fetchBanners();
@@ -138,13 +141,94 @@ export default function BannersPage() {
                                 />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-300">Image Link</label>
-                                <Input
-                                    placeholder="https://image-host.com/my-banner.jpg"
-                                    value={imageUrl}
-                                    onChange={(e) => setImageUrl(e.target.value)}
-                                    required
-                                />
+                                <div className="flex items-center justify-between">
+                                    <label className="text-sm font-semibold text-slate-300">Banner Image *</label>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setUseUrlMode(!useUrlMode);
+                                            setImageUrl('');
+                                        }}
+                                        className="text-xs text-primary hover:underline flex items-center gap-1 font-medium"
+                                    >
+                                        {useUrlMode ? <UploadCloud size={12} /> : <LinkIcon size={12} />}
+                                        {useUrlMode ? 'Upload File' : 'Paste URL'}
+                                    </button>
+                                </div>
+
+                                {!useUrlMode ? (
+                                    <div className="space-y-2">
+                                        <input
+                                            ref={fileInputRef}
+                                            type="file"
+                                            accept="image/png, image/jpeg, image/jpg, image/webp, image/gif"
+                                            onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                    if (!file.type.startsWith('image/')) {
+                                                        toast.error('Please select a valid image file');
+                                                        return;
+                                                    }
+                                                    if (file.size > 10 * 1024 * 1024) {
+                                                        toast.error('Image size must be under 10MB');
+                                                        return;
+                                                    }
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => {
+                                                        setImageUrl(reader.result as string);
+                                                    };
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                            className="hidden"
+                                        />
+
+                                        {imageUrl ? (
+                                            <div className="relative group rounded-xl overflow-hidden border border-slate-700 bg-slate-800/80 p-2">
+                                                <img
+                                                    src={imageUrl}
+                                                    alt="Preview"
+                                                    className="w-full h-32 object-cover rounded-lg border border-slate-700"
+                                                />
+                                                <div className="mt-2 flex items-center justify-between px-1">
+                                                    <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1">
+                                                        <CheckCircle2 size={13} /> Image Ready
+                                                    </span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            setImageUrl('');
+                                                            if (fileInputRef.current) fileInputRef.current.value = '';
+                                                        }}
+                                                        className="text-xs text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20"
+                                                    >
+                                                        <X size={13} /> Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div
+                                                onClick={() => fileInputRef.current?.click()}
+                                                className="border-2 border-dashed border-slate-700 hover:border-primary/60 rounded-xl p-5 text-center cursor-pointer transition-colors bg-slate-900/40 hover:bg-slate-800/40 group flex flex-col items-center justify-center space-y-2"
+                                            >
+                                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                                                    <UploadCloud size={20} />
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-slate-200">Click to Upload Banner Image</p>
+                                                    <p className="text-[10px] text-slate-400 mt-0.5">PNG, JPG, WEBP, GIF (Max 10MB)</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <Input
+                                        placeholder="https://image-host.com/my-banner.jpg"
+                                        value={imageUrl}
+                                        onChange={(e) => setImageUrl(e.target.value)}
+                                        required
+                                    />
+                                )}
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-semibold text-slate-300">Action Deep Link</label>
