@@ -357,7 +357,7 @@ export default function Sidebar() {
                 if (!user) {
                     return;
                 }
-                if (['owner', 'superAdmin', 'admin', 'operator'].includes(user.role)) {
+                if (['owner', 'superAdmin', 'admin'].includes(user.role)) {
                     setAllowedMenus(['*']);
                     setAllowedPages(['*']);
                     setPermissionsLoaded(true);
@@ -389,6 +389,7 @@ export default function Sidebar() {
     // Filter layout sections strictly based on ROLE_PERMISSION_MATRIX
     const hasDynamicRoute = (href: string) => {
         if (!permissionsLoaded || user?.role === 'owner') return true;
+        if (allowedPages.length === 0) return true;
         return allowedPages.includes('*') ||
             allowedPages.includes(href) ||
             allowedPages.includes(href.replace(/^\//, ''));
@@ -396,7 +397,7 @@ export default function Sidebar() {
 
     const hasDynamicMenu = (category: string) => {
         if (!permissionsLoaded || user?.role === 'owner') return true;
-        if (allowedPages.length > 0) return true;
+        if (allowedPages.length === 0 && allowedMenus.length === 0) return true;
         return allowedMenus.includes('*') || allowedMenus.includes(category);
     };
 
