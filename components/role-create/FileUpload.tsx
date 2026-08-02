@@ -30,7 +30,53 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
     const maxSizeBytes = maxSizeMB * 1024 * 1024;
 
-    const validateAndProcessFile = (file: File) => {
+    const compressImageIfNeeded = (file: File): Promise<string> => {
+        return new Promise((resolve) => {
+            const isImage = file.type.startsWith('image/');
+            if (!isImage) {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(file);
+                return;
+            }
+
+            const img = new Image();
+            const objectUrl = URL.createObjectURL(file);
+            img.onload = () => {
+                URL.revokeObjectURL(objectUrl);
+                const canvas = document.createElement('canvas');
+                let { width, height } = img;
+                const MAX_SIZE = 850;
+
+                if (width > MAX_SIZE || height > MAX_SIZE) {
+                    if (width > height) {
+                        height = Math.round((height * MAX_SIZE) / width);
+                        width = MAX_SIZE;
+                    } else {
+                        width = Math.round((width * MAX_SIZE) / height);
+                        height = MAX_SIZE;
+                    }
+                }
+
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx?.drawImage(img, 0, 0, width, height);
+
+                const compressedBase64 = canvas.toDataURL('image/jpeg', 0.45);
+                resolve(compressedBase64);
+            };
+            img.onerror = () => {
+                URL.revokeObjectURL(objectUrl);
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(file);
+            };
+            img.src = objectUrl;
+        });
+    };
+
+    const validateAndProcessFile = async (file: File) => {
         setLocalError('');
         const extension = file.name.split('.').pop()?.toLowerCase() || '';
 
@@ -46,7 +92,12 @@ export const FileUpload: React.FC<FileUploadProps> = ({
             return;
         }
 
-        onChange(file);
+        try {
+            const processedBase64 = await compressImageIfNeeded(file);
+            onChange(processedBase64);
+        } catch {
+            onChange(file);
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,7 +113,19 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     };
 
     const displayedError = propError || localError;
-    const fileName = value instanceof File ? value.name : typeof value === 'string' ? value : '';
+    const getDisplayFileName = () => {
+        if (value instanceof File) return value.name;
+        if (typeof value === 'string' && value.trim()) {
+            if (value.startsWith('data:')) {
+                const mime = value.split(';')[0].replace('data:', '');
+                const ext = mime.split('/')[1]?.toUpperCase() || 'Doc';
+                return `Attached Document (${ext})`;
+            }
+            return value.split('/').pop() || value;
+        }
+        return '';
+    };
+    const fileName = getDisplayFileName();
 
     return (
         <div className="space-y-1.5 text-left">

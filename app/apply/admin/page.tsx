@@ -117,10 +117,6 @@ function AdminFormContent() {
                     formData.securityConsentUrl ? { name: 'Security Consent Form', documentType: 'Consent', url: formData.securityConsentUrl } : null,
                 ].filter(Boolean),
 
-                // Role specific data
-                adharFront: formData.adharFrontUrl,
-                adharBack: formData.adharBackUrl,
-                pan: formData.panCardUrl,
                 emergencyPhone: formData.emergencyPhone,
                 currentDesignation: formData.currentDesignation,
                 adminExperienceYears: formData.adminExperienceYears,

@@ -118,10 +118,6 @@ function OperatorFormContent() {
                     formData.experienceProofUrl ? { name: 'Experience Proof', documentType: 'Certificate', url: formData.experienceProofUrl } : null,
                 ].filter(Boolean),
 
-                // Role specific data
-                adharFront: formData.adharFrontUrl,
-                adharBack: formData.adharBackUrl,
-                pan: formData.panCardUrl,
                 operatorCategory: formData.operatorCategory,
                 previousPlatforms: formData.previousPlatforms,
                 languagesSpoken: formData.languagesSpoken,

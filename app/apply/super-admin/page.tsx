@@ -115,10 +115,6 @@ function SuperAdminFormContent() {
                     formData.signedNdaUrl ? { name: 'Signed Enterprise NDA', documentType: 'NDA', url: formData.signedNdaUrl } : null,
                 ].filter(Boolean),
 
-                // Role specific data
-                adharFront: formData.adharFrontUrl,
-                adharBack: formData.adharBackUrl,
-                pan: formData.panCardUrl,
                 executiveExperienceYears: formData.executiveExperienceYears,
                 strategicPortfolio: formData.strategicPortfolio,
                 executiveSecurityCode: formData.executiveSecurityCode,

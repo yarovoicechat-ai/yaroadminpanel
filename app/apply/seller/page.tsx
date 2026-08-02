@@ -112,9 +112,6 @@ function SellerFormContent() {
                     formData.resumePdfUrl ? { name: 'Business Resume / Proof', documentType: 'Resume', url: formData.resumePdfUrl } : null,
                 ].filter(Boolean),
 
-                adharFront: formData.adharFrontUrl,
-                adharBack: formData.adharBackUrl,
-                pan: formData.panCardUrl,
                 businessName: formData.businessName,
                 requestedCoinLimit: formData.requestedCoinLimit,
                 monthlyTurnover: formData.monthlyTurnover,

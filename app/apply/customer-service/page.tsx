@@ -116,10 +116,6 @@ function CustomerServiceFormContent() {
                     formData.photoUrl ? { name: 'Profile Photo', documentType: 'Photo', url: formData.photoUrl } : null,
                 ].filter(Boolean),
 
-                // Role specific data
-                adharFront: formData.adharFrontUrl,
-                adharBack: formData.adharBackUrl,
-                pan: formData.panCardUrl,
                 typingSpeedWpm: formData.typingSpeedWpm,
                 languagesSpoken: formData.languagesSpoken,
                 userConflictScenarioAnswer: formData.userConflictScenarioAnswer,

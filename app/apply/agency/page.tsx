@@ -133,10 +133,6 @@ function AgencyFormContent() {
                     formData.managerPhotoUrl ? { name: 'Manager Photo', documentType: 'Photo', url: formData.managerPhotoUrl } : null,
                 ].filter(Boolean),
 
-                // Role specific data
-                adharFront: formData.adharFrontUrl,
-                adharBack: formData.adharBackUrl,
-                pan: formData.panCardUrl || formData.panCopyUrl,
                 businessName: formData.businessName,
                 managerName: formData.managerName,
                 meethiLiveId: formData.meethiLiveId,

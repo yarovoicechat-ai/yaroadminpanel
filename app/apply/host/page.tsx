@@ -64,7 +64,21 @@ function HostFormContent() {
             return;
         }
 
-        if (!form.name || !form.email || !form.phone || !form.city || !form.linkedin) {
+        if (
+            !form.name.trim() ||
+            !form.age ||
+            !form.email.trim() ||
+            !form.phone.trim() ||
+            !form.city.trim() ||
+            !form.state.trim() ||
+            !form.district.trim() ||
+            !form.country.trim() ||
+            !(form.adharFront || form.idProof) ||
+            !(form.adharBack || form.addressProof) ||
+            !form.pan ||
+            !form.portfolio ||
+            !form.personalNote.trim()
+        ) {
             toast.error('Please fill in all required fields');
             return;
         }

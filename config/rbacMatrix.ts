@@ -26,6 +26,7 @@ const OPERATOR_DENIED_ROUTES = [
   '/messages',
   '/kyc',
   '/withdrawals',
+  '/moderation',
 ];
 
 export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
@@ -52,8 +53,71 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
 
   operator: {
     name: 'Operator',
-    allowedRoutes: ['*'],
-    allowedModules: ['*'],
+    allowedRoutes: [
+      '/dashboard',
+      '/users',
+      '/recharges',
+      '/recharges/user',
+      '/recharges/seller',
+      '/admins',
+      '/admins/add',
+      '/admins/create',
+      '/admins/request',
+      '/ads',
+      '/agencies',
+      '/agencies/add',
+      '/agencies/create',
+      '/agencies/request',
+      '/banners',
+      '/calls',
+      '/cms',
+      '/customer-support',
+      '/customer-support/add',
+      '/customer-support/create',
+      '/customer-support/list',
+      '/customer-support/request',
+      '/employees',
+      '/help-support',
+      '/host-levels',
+      '/host-management',
+      '/hosts',
+      '/hosts/add',
+      '/hosts/create',
+      '/avatar-requests',
+      '/bios',
+      '/hosts/request',
+      '/profile',
+      '/referrals',
+      '/referrals/links',
+      '/reports',
+      '/rooms',
+      '/super-admins',
+      '/super-admins/create',
+      '/super-admins/request',
+    ],
+    allowedModules: [
+      'Dashboard',
+      'Users',
+      'Finance',
+      'Recharge',
+      'SuperAdmin',
+      'Admin',
+      'Agency',
+      'Host',
+      'CustomerSupport',
+      'Reports',
+      'HelpSupport',
+      'Settings',
+      'Calls',
+      'Rooms',
+      'Banner',
+      'HostLevels',
+      'VIP',
+      'CMS',
+      'Ads',
+      'Employees',
+      'Profile',
+    ],
     allowedActions: ['*'],
   },
 
@@ -163,7 +227,7 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
  * Check if a route is allowed for a given role
  */
 export const isRouteAllowed = (role: string, route: string): boolean => {
-  if (!role || ['owner', 'superAdmin', 'admin', 'operator'].includes(role)) return true;
+  if (!role || ['owner', 'superAdmin', 'admin'].includes(role)) return true;
   const roleDef = ROLE_PERMISSION_MATRIX[role];
   if (!roleDef) return true;
   if (roleDef.allowedRoutes.includes('*')) return true;

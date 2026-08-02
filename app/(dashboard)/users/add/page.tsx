@@ -155,11 +155,10 @@ export default function AddUserPage() {
                                 >
                                     <option value="user">Standard User</option>
                                     <option value="host">Host</option>
-                                    <option value="coinSeller">Coin Seller</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="superAdmin">Super Admin</option>
-                                    {currentUser?.role !== 'operator' && <option value="operator">Operator</option>}
                                 </select>
+                                <p className="text-[11px] text-slate-400 mt-1">
+                                    To create Staff/Employee accounts, go to <Link href="/employees" className="text-dosti-400 underline">Employees</Link>.
+                                </p>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-semibold text-slate-300">Initial Coins</label>

@@ -188,7 +188,7 @@ export default function UsersPage() {
 
         fetchPerms();
         fetchUsers(pagination.currentPage);
-    }, [pagination.currentPage]);
+    }, [pagination.currentPage, filterRole, search]);
 
     const showCol = (col: string) => visibleColumns.includes(col);
     const showBtn = (btn: string) => allowedButtons.includes(btn);
@@ -196,7 +196,14 @@ export default function UsersPage() {
     const fetchUsers = async (page: number) => {
         try {
             setLoading(true);
-            const response = await apiClient.get(API_ENDPOINTS.USERS.LIST, { page, limit: pagination.limit });
+            const params: any = { page, limit: pagination.limit };
+            if (filterRole && filterRole !== 'all') {
+                params.role = filterRole;
+            }
+            if (search) {
+                params.search = search;
+            }
+            const response = await apiClient.get(API_ENDPOINTS.USERS.LIST, params);
             if (response.success && response.data) {
                 const data = response.data as any;
                 const usersData = data.usersData;
@@ -484,11 +491,6 @@ export default function UsersPage() {
                                 <option value="all">All User Types</option>
                                 <option value="user">User</option>
                                 <option value="host">Host</option>
-                                <option value="agency">Agency</option>
-                                <option value="coinSeller">Coin Seller</option>
-                                <option value="admin">Admin</option>
-                                <option value="superAdmin">Super Admin</option>
-                                <option value="owner">Owner</option>
                             </select>
                         </div>
                         {/* Level Selector */}
