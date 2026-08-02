@@ -34,34 +34,38 @@ export default function Home() {
       try {
         setLoading(true);
         const [statsRes, revenueRes, earningsRes, callsRes, distRes, historyRes] = await Promise.all([
-          apiClient.get(API_ENDPOINTS.DASHBOARD.STATS),
-          apiClient.get(API_ENDPOINTS.DASHBOARD.REVENUE_CHART, { days: 7 }),
-          apiClient.get(API_ENDPOINTS.DASHBOARD.EARNINGS_CHART, { days: 7 }),
-          apiClient.get(API_ENDPOINTS.DASHBOARD.CALL_TRENDS, { days: 7 }),
-          apiClient.get(API_ENDPOINTS.DASHBOARD.COIN_DISTRIBUTION),
-          apiClient.get(API_ENDPOINTS.CALLS.HISTORY, { limit: 5 })
+          apiClient.get(API_ENDPOINTS.DASHBOARD.STATS).catch(() => ({ success: false, data: null })),
+          apiClient.get(API_ENDPOINTS.DASHBOARD.REVENUE_CHART, { days: 7 }).catch(() => ({ success: false, data: [] })),
+          apiClient.get(API_ENDPOINTS.DASHBOARD.EARNINGS_CHART, { days: 7 }).catch(() => ({ success: false, data: [] })),
+          apiClient.get(API_ENDPOINTS.DASHBOARD.CALL_TRENDS, { days: 7 }).catch(() => ({ success: false, data: [] })),
+          apiClient.get(API_ENDPOINTS.DASHBOARD.COIN_DISTRIBUTION).catch(() => ({ success: false, data: [] })),
+          apiClient.get(API_ENDPOINTS.CALLS.HISTORY, { limit: 5 }).catch(() => ({ success: false, data: { calls: [] } }))
         ]);
 
-        if (statsRes.success) setStats(statsRes.data);
-        if (revenueRes.success) setRevenueData(revenueRes.data as any);
-        if (earningsRes.success) setEarningsData(earningsRes.data as any);
-        if (callsRes.success) setCallData(callsRes.data as any);
-        if (distRes.success) setDistributionData(distRes.data as any);
-        if (historyRes.success) setRecentActivity((historyRes.data as any).calls || []);
+        if (statsRes?.success) setStats(statsRes.data);
+        if (revenueRes?.success) setRevenueData((revenueRes.data as any) || []);
+        if (earningsRes?.success) setEarningsData((earningsRes.data as any) || []);
+        if (callsRes?.success) setCallData((callsRes.data as any) || []);
+        if (distRes?.success) setDistributionData((distRes.data as any) || []);
+        if (historyRes?.success) setRecentActivity(((historyRes.data as any)?.calls) || []);
 
         // Load allowed dashboard widgets dynamically
         const userObj = JSON.parse(localStorage.getItem('admin_user') || '{}');
         let widgets = ["Today's Minutes", "Coins Spent Today", "Host Earnings Today", "Today's Revenue", "Total Users", "Total Hosts", "Active Hosts", "Reports Pending"];
-        if (userObj.role !== 'owner') {
-          const res = await apiClient.get('/api/ems/my-permissions');
-          if (res.success && res.data && res.data.dashboardWidgets) {
-            widgets = res.data.dashboardWidgets;
+        if (userObj.role && userObj.role !== 'owner') {
+          try {
+            const res = await apiClient.get('/api/ems/my-permissions');
+            if (res?.success && res?.data?.dashboardWidgets) {
+              widgets = res.data.dashboardWidgets;
+            }
+          } catch (e) {
+            // Keep default widgets if permissions API is unreachable
           }
         }
         setAllowedWidgets(widgets);
 
       } catch (error) {
-        toast.error("Failed to load dashboard data");
+        console.error("Dashboard load error:", error);
       } finally {
         setLoading(false);
       }
