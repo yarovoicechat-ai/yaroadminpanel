@@ -301,7 +301,20 @@ export default function AgenciesPage() {
                                 ) : (
                                     agencies.map((agency) => (
                                         <TableRow key={agency._id} className="hover:bg-muted/30">
-                                            <TableCell className="font-bold text-slate-200">{agency.name}</TableCell>
+                                            <TableCell className="font-bold text-slate-200">
+                                                <div className="flex items-center gap-2.5">
+                                                    <div className="h-8 w-8 rounded-lg bg-slate-800 border border-slate-700 overflow-hidden flex items-center justify-center font-bold text-xs text-primary shrink-0">
+                                                        {agency.logo ? (
+                                                            <img src={agency.logo} alt={agency.name} className="h-full w-full object-cover" />
+                                                        ) : agency.ownerId?.agencyLogo || agency.ownerId?.image ? (
+                                                            <img src={agency.ownerId.agencyLogo || agency.ownerId.image} alt={agency.name} className="h-full w-full object-cover" />
+                                                        ) : (
+                                                            agency.name?.[0]?.toUpperCase() || 'A'
+                                                        )}
+                                                    </div>
+                                                    <span>{agency.name}</span>
+                                                </div>
+                                            </TableCell>
                                             <TableCell className="font-mono text-xs font-semibold text-primary">{agency.code}</TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">

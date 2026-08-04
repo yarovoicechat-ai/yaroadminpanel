@@ -247,10 +247,10 @@ export default function HostRequestsPage() {
                         registrationDate: item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN') : '—',
                         aadhaarNo: d.aadhaarNo || '',
                         panNo: d.panNo || '',
-                        aadhaarFront: d.adharFront || d.aadhaarFront || '',
-                        aadhaarBack: d.adharBack || d.aadhaarBack || '',
-                        panCard: d.pan || d.panCard || '',
-                        voiceAudioUrl: d.voiceAudioUrl || d.introAudio || '',
+                        aadhaarFront: d.adharFront || d.aadhaarFront || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('front') || doc.documentType === 'GovtID')?.url : '') || '',
+                        aadhaarBack: d.adharBack || d.aadhaarBack || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('back'))?.url : '') || '',
+                        panCard: d.pan || d.panCard || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('pan') || doc.documentType === 'Certificate')?.url : '') || '',
+                        voiceAudioUrl: d.voiceAudioUrl || d.audio || d.audioUrl || d.voiceUrl || d.voice || d.portfolio || d.introAudio || d.audioURL || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.documentType === 'Voice' || doc.documentType === 'Audio' || doc.documentType === 'Portfolio' || doc.name?.toLowerCase().includes('voice') || doc.name?.toLowerCase().includes('portfolio') || doc.name?.toLowerCase().includes('audition'))?.url : '') || '',
                         voiceDuration: d.voiceDuration || '0:30',
                         voiceWaveform: [30, 50, 70, 90, 60, 40, 80, 95, 75, 45, 85, 65, 90, 50, 35, 75, 85, 60, 40, 25],
                         qualification: d.qualification || '',
@@ -1060,65 +1060,77 @@ export default function HostRequestsPage() {
 
                                         {/* 14. Aadhaar Front Side */}
                                         <td className="p-3.5 text-center whitespace-nowrap">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarFront, title: `${req.name} - Aadhaar Front`, zoom: 1, rotate: 0 })}
-                                                    className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-blue-500 transition-all"
-                                                >
-                                                    <img src={req.aadhaarFront} alt="Aadhaar Front" className="w-12 h-8 object-cover" />
-                                                    <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
-                                                        <Eye className="w-3.5 h-3.5" />
-                                                    </div>
-                                                </button>
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarFront, title: `${req.name} - Aadhaar Front`, zoom: 1, rotate: 0 })}
-                                                    className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
-                                                >
-                                                    View
-                                                </button>
-                                            </div>
+                                            {req.aadhaarFront ? (
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <button
+                                                        onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarFront, title: `${req.name} - Aadhaar Front`, zoom: 1, rotate: 0 })}
+                                                        className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-blue-500 transition-all"
+                                                    >
+                                                        <img src={req.aadhaarFront} alt="Aadhaar Front" className="w-12 h-8 object-cover" />
+                                                        <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                                            <Eye className="w-3.5 h-3.5" />
+                                                        </div>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarFront, title: `${req.name} - Aadhaar Front`, zoom: 1, rotate: 0 })}
+                                                        className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
+                                                    >
+                                                        View
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">—</span>
+                                            )}
                                         </td>
 
                                         {/* 15. Aadhaar Back Side */}
                                         <td className="p-3.5 text-center whitespace-nowrap">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarBack, title: `${req.name} - Aadhaar Back`, zoom: 1, rotate: 0 })}
-                                                    className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-blue-500 transition-all"
-                                                >
-                                                    <img src={req.aadhaarBack} alt="Aadhaar Back" className="w-12 h-8 object-cover" />
-                                                    <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
-                                                        <Eye className="w-3.5 h-3.5" />
-                                                    </div>
-                                                </button>
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarBack, title: `${req.name} - Aadhaar Back`, zoom: 1, rotate: 0 })}
-                                                    className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
-                                                >
-                                                    View
-                                                </button>
-                                            </div>
+                                            {req.aadhaarBack ? (
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <button
+                                                        onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarBack, title: `${req.name} - Aadhaar Back`, zoom: 1, rotate: 0 })}
+                                                        className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-blue-500 transition-all"
+                                                    >
+                                                        <img src={req.aadhaarBack} alt="Aadhaar Back" className="w-12 h-8 object-cover" />
+                                                        <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                                            <Eye className="w-3.5 h-3.5" />
+                                                        </div>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarBack, title: `${req.name} - Aadhaar Back`, zoom: 1, rotate: 0 })}
+                                                        className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
+                                                    >
+                                                        View
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">—</span>
+                                            )}
                                         </td>
 
                                         {/* 16. PAN Card */}
                                         <td className="p-3.5 text-center whitespace-nowrap">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.panCard, title: `${req.name} - PAN Card`, zoom: 1, rotate: 0 })}
-                                                    className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-emerald-500 transition-all"
-                                                >
-                                                    <img src={req.panCard} alt="PAN Card" className="w-12 h-8 object-cover" />
-                                                    <div className="absolute inset-0 bg-emerald-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
-                                                        <Eye className="w-3.5 h-3.5" />
-                                                    </div>
-                                                </button>
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.panCard, title: `${req.name} - PAN Card`, zoom: 1, rotate: 0 })}
-                                                    className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
-                                                >
-                                                    View
-                                                </button>
-                                            </div>
+                                            {req.panCard ? (
+                                                <div className="flex items-center justify-center gap-1.5">
+                                                    <button
+                                                        onClick={() => setImageZoom({ isOpen: true, url: req.panCard, title: `${req.name} - PAN Card`, zoom: 1, rotate: 0 })}
+                                                        className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-emerald-500 transition-all"
+                                                    >
+                                                        <img src={req.panCard} alt="PAN Card" className="w-12 h-8 object-cover" />
+                                                        <div className="absolute inset-0 bg-emerald-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                                            <Eye className="w-3.5 h-3.5" />
+                                                        </div>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setImageZoom({ isOpen: true, url: req.panCard, title: `${req.name} - PAN Card`, zoom: 1, rotate: 0 })}
+                                                        className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
+                                                    >
+                                                        View
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">—</span>
+                                            )}
                                         </td>
 
                                         {/* 17. Host Voice Column (Audio Player with Play/Pause, Duration & Download) */}
@@ -1496,13 +1508,15 @@ export default function HostRequestsPage() {
 
                                 {detailTab === 'identity' && (
                                     <div className="space-y-6 text-xs">
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                            {/* Aadhaar Front Card */}
-                                            <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-3">
-                                                <div className="flex items-center justify-between">
-                                                    <h4 className="font-bold text-slate-800 dark:text-slate-200">Aadhaar Front Side</h4>
-                                                    <span className="text-[10px] text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded font-bold">Uploaded</span>
-                                                </div>
+                                        {/* Aadhaar Front Card */}
+                                        <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">Aadhaar Front Side</h4>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${selectedReq.aadhaarFront ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950' : 'text-slate-400 bg-slate-100 dark:bg-slate-800'}`}>
+                                                    {selectedReq.aadhaarFront ? 'Uploaded' : 'Not Uploaded'}
+                                                </span>
+                                            </div>
+                                            {selectedReq.aadhaarFront ? (
                                                 <div
                                                     onClick={() => setImageZoom({ isOpen: true, url: selectedReq.aadhaarFront, title: `${selectedReq.name} - Aadhaar Front`, zoom: 1, rotate: 0 })}
                                                     className="relative group rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 cursor-pointer shadow-xs"
@@ -1512,15 +1526,23 @@ export default function HostRequestsPage() {
                                                         <ZoomIn className="w-4 h-4" /> Click to Zoom
                                                     </div>
                                                 </div>
-                                                <p className="text-[11px] text-slate-500">Aadhaar No: <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{selectedReq.aadhaarNo}</span></p>
-                                            </div>
-
-                                            {/* Aadhaar Back Card */}
-                                            <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-3">
-                                                <div className="flex items-center justify-between">
-                                                    <h4 className="font-bold text-slate-800 dark:text-slate-200">Aadhaar Back Side</h4>
-                                                    <span className="text-[10px] text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded font-bold">Uploaded</span>
+                                            ) : (
+                                                <div className="w-full h-36 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 text-xs">
+                                                    No Image Document
                                                 </div>
+                                            )}
+                                            <p className="text-[11px] text-slate-500">Aadhaar No: <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{selectedReq.aadhaarNo || 'N/A'}</span></p>
+                                        </div>
+
+                                        {/* Aadhaar Back Card */}
+                                        <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">Aadhaar Back Side</h4>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${selectedReq.aadhaarBack ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950' : 'text-slate-400 bg-slate-100 dark:bg-slate-800'}`}>
+                                                    {selectedReq.aadhaarBack ? 'Uploaded' : 'Not Uploaded'}
+                                                </span>
+                                            </div>
+                                            {selectedReq.aadhaarBack ? (
                                                 <div
                                                     onClick={() => setImageZoom({ isOpen: true, url: selectedReq.aadhaarBack, title: `${selectedReq.name} - Aadhaar Back`, zoom: 1, rotate: 0 })}
                                                     className="relative group rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 cursor-pointer shadow-xs"
@@ -1530,15 +1552,23 @@ export default function HostRequestsPage() {
                                                         <ZoomIn className="w-4 h-4" /> Click to Zoom
                                                     </div>
                                                 </div>
-                                                <p className="text-[11px] text-slate-500">Address Proof Verified</p>
-                                            </div>
-
-                                            {/* PAN Card */}
-                                            <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-3">
-                                                <div className="flex items-center justify-between">
-                                                    <h4 className="font-bold text-slate-800 dark:text-slate-200">PAN Card</h4>
-                                                    <span className="text-[10px] text-emerald-600 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded font-bold">Uploaded</span>
+                                            ) : (
+                                                <div className="w-full h-36 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 text-xs">
+                                                    No Image Document
                                                 </div>
+                                            )}
+                                            <p className="text-[11px] text-slate-500">Address Proof Verified</p>
+                                        </div>
+
+                                        {/* PAN Card */}
+                                        <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">PAN Card</h4>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${selectedReq.panCard ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950' : 'text-slate-400 bg-slate-100 dark:bg-slate-800'}`}>
+                                                    {selectedReq.panCard ? 'Uploaded' : 'Not Uploaded'}
+                                                </span>
+                                            </div>
+                                            {selectedReq.panCard ? (
                                                 <div
                                                     onClick={() => setImageZoom({ isOpen: true, url: selectedReq.panCard, title: `${selectedReq.name} - PAN Card`, zoom: 1, rotate: 0 })}
                                                     className="relative group rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 cursor-pointer shadow-xs"
@@ -1548,8 +1578,12 @@ export default function HostRequestsPage() {
                                                         <ZoomIn className="w-4 h-4" /> Click to Zoom
                                                     </div>
                                                 </div>
-                                                <p className="text-[11px] text-slate-500">PAN No: <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{selectedReq.panNo}</span></p>
-                                            </div>
+                                            ) : (
+                                                <div className="w-full h-36 rounded-lg border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 text-xs">
+                                                    No Image Document
+                                                </div>
+                                            )}
+                                            <p className="text-[11px] text-slate-500">PAN No: <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{selectedReq.panNo || 'N/A'}</span></p>
                                         </div>
                                     </div>
                                 )}
@@ -1694,15 +1728,17 @@ export default function HostRequestsPage() {
 
                             {/* Image Container */}
                             <div className="p-8 flex items-center justify-center min-h-[420px] max-h-[75vh] overflow-auto bg-slate-950">
-                                <img
-                                    src={imageZoom.url}
-                                    alt="Document Full View"
-                                    style={{
-                                        transform: `scale(${imageZoom.zoom}) rotate(${imageZoom.rotate}deg)`,
-                                        transition: 'transform 0.2s ease-in-out'
-                                    }}
-                                    className="max-h-[65vh] object-contain rounded-lg shadow-lg"
-                                />
+                                {imageZoom.url ? (
+                                    <img
+                                        src={imageZoom.url}
+                                        alt="Document Full View"
+                                        style={{
+                                            transform: `scale(${imageZoom.zoom}) rotate(${imageZoom.rotate}deg)`,
+                                            transition: 'transform 0.2s ease-in-out'
+                                        }}
+                                        className="max-h-[65vh] object-contain rounded-lg shadow-lg"
+                                    />
+                                ) : null}
                             </div>
                         </motion.div>
                     </div>

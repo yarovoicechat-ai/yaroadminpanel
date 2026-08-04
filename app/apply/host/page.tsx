@@ -90,6 +90,7 @@ function HostFormContent() {
                 { name: 'Aadhaar Front', documentType: 'GovtID', url: form.adharFront || form.idProof },
                 { name: 'Aadhaar Back', documentType: 'GovtID', url: form.adharBack || form.addressProof },
                 { name: 'PAN Card', documentType: 'Certificate', url: form.pan },
+                { name: 'Host 30Sec Voice Audition', documentType: 'Voice', url: form.portfolio },
                 { name: 'Portfolio', documentType: 'Portfolio', url: form.portfolio },
                 { name: 'Experience Letter', documentType: 'Experience', url: form.experienceLetter },
             ].filter(document => Boolean(document.url));
@@ -102,6 +103,9 @@ function HostFormContent() {
                 phone: form.phone.trim(),
                 role: 'host',
                 referralCode: verifiedReferralCode,
+                voiceAudioUrl: form.portfolio,
+                audio: form.portfolio,
+                voice: form.portfolio,
                 documents,
                 city: form.city.trim(),
                 state: form.state.trim(),

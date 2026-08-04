@@ -8,6 +8,8 @@ import { Textarea } from "@/components/ui/Textarea";
 import { MessageSquare, Bell, Users, CheckCircle } from "lucide-react";
 import { toast } from 'sonner';
 
+import { apiClient } from '@/lib/apiClient';
+
 export default function SystemMessagesPage() {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
@@ -20,15 +22,22 @@ export default function SystemMessagesPage() {
 
         setLoading(true);
         try {
-            // Mock delivery
-            setTimeout(() => {
-                toast.success(`FCM push notification dispatched to target group "${targetGroup}"`);
+            const response = await apiClient.post('/api/admin/system-messages', {
+                title,
+                message: content,
+                targetGroup
+            });
+
+            if (response.success) {
+                toast.success(response.message || `System notification dispatched to "${targetGroup}" group successfully!`);
                 setTitle('');
                 setContent('');
-                setLoading(false);
-            }, 1200);
-        } catch (err) {
-            toast.error("Failed to transmit notification");
+            } else {
+                toast.error(response.message || "Failed to transmit system notification");
+            }
+        } catch (err: any) {
+            toast.error(err.message || "Failed to transmit system notification");
+        } finally {
             setLoading(false);
         }
     };
