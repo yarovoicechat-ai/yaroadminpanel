@@ -88,27 +88,31 @@ export default function SellerRechargePage() {
         setVerifiedSeller(null);
     };
 
-    const handleVerifySeller = () => {
+    const handleVerifySeller = async () => {
         if (!sellerCode.trim()) {
             return toast.error("Please enter a Seller Code or ID first");
         }
 
         setVerifying(true);
-        setTimeout(() => {
-            const codeUpper = sellerCode.trim().toUpperCase();
-            setVerifiedSeller({
-                sellerCode: codeUpper,
-                name: codeUpper === 'SEL881' ? 'Alibaba Coin Distributor' : codeUpper === 'SEL292' ? 'Global Recharge Hub' : `Authorized Seller ${codeUpper}`,
-                username: `@seller_${codeUpper.toLowerCase()}`,
-                userId: 9001,
-                image: '',
-                coinsSold: 4500000,
-                creditLimit: 5000000
-            });
-            setIsVerified(true);
-            toast.success(`Seller Verified: ${codeUpper}`);
+        try {
+            const res = await apiClient.get(`/api/admin/sellers/verify/${encodeURIComponent(sellerCode.trim())}`);
+            if (res.success && res.data?.seller) {
+                setVerifiedSeller(res.data.seller);
+                setIsVerified(true);
+                toast.success(`Seller Verified: ${res.data.seller.name}`);
+            } else {
+                setVerifiedSeller(null);
+                setIsVerified(false);
+                toast.error(res.message || "Seller account not found");
+            }
+        } catch (err: any) {
+            setVerifiedSeller(null);
+            setIsVerified(false);
+            const errMsg = err?.message || err?.error || "Failed to verify seller";
+            toast.error(errMsg);
+        } finally {
             setVerifying(false);
-        }, 500);
+        }
     };
 
     const handleInrChange = (val: string) => {
@@ -147,36 +151,41 @@ export default function SellerRechargePage() {
 
     const handleRecharge = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!sellerCode || !amount) return;
+        if (!sellerCode || !amount || loading) return;
 
         if (!isVerified || !verifiedSeller) {
             return toast.error("Please click Verify to verify the Seller Code before recharging!");
         }
 
+        const numDiamonds = Number(amount);
+        if (isNaN(numDiamonds) || numDiamonds <= 0) {
+            return toast.error("Please enter a valid diamond amount");
+        }
+
         setLoading(true);
         try {
             const res = await apiClient.post('/api/admin/sellers/add-diamonds', {
-                sellerCode: sellerCode.toUpperCase(),
-                diamonds: Number(amount)
-            }).catch(() => null);
+                sellerId: verifiedSeller.userId,
+                sellerCode: sellerCode.trim(),
+                diamonds: numDiamonds,
+                payableAmount: inrAmount ? Number(inrAmount) : undefined
+            });
 
-            const newLog = {
-                id: Date.now().toString(),
-                sellerCode: sellerCode.toUpperCase(),
-                name: verifiedSeller.name,
-                amount: parseInt(amount),
-                date: new Date().toISOString().replace('T', ' ').substring(0, 16)
-            };
-            setLogs(prev => [newLog, ...prev]);
-            toast.success(`Successfully credited Seller ${sellerCode.toUpperCase()} (${verifiedSeller.name}) with ${Number(amount).toLocaleString()} Diamonds`);
-            setSellerCode('');
-            setInrAmount('');
-            setAmount('');
-            setSelectedPlan(null);
-            setIsVerified(false);
-            setVerifiedSeller(null);
+            if (res.success) {
+                toast.success(res.message || `Successfully credited 💎 ${numDiamonds.toLocaleString()} to Seller ${verifiedSeller.name}`);
+                setSellerCode('');
+                setInrAmount('');
+                setAmount('');
+                setSelectedPlan(null);
+                setIsVerified(false);
+                setVerifiedSeller(null);
+                fetchHistory();
+            } else {
+                toast.error(res.message || 'Failed to add diamonds to seller');
+            }
         } catch (error: any) {
-            const errMsg = error?.message || 'Error processing recharge';
+            const errMsg = error?.message || error?.error || (typeof error === 'string' ? error : 'Error processing recharge');
+            console.error('Seller Recharge Error:', errMsg, error);
             toast.error(errMsg);
         } finally {
             setLoading(false);
