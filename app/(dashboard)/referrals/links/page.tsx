@@ -79,7 +79,7 @@ export default function ReferralLinks() {
     superAdmin: ['Admin', 'Agency', 'Host', 'Customer Service Support'],
     admin: ['Agency', 'Host', 'Customer Service Support'],
     agency: ['Agency', 'Host'],
-    coinSeller: ['Coin Seller'],
+    coinSeller: [],
     customerSupport: ['Customer Service Support'],
   };
 

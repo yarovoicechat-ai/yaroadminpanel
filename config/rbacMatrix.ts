@@ -241,8 +241,6 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     name: 'Coin Seller',
     allowedRoutes: [
       '/dashboard',
-      '/referrals',
-      '/referrals/links',
       '/seller/wallet',
       '/wallet',
       '/recharges/user',
