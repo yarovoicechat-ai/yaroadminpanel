@@ -13,7 +13,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { Gem, Plus, RefreshCw, Calendar, Check, CheckCircle2, ShieldCheck, AlertCircle, Loader2, Tag } from "lucide-react";
+import { Gem, Plus, RefreshCw, Calendar, Check, CheckCircle2, ShieldCheck, AlertCircle, Loader2, Tag, ShoppingBag, Clock, XCircle } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 
@@ -58,11 +58,12 @@ export default function SellerRechargePage() {
     const [verifiedSeller, setVerifiedSeller] = useState<VerifiedSeller | null>(null);
     const [isVerified, setIsVerified] = useState(false);
 
-    // Mock logs
-    const [logs, setLogs] = useState<any[]>([
-        { id: '1', sellerCode: 'SEL881', name: 'Alibaba Coin Distributor', amount: 167000, date: '2026-07-08 11:20' },
-        { id: '2', sellerCode: 'SEL292', name: 'Global Recharge Hub', amount: 835000, date: '2026-07-08 14:15' }
-    ]);
+    // Stock requests state
+    const [stockRequests, setStockRequests] = useState<any[]>([]);
+    const [requestsLoading, setRequestsLoading] = useState(false);
+    const [processingId, setProcessingId] = useState<string | null>(null);
+
+    const [logs, setLogs] = useState<any[]>([]);
 
     const fetchHistory = async () => {
         try {
@@ -78,8 +79,23 @@ export default function SellerRechargePage() {
         }
     };
 
+    const fetchStockRequests = async () => {
+        try {
+            setRequestsLoading(true);
+            const res = await apiClient.get('/api/admin/sellers/stock-requests');
+            if (res.success && res.data && res.data.requests) {
+                setStockRequests(res.data.requests);
+            }
+        } catch (err: any) {
+            console.error('Failed to fetch seller stock requests:', err);
+        } finally {
+            setRequestsLoading(false);
+        }
+    };
+
     useEffect(() => {
         fetchHistory();
+        fetchStockRequests();
     }, []);
 
     const handleSellerCodeChange = (val: string) => {
@@ -123,7 +139,6 @@ export default function SellerRechargePage() {
             return;
         }
         const numRs = Number(val);
-        // Seller gets Diamonds at ₹95 rate for 1,670 💎 (16.7 / 0.95 = ~17.579 💎 per ₹1)
         const calcDiamonds = Math.round(numRs * SELLER_DIAMONDS_PER_RUPEE);
         setAmount(calcDiamonds.toString());
     };
@@ -136,7 +151,6 @@ export default function SellerRechargePage() {
             return;
         }
         const numDiamonds = Number(val);
-        // Rupees calculation for seller: 1,670 💎 costs ₹95 (Diamonds * 0.95 / 16.7)
         const calcRs = Math.round((numDiamonds * SELLER_DISCOUNT_FACTOR) / USER_DIAMONDS_PER_RUPEE);
         setInrAmount(calcRs.toString());
     };
@@ -192,20 +206,57 @@ export default function SellerRechargePage() {
         }
     };
 
+    const handleApproveStockRequest = async (id: string) => {
+        setProcessingId(id);
+        try {
+            const res = await apiClient.post(`/api/admin/sellers/stock-requests/${id}/approve`, {});
+            if (res.success) {
+                toast.success(res.message || "Stock request approved and diamonds credited to seller!");
+                fetchStockRequests();
+                fetchHistory();
+            } else {
+                toast.error(res.message || "Failed to approve stock request");
+            }
+        } catch (err: any) {
+            toast.error(err?.message || "Error approving stock request");
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
+    const handleRejectStockRequest = async (id: string) => {
+        setProcessingId(id);
+        try {
+            const res = await apiClient.post(`/api/admin/sellers/stock-requests/${id}/reject`, { reason: 'UTR payment could not be verified by Admin' });
+            if (res.success) {
+                toast.success("Stock request rejected");
+                fetchStockRequests();
+            } else {
+                toast.error(res.message || "Failed to reject stock request");
+            }
+        } catch (err: any) {
+            toast.error(err?.message || "Error rejecting stock request");
+        } finally {
+            setProcessingId(null);
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">
-                        Seller Diamond Recharge
+                        Seller Diamond Management & Stock Approvals
                     </h2>
                     <p className="text-muted-foreground mt-1 font-medium font-sans">
-                        Credit discounted Diamond packages to authorized seller profiles
+                        Credit discounted Diamond packages & approve Buy Stock requests from authorized sellers
                     </p>
                 </div>
-                <Button variant="outline" size="sm" onClick={fetchHistory} disabled={historyLoading}>
-                    <RefreshCw className={`h-4 w-4 mr-1 ${historyLoading ? 'animate-spin' : ''}`} /> Refresh Logs
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => { fetchHistory(); fetchStockRequests(); }}>
+                        <RefreshCw className={`h-4 w-4 mr-1 ${historyLoading || requestsLoading ? 'animate-spin' : ''}`} /> Refresh All
+                    </Button>
+                </div>
             </div>
 
             {/* Special Seller Discount Rate Info Bar */}
@@ -220,15 +271,117 @@ export default function SellerRechargePage() {
                 </Badge>
             </div>
 
+            {/* Pending Seller Stock Requests Approval Table */}
+            <Card className="glass-card border-blue-500/30">
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle className="flex items-center gap-2 text-blue-300 text-lg">
+                            <ShoppingBag className="h-5 w-5 text-blue-400" />
+                            Pending Seller Stock Purchase Requests (Buy Stock)
+                        </CardTitle>
+                        <CardDescription className="text-slate-400 text-xs mt-0.5">
+                            Sellers who submitted Buy Stock requests with UTR payment proof for Admin approval
+                        </CardDescription>
+                    </div>
+                    <Badge variant="outline" className="border-blue-500/30 text-blue-400 font-bold">
+                        {stockRequests.filter(r => r.status === 'PENDING').length} Pending
+                    </Badge>
+                </CardHeader>
+                <CardContent className="p-0">
+                    <Table>
+                        <TableHeader>
+                            <TableRow className="border-slate-800">
+                                <TableHead className="font-bold text-slate-300">Req ID / Seller</TableHead>
+                                <TableHead className="font-bold text-slate-300">Diamonds Requested</TableHead>
+                                <TableHead className="font-bold text-slate-300">Amount Payable (₹)</TableHead>
+                                <TableHead className="font-bold text-slate-300">UTR / Ref No.</TableHead>
+                                <TableHead className="font-bold text-slate-300">Status</TableHead>
+                                <TableHead className="font-bold text-slate-300">Submitted Date</TableHead>
+                                <TableHead className="font-bold text-slate-300 text-right">Action</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {stockRequests.map((req) => (
+                                <TableRow key={req._id || req.requestId} className="hover:bg-slate-800/40 border-slate-800/50">
+                                    <TableCell className="font-mono text-xs">
+                                        <div className="font-bold text-blue-400">{req.requestId}</div>
+                                        <div className="text-slate-300">{req.sellerName || `Seller #${req.sellerId}`}</div>
+                                    </TableCell>
+                                    <TableCell className="font-extrabold text-cyan-300">
+                                        +💎 {(req.diamonds || 0).toLocaleString()}
+                                    </TableCell>
+                                    <TableCell className="font-bold text-slate-100">
+                                        ₹{(req.payableAmount || 0).toLocaleString()}
+                                    </TableCell>
+                                    <TableCell className="font-mono text-xs text-emerald-400 font-bold">
+                                        {req.utrNumber || '—'}
+                                    </TableCell>
+                                    <TableCell>
+                                        <Badge
+                                            variant="outline"
+                                            className={`text-[10px] uppercase font-bold ${
+                                                req.status === 'APPROVED'
+                                                    ? 'border-emerald-500/30 text-emerald-400 bg-emerald-500/10'
+                                                    : req.status === 'REJECTED'
+                                                    ? 'border-rose-500/30 text-rose-400 bg-rose-500/10'
+                                                    : 'border-amber-500/30 text-amber-400 bg-amber-500/10 animate-pulse'
+                                            }`}
+                                        >
+                                            {req.status}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-xs text-muted-foreground">
+                                        {req.createdAt ? new Date(req.createdAt).toLocaleString() : '-'}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        {req.status === 'PENDING' ? (
+                                            <div className="flex items-center justify-end gap-2">
+                                                <Button
+                                                    size="sm"
+                                                    disabled={processingId === req._id}
+                                                    onClick={() => handleApproveStockRequest(req._id)}
+                                                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold h-7 text-xs px-2.5"
+                                                >
+                                                    {processingId === req._id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Check className="h-3.5 w-3.5 mr-1" />}
+                                                    Approve
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline"
+                                                    disabled={processingId === req._id}
+                                                    onClick={() => handleRejectStockRequest(req._id)}
+                                                    className="border-rose-500/40 text-rose-400 hover:bg-rose-500/10 h-7 text-xs px-2"
+                                                >
+                                                    <XCircle className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <span className="text-xs text-slate-500 font-medium">Processed</span>
+                                        )}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                            {stockRequests.length === 0 && !requestsLoading && (
+                                <TableRow>
+                                    <TableCell colSpan={7} className="text-center py-6 text-slate-500 text-xs">
+                                        No pending stock purchase requests.
+                                    </TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+
             {/* Seller Diamond Recharge Plans Section */}
             <Card className="glass-card border-cyan-500/20">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-cyan-300 text-lg">
                         <Gem className="h-5 w-5 text-cyan-400" />
-                        Available Seller Diamond Plans (5% Discounted)
+                        Direct Seller Credit Plans (5% Discounted)
                     </CardTitle>
                     <CardDescription className="text-slate-400 text-xs">
-                        Click on any discounted package card below to auto-select diamond amount for seller credit.
+                        Click on any discounted package card below to auto-select diamond amount for direct seller credit.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -267,13 +420,13 @@ export default function SellerRechargePage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-slate-200">
                             <Plus size={20} className="text-cyan-400" />
-                            Allocate Seller Diamonds
+                            Direct Seller Stock Credit
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleRecharge} className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-300">Seller Agency Code / ID</label>
+                                <label className="text-sm font-semibold text-slate-300">Seller Code / ID</label>
                                 <div className="flex gap-2">
                                     <Input
                                         placeholder="e.g. SEL881"
@@ -321,16 +474,9 @@ export default function SellerRechargePage() {
                                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-400">
                                             <span className="text-emerald-400 font-semibold">{verifiedSeller.username}</span>
                                             <span>•</span>
-                                            <span className="font-mono text-slate-300">Code: {verifiedSeller.sellerCode}</span>
+                                            <span className="font-mono text-slate-300">ID: #{verifiedSeller.userId}</span>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-
-                            {!isVerified && sellerCode.trim() !== '' && (
-                                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-center gap-2">
-                                    <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
-                                    <span>Click <strong>Verify</strong> to verify seller details before allocating diamonds.</span>
                                 </div>
                             )}
 
