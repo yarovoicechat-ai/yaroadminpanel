@@ -70,6 +70,7 @@ function HostFormContent() {
             !form.age ||
             !form.email.trim() ||
             !form.phone.trim() ||
+            !form.meethiChatId.trim() ||
             !form.city.trim() ||
             !form.state.trim() ||
             !form.district.trim() ||
@@ -80,7 +81,7 @@ function HostFormContent() {
             !form.portfolio ||
             !form.personalNote.trim()
         ) {
-            toast.error('Please fill in all required fields');
+            toast.error('Please fill in all required fields including Meethi Chat ID');
             return;
         }
 
@@ -261,10 +262,11 @@ function HostFormContent() {
                     {/* Meethi Chat ID */}
                     <div>
                         <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Meethi Chat ID (optional / App User ID)
+                            Meethi Chat ID *
                         </label>
                         <input
                             type="text"
+                            required
                             placeholder="e.g. MC100852 or 50021"
                             value={form.meethiChatId}
                             onChange={e => setForm({ ...form, meethiChatId: e.target.value })}
