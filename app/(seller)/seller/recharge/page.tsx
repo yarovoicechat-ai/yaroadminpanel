@@ -13,15 +13,15 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { Gem, Plus, RefreshCw, Calendar, Check, CheckCircle2, ShieldCheck, AlertCircle, Loader2, Tag } from "lucide-react";
+import { Gem, Plus, RefreshCw, Calendar, Check, CheckCircle2, ShieldCheck, AlertCircle, Loader2, Tag, Printer } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 
 // Base User Rate: 16.7 Diamonds / ₹1 INR (₹100 = 1,670 💎)
 // Seller Discount Rule: ₹95 for ₹100 worth of Diamonds (5% Discount)
 const USER_DIAMONDS_PER_RUPEE = 16.7;
-const SELLER_DISCOUNT_FACTOR = 0.95; // Seller pays ₹95 per ₹100 worth of Diamonds
-const SELLER_DIAMONDS_PER_RUPEE = USER_DIAMONDS_PER_RUPEE / SELLER_DISCOUNT_FACTOR; // ~17.579 💎 per ₹1
+const SELLER_DISCOUNT_FACTOR = 0.95;
+const SELLER_DIAMONDS_PER_RUPEE = USER_DIAMONDS_PER_RUPEE / SELLER_DISCOUNT_FACTOR;
 
 const SELLER_DIAMOND_PLANS = [
     { price: '₹95', diamonds: 1670, worth: '₹100 User Value', isPopular: false },
@@ -35,18 +35,20 @@ const SELLER_DIAMOND_PLANS = [
     { price: '₹95,000', diamonds: 1670000, worth: '₹1,00,000 User Value', isPopular: false },
 ];
 
-export interface VerifiedSeller {
-    sellerCode: string;
-    name: string;
-    username: string;
+export interface VerifiedUser {
     userId: number;
-    image?: string;
-    coinsSold?: number;
-    creditLimit?: number;
+    name: string;
+    userName: string;
+    meethiId: string;
+    image: string;
+    coins: number;
+    diamonds: number;
+    role?: string;
+    status?: string;
 }
 
-export default function SellerRechargePage() {
-    const [sellerCode, setSellerCode] = useState('');
+export default function SellerUserRechargePage() {
+    const [userId, setUserId] = useState('');
     const [inrAmount, setInrAmount] = useState('');
     const [amount, setAmount] = useState('');
     const [loading, setLoading] = useState(false);
@@ -55,24 +57,22 @@ export default function SellerRechargePage() {
 
     // Verification states
     const [verifying, setVerifying] = useState(false);
-    const [verifiedSeller, setVerifiedSeller] = useState<VerifiedSeller | null>(null);
+    const [verifiedUser, setVerifiedUser] = useState<VerifiedUser | null>(null);
     const [isVerified, setIsVerified] = useState(false);
 
-    // Mock logs
-    const [logs, setLogs] = useState<any[]>([
-        { id: '1', sellerCode: 'SEL881', name: 'Alibaba Coin Distributor', amount: 167000, date: '2026-07-08 11:20' },
-        { id: '2', sellerCode: 'SEL292', name: 'Global Recharge Hub', amount: 835000, date: '2026-07-08 14:15' }
-    ]);
+    // Receipt Modal state
+    const [lastReceipt, setLastReceipt] = useState<any | null>(null);
+    const [logs, setLogs] = useState<any[]>([]);
 
     const fetchHistory = async () => {
         try {
             setHistoryLoading(true);
-            const res = await apiClient.get('/api/admin/recharges/history?type=seller&limit=50');
-            if (res.success && res.data && res.data.history && res.data.history.length > 0) {
+            const res = await apiClient.get('/api/seller/history?type=USER_RECHARGE&limit=20');
+            if (res.success && res.data && res.data.history) {
                 setLogs(res.data.history);
             }
         } catch (err: any) {
-            console.error('Failed to fetch seller recharge history:', err);
+            console.error('Failed to fetch recharge history:', err);
         } finally {
             setHistoryLoading(false);
         }
@@ -82,33 +82,37 @@ export default function SellerRechargePage() {
         fetchHistory();
     }, []);
 
-    const handleSellerCodeChange = (val: string) => {
-        setSellerCode(val);
+    const handleUserIdChange = (val: string) => {
+        setUserId(val);
         setIsVerified(false);
-        setVerifiedSeller(null);
+        setVerifiedUser(null);
     };
 
-    const handleVerifySeller = () => {
-        if (!sellerCode.trim()) {
-            return toast.error("Please enter a Seller Code or ID first");
+    const handleVerifyUser = async () => {
+        if (!userId.trim()) {
+            return toast.error("Please enter a User ID first");
         }
 
         setVerifying(true);
-        setTimeout(() => {
-            const codeUpper = sellerCode.trim().toUpperCase();
-            setVerifiedSeller({
-                sellerCode: codeUpper,
-                name: codeUpper === 'SEL881' ? 'Alibaba Coin Distributor' : codeUpper === 'SEL292' ? 'Global Recharge Hub' : `Authorized Seller ${codeUpper}`,
-                username: `@seller_${codeUpper.toLowerCase()}`,
-                userId: 9001,
-                image: '',
-                coinsSold: 4500000,
-                creditLimit: 5000000
-            });
-            setIsVerified(true);
-            toast.success(`Seller Verified: ${codeUpper}`);
+        try {
+            const res = await apiClient.get(`/api/seller/users/${encodeURIComponent(userId.trim())}`);
+            if (res.success && res.data?.user) {
+                setVerifiedUser(res.data.user);
+                setIsVerified(true);
+                toast.success(`User Verified: ${res.data.user.name}`);
+            } else {
+                setVerifiedUser(null);
+                setIsVerified(false);
+                toast.error(res.message || "User not found with this ID");
+            }
+        } catch (err: any) {
+            setVerifiedUser(null);
+            setIsVerified(false);
+            const errMsg = err?.message || err?.error || "Failed to verify user ID";
+            toast.error(errMsg);
+        } finally {
             setVerifying(false);
-        }, 500);
+        }
     };
 
     const handleInrChange = (val: string) => {
@@ -119,7 +123,6 @@ export default function SellerRechargePage() {
             return;
         }
         const numRs = Number(val);
-        // Seller gets Diamonds at ₹95 rate for 1,670 💎 (16.7 / 0.95 = ~17.579 💎 per ₹1)
         const calcDiamonds = Math.round(numRs * SELLER_DIAMONDS_PER_RUPEE);
         setAmount(calcDiamonds.toString());
     };
@@ -132,7 +135,6 @@ export default function SellerRechargePage() {
             return;
         }
         const numDiamonds = Number(val);
-        // Rupees calculation for seller: 1,670 💎 costs ₹95 (Diamonds * 0.95 / 16.7)
         const calcRs = Math.round((numDiamonds * SELLER_DISCOUNT_FACTOR) / USER_DIAMONDS_PER_RUPEE);
         setInrAmount(calcRs.toString());
     };
@@ -142,41 +144,52 @@ export default function SellerRechargePage() {
         const rawRs = plan.price.replace(/[^\d]/g, '');
         setInrAmount(rawRs);
         setAmount(plan.diamonds.toString());
-        toast.info(`Selected ${plan.diamonds.toLocaleString()} 💎 plan (${plan.price}) - ${plan.worth}`);
+        toast.info(`Selected ${plan.diamonds.toLocaleString()} 💎 plan (${plan.price})`);
     };
 
     const handleRecharge = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!sellerCode || !amount) return;
+        if (!userId || !amount || loading) return;
 
-        if (!isVerified || !verifiedSeller) {
-            return toast.error("Please click Verify to verify the Seller Code before recharging!");
+        if (!isVerified || !verifiedUser) {
+            return toast.error("Please click Verify to verify the User ID before crediting!");
         }
+
+        const numAmount = Number(amount);
+        if (isNaN(numAmount) || numAmount <= 0) {
+            return toast.error("Please enter a valid diamond amount");
+        }
+
+        // Generate unique Client Idempotency Key
+        const idempotencyKey = `IK_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
         setLoading(true);
         try {
-            const res = await apiClient.post('/api/admin/sellers/add-diamonds', {
-                sellerCode: sellerCode.toUpperCase(),
-                diamonds: Number(amount)
-            }).catch(() => null);
+            const res = await apiClient.post('/api/seller/recharge', {
+                userId: verifiedUser.userId,
+                diamonds: numAmount,
+                idempotencyKey
+            });
 
-            const newLog = {
-                id: Date.now().toString(),
-                sellerCode: sellerCode.toUpperCase(),
-                name: verifiedSeller.name,
-                amount: parseInt(amount),
-                date: new Date().toISOString().replace('T', ' ').substring(0, 16)
-            };
-            setLogs(prev => [newLog, ...prev]);
-            toast.success(`Successfully credited Seller ${sellerCode.toUpperCase()} (${verifiedSeller.name}) with ${Number(amount).toLocaleString()} Diamonds`);
-            setSellerCode('');
-            setInrAmount('');
-            setAmount('');
-            setSelectedPlan(null);
-            setIsVerified(false);
-            setVerifiedSeller(null);
+            if (res.success && res.data?.receipt) {
+                const receipt = res.data.receipt;
+                setLastReceipt(receipt);
+                toast.success(res.message || `Successfully credited ${numAmount.toLocaleString()} 💎 to ${verifiedUser.name}`);
+
+                // Reset form
+                setUserId('');
+                setInrAmount('');
+                setAmount('');
+                setSelectedPlan(null);
+                setIsVerified(false);
+                setVerifiedUser(null);
+                fetchHistory();
+            } else {
+                toast.error(res.message || 'Recharge failed');
+            }
         } catch (error: any) {
-            const errMsg = error?.message || 'Error processing recharge';
+            const errMsg = error?.message || error?.error || (typeof error === 'string' ? error : 'Error processing recharge');
+            console.error('Seller Recharge Error:', errMsg, error);
             toast.error(errMsg);
         } finally {
             setLoading(false);
@@ -188,19 +201,19 @@ export default function SellerRechargePage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">
-                        Seller Diamond Recharge
+                        User Recharge Console
                     </h2>
-                    <p className="text-muted-foreground mt-1 font-medium font-sans">
-                        Credit discounted Diamond packages to authorized seller profiles
+                    <p className="text-muted-foreground mt-1 font-medium text-sm">
+                        Credit Diamond packages to user profiles at your special ₹95 Seller Rate
                     </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={fetchHistory} disabled={historyLoading}>
-                    <RefreshCw className={`h-4 w-4 mr-1 ${historyLoading ? 'animate-spin' : ''}`} /> Refresh Logs
+                    <RefreshCw className={`h-4 w-4 mr-1 ${historyLoading ? 'animate-spin' : ''}`} /> Refresh History
                 </Button>
             </div>
 
-            {/* Special Seller Discount Rate Info Bar */}
-            <div className="p-3.5 rounded-xl bg-cyan-950/50 border border-cyan-500/30 flex items-center justify-between gap-4 text-xs">
+            {/* Special Seller Rate Info Bar */}
+            <div className="p-3.5 rounded-xl bg-cyan-950/50 border border-cyan-500/30 flex flex-wrap items-center justify-between gap-4 text-xs">
                 <div className="flex items-center gap-2 text-cyan-300">
                     <Tag className="h-4 w-4 text-cyan-400 shrink-0" />
                     <span className="font-semibold text-sm">Seller Special Discount Rate:</span>
@@ -219,7 +232,7 @@ export default function SellerRechargePage() {
                         Available Seller Diamond Plans (5% Discounted)
                     </CardTitle>
                     <CardDescription className="text-slate-400 text-xs">
-                        Click on any discounted package card below to auto-select diamond amount for seller credit.
+                        Click on any package card below to auto-select diamond amount for user credit.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -258,25 +271,25 @@ export default function SellerRechargePage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-slate-200">
                             <Plus size={20} className="text-cyan-400" />
-                            Allocate Seller Diamonds
+                            Credit Diamonds to User
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleRecharge} className="space-y-4">
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-300">Seller Agency Code / ID</label>
+                                <label className="text-sm font-semibold text-slate-300">Target User ID</label>
                                 <div className="flex gap-2">
                                     <Input
-                                        placeholder="e.g. SEL881"
-                                        value={sellerCode}
-                                        onChange={(e) => handleSellerCodeChange(e.target.value)}
+                                        placeholder="Enter User ID or Username"
+                                        value={userId}
+                                        onChange={(e) => handleUserIdChange(e.target.value)}
                                         required
-                                        className="uppercase flex-1"
+                                        className="flex-1"
                                     />
                                     <Button
                                         type="button"
-                                        onClick={handleVerifySeller}
-                                        disabled={verifying || !sellerCode.trim()}
+                                        onClick={handleVerifyUser}
+                                        disabled={verifying || !userId.trim()}
                                         className={`font-semibold shrink-0 ${
                                             isVerified
                                                 ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
@@ -294,34 +307,34 @@ export default function SellerRechargePage() {
                                 </div>
                             </div>
 
-                            {/* Verified Seller Details Card */}
-                            {verifiedSeller && isVerified && (
+                            {/* Verified User Details Profile Card */}
+                            {verifiedUser && isVerified && (
                                 <div className="p-3.5 rounded-xl bg-slate-900/90 border border-emerald-500/50 flex items-center gap-3.5 animate-in fade-in duration-200 shadow-lg">
                                     <div className="relative h-12 w-12 rounded-full overflow-hidden border-2 border-emerald-400 bg-slate-800 shrink-0 flex items-center justify-center text-emerald-300 font-bold text-lg">
-                                        {verifiedSeller.image ? (
-                                            <img src={verifiedSeller.image} alt={verifiedSeller.name} className="h-full w-full object-cover" />
+                                        {verifiedUser.image ? (
+                                            <img src={verifiedUser.image} alt={verifiedUser.name} className="h-full w-full object-cover" />
                                         ) : (
-                                            verifiedSeller.name?.[0]?.toUpperCase() || 'S'
+                                            verifiedUser.name?.[0]?.toUpperCase() || 'U'
                                         )}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-1.5">
-                                            <h4 className="font-bold text-sm text-slate-100 truncate">{verifiedSeller.name}</h4>
+                                            <h4 className="font-bold text-sm text-slate-100 truncate">{verifiedUser.name}</h4>
                                             <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                                         </div>
                                         <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-400">
-                                            <span className="text-emerald-400 font-semibold">{verifiedSeller.username}</span>
+                                            <span className="text-emerald-400 font-semibold">{verifiedUser.userName}</span>
                                             <span>•</span>
-                                            <span className="font-mono text-slate-300">Code: {verifiedSeller.sellerCode}</span>
+                                            <span className="font-mono text-slate-300">ID: #{verifiedUser.userId}</span>
                                         </div>
                                     </div>
                                 </div>
                             )}
 
-                            {!isVerified && sellerCode.trim() !== '' && (
+                            {!isVerified && userId.trim() !== '' && (
                                 <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-center gap-2">
                                     <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
-                                    <span>Click <strong>Verify</strong> to verify seller details before allocating diamonds.</span>
+                                    <span>Click <strong>Verify</strong> to verify user details before crediting.</span>
                                 </div>
                             )}
 
@@ -374,51 +387,103 @@ export default function SellerRechargePage() {
 
                             <Button
                                 type="submit"
-                                className="w-full font-bold bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={loading || !isVerified || !verifiedSeller}
+                                className="w-full font-bold bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                disabled={loading || !isVerified || !verifiedUser}
                             >
-                                {loading ? 'Crediting Diamonds...' : 'Credit Seller Diamonds'}
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" /> Processing Transaction...
+                                    </>
+                                ) : (
+                                    'Credit Diamonds Now'
+                                )}
                             </Button>
                         </form>
                     </CardContent>
                 </Card>
 
-                {/* History Logs */}
-                <Card className="glass-card md:col-span-2">
-                    <CardHeader className="flex flex-row items-center justify-between">
-                        <CardTitle className="flex items-center gap-2 text-slate-200">
-                            <Calendar size={20} className="text-cyan-400 animate-pulse" />
-                            Recent Sellers Diamond Recharge Audit Logs
-                        </CardTitle>
-                        <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
-                            {logs.length} Transactions
-                        </Badge>
-                    </CardHeader>
-                    <CardContent className="p-0">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="border-slate-800">
-                                    <TableHead className="font-bold text-slate-300">Seller Code</TableHead>
-                                    <TableHead className="font-bold text-slate-300">Agency Name</TableHead>
-                                    <TableHead className="font-bold text-slate-300">Diamonds Credited</TableHead>
-                                    <TableHead className="font-bold text-slate-300">Date Timestamp</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {logs.map((log) => (
-                                    <TableRow key={log.id || log._id} className="hover:bg-muted/30 border-slate-800/50">
-                                        <TableCell className="font-mono text-xs text-cyan-400 font-bold">{log.sellerCode}</TableCell>
-                                        <TableCell className="font-semibold text-slate-200">{log.name}</TableCell>
-                                        <TableCell className="font-bold text-cyan-300">+{ (log.amount || log.diamonds || 0).toLocaleString() } 💎</TableCell>
-                                        <TableCell className="text-xs text-muted-foreground font-semibold">
-                                            {log.date || (log.createdAt ? new Date(log.createdAt).toLocaleString() : '-')}
-                                        </TableCell>
+                {/* History Logs & Recent Receipt Preview */}
+                <div className="md:col-span-2 space-y-4">
+                    {/* Last Receipt Notification Card if available */}
+                    {lastReceipt && (
+                        <Card className="glass-card border-emerald-500/50 bg-emerald-950/20 animate-in fade-in duration-300">
+                            <CardContent className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2.5 rounded-full bg-emerald-500/20 text-emerald-400">
+                                        <CheckCircle2 className="h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-bold text-sm text-slate-100">Transaction Completed #{lastReceipt.txId}</h4>
+                                        <p className="text-xs text-emerald-300">
+                                            Credited <strong>{lastReceipt.diamonds?.toLocaleString()} 💎</strong> to User #{lastReceipt.userId} (Cost: ₹{lastReceipt.sellerCost})
+                                        </p>
+                                    </div>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    onClick={() => toast.info(`Digital Receipt Ref #${lastReceipt.txId}`)}
+                                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs shrink-0"
+                                >
+                                    <Printer className="h-3.5 w-3.5 mr-1.5" /> Digital Receipt
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {/* Audit Logs */}
+                    <Card className="glass-card">
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle className="flex items-center gap-2 text-slate-200">
+                                <Calendar size={20} className="text-cyan-400 animate-pulse" />
+                                User Recharge History Logs
+                            </CardTitle>
+                            <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
+                                {logs.length} Transactions
+                            </Badge>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow className="border-slate-800">
+                                        <TableHead className="font-bold text-slate-300">Tx ID / Target User</TableHead>
+                                        <TableHead className="font-bold text-slate-300">Diamonds Credited</TableHead>
+                                        <TableHead className="font-bold text-slate-300">Cost (₹)</TableHead>
+                                        <TableHead className="font-bold text-slate-300">Customer Amt (₹)</TableHead>
+                                        <TableHead className="font-bold text-slate-300">Date Timestamp</TableHead>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </CardContent>
-                </Card>
+                                </TableHeader>
+                                <TableBody>
+                                    {logs.map((log, idx) => (
+                                        <TableRow key={log.transactionId || log.id || idx} className="hover:bg-muted/30 border-slate-800/50">
+                                            <TableCell className="font-mono text-xs text-cyan-400 font-bold">
+                                                {log.transactionId || log.id} <span className="text-slate-400">(User #{log.userId})</span>
+                                            </TableCell>
+                                            <TableCell className="font-bold text-cyan-300">
+                                                +{ (log.diamonds || 0).toLocaleString() } 💎
+                                            </TableCell>
+                                            <TableCell className="font-bold text-slate-200">
+                                                ₹{ (log.sellerCost || log.inr || 0).toLocaleString() }
+                                            </TableCell>
+                                            <TableCell className="font-bold text-emerald-400">
+                                                ₹{ (log.customerAmount || 0).toLocaleString() }
+                                            </TableCell>
+                                            <TableCell className="text-xs text-muted-foreground font-semibold">
+                                                {log.createdAt ? new Date(log.createdAt).toLocaleString() : log.date || '-'}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                    {logs.length === 0 && !historyLoading && (
+                                        <TableRow>
+                                            <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                                                No recharge transactions recorded yet.
+                                            </TableCell>
+                                        </TableRow>
+                                    )}
+                                </TableBody>
+                            </Table>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
         </div>
     );

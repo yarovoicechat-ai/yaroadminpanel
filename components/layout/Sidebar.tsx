@@ -7,7 +7,7 @@ import {
     LayoutDashboard, Menu, X, LogOut, User, Award, Gift, UserX,
     Users, UserCheck, ShieldAlert, Video, Plus, Flag, HelpCircle,
     Ban, AlertOctagon, Calendar, MessageSquare, Bell, Share2,
-    CheckSquare, FileCheck, DollarSign, Coins, ChevronDown, ChevronRight,
+    CheckSquare, FileCheck, DollarSign, Coins, Gem, ChevronDown, ChevronRight,
     Crown, Briefcase, Terminal, ShieldCheck, Settings, Headphones, Globe,
     FileText, Layers, Radio, Sliders, Image as ImageIcon
 } from 'lucide-react';
@@ -241,7 +241,19 @@ const adminSidebarSections: SidebarSection[] = [
                 category: 'Finance',
                 submenu: [
                     { name: 'User', href: '/recharges/user' },
-                    { name: 'Seller', href: '/recharges/seller' }
+                    { name: 'Seller (Admin)', href: '/recharges/seller' }
+                ]
+            },
+            {
+                name: 'Seller Portal',
+                icon: Gem,
+                category: 'Finance',
+                submenu: [
+                    { name: 'Dashboard', href: '/seller' },
+                    { name: 'User Recharge', href: '/seller/recharge' },
+                    { name: 'Buy Stock', href: '/seller/stock' },
+                    { name: 'Audit Logs', href: '/seller/history' },
+                    { name: 'Profit & Ledger', href: '/seller/ledger' }
                 ]
             }
         ]

@@ -13,7 +13,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
-import { Coins, Plus, Calendar, Gem, RefreshCw, Check } from "lucide-react";
+import { Coins, Plus, Calendar, Gem, RefreshCw, Check, CheckCircle2, ShieldCheck, AlertCircle, User, Loader2 } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 
@@ -29,13 +29,34 @@ const DIAMOND_PLANS = [
     { price: '₹9,999', diamonds: 167000, isPopular: false },
 ];
 
+export interface VerifiedUser {
+    userId: number;
+    name: string;
+    userName: string;
+    meethiId: string;
+    image: string;
+    coins: number;
+    diamonds: number;
+    role?: string;
+    isBlocked?: boolean;
+}
+
 export default function UserRechargePage() {
     const [userId, setUserId] = useState('');
+    const [inrAmount, setInrAmount] = useState('');
     const [amount, setAmount] = useState('');
     const [loading, setLoading] = useState(false);
     const [historyLoading, setHistoryLoading] = useState(true);
     const [logs, setLogs] = useState<any[]>([]);
     const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
+
+    // Rate: ~16.7 Diamonds per 1 Rupee
+    const DIAMONDS_PER_RUPEE = 16.7;
+
+    // Verification states
+    const [verifying, setVerifying] = useState(false);
+    const [verifiedUser, setVerifiedUser] = useState<VerifiedUser | null>(null);
+    const [isVerified, setIsVerified] = useState(false);
 
     const fetchHistory = async () => {
         try {
@@ -55,8 +76,67 @@ export default function UserRechargePage() {
         fetchHistory();
     }, []);
 
+    const handleUserIdChange = (val: string) => {
+        setUserId(val);
+        setIsVerified(false);
+        setVerifiedUser(null);
+    };
+
+    const handleVerifyUser = async () => {
+        if (!userId.trim()) {
+            return toast.error("Please enter a User ID first");
+        }
+
+        setVerifying(true);
+        try {
+            const res = await apiClient.get(`/api/admin/users/verify/${userId.trim()}`);
+            if (res.success && res.data?.user) {
+                setVerifiedUser(res.data.user);
+                setIsVerified(true);
+                toast.success(`User Verified: ${res.data.user.name}`);
+            } else {
+                setVerifiedUser(null);
+                setIsVerified(false);
+                toast.error(res.message || "User not found with this ID");
+            }
+        } catch (err: any) {
+            setVerifiedUser(null);
+            setIsVerified(false);
+            const errMsg = err?.message || err?.error || "Failed to verify user ID";
+            toast.error(errMsg);
+        } finally {
+            setVerifying(false);
+        }
+    };
+
+    const handleInrChange = (val: string) => {
+        setInrAmount(val);
+        setSelectedPlan(null);
+        if (!val || isNaN(Number(val))) {
+            setAmount('');
+            return;
+        }
+        const numRs = Number(val);
+        const calcDiamonds = Math.round(numRs * DIAMONDS_PER_RUPEE);
+        setAmount(calcDiamonds.toString());
+    };
+
+    const handleDiamondsChange = (val: string) => {
+        setAmount(val);
+        setSelectedPlan(null);
+        if (!val || isNaN(Number(val))) {
+            setInrAmount('');
+            return;
+        }
+        const numDiamonds = Number(val);
+        const calcRs = Math.round(numDiamonds / DIAMONDS_PER_RUPEE);
+        setInrAmount(calcRs.toString());
+    };
+
     const handleSelectPlan = (plan: typeof DIAMOND_PLANS[0], index: number) => {
         setSelectedPlan(index);
+        const rawRs = plan.price.replace(/[^\d]/g, '');
+        setInrAmount(rawRs);
         setAmount(plan.diamonds.toString());
         toast.info(`Selected ${plan.diamonds.toLocaleString()} 💎 plan (${plan.price})`);
     };
@@ -65,17 +145,24 @@ export default function UserRechargePage() {
         e.preventDefault();
         if (!userId || !amount) return;
 
+        if (!isVerified || !verifiedUser) {
+            return toast.error("Please click Verify to verify the User ID before recharging!");
+        }
+
         setLoading(true);
         try {
             const res = await apiClient.post('/api/admin/users/add-diamonds', {
-                userId: Number(userId),
+                userId: Number(verifiedUser.userId),
                 diamonds: Number(amount)
             });
             if (res.success) {
-                toast.success(res.message || `Successfully added ${Number(amount).toLocaleString()} diamonds`);
+                toast.success(res.message || `Successfully added ${Number(amount).toLocaleString()} diamonds to ${verifiedUser.name}`);
                 setUserId('');
+                setInrAmount('');
                 setAmount('');
                 setSelectedPlan(null);
+                setIsVerified(false);
+                setVerifiedUser(null);
                 fetchHistory();
             } else {
                 toast.error(res.message || 'Recharge failed');
@@ -97,7 +184,7 @@ export default function UserRechargePage() {
                         User Diamond Recharge
                     </h2>
                     <p className="text-muted-foreground mt-1 font-medium font-sans">
-                        Credit Diamonds packages directly to user profiles & manage active rate plans
+                        Credit Diamonds packages directly to verified user profiles
                     </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={fetchHistory} disabled={historyLoading}>
@@ -158,31 +245,120 @@ export default function UserRechargePage() {
                         <form onSubmit={handleRecharge} className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-semibold text-slate-300">Target User ID</label>
-                                <Input
-                                    type="number"
-                                    placeholder="e.g. 10002"
-                                    value={userId}
-                                    onChange={(e) => setUserId(e.target.value)}
-                                    required
-                                />
+                                <div className="flex gap-2">
+                                    <Input
+                                        type="text"
+                                        placeholder="Enter User ID or Username"
+                                        value={userId}
+                                        onChange={(e) => handleUserIdChange(e.target.value)}
+                                        required
+                                        className="flex-1"
+                                    />
+                                    <Button
+                                        type="button"
+                                        onClick={handleVerifyUser}
+                                        disabled={verifying || !userId.trim()}
+                                        className={`font-semibold shrink-0 ${
+                                            isVerified
+                                                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                                                : 'bg-cyan-600 hover:bg-cyan-500 text-white'
+                                        }`}
+                                    >
+                                        {verifying ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : isVerified ? (
+                                            <span className="flex items-center gap-1"><CheckCircle2 className="h-4 w-4" /> Verified</span>
+                                        ) : (
+                                            <span className="flex items-center gap-1"><ShieldCheck className="h-4 w-4" /> Verify</span>
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
+
+                            {/* Verified User Details Profile Card */}
+                            {verifiedUser && isVerified && (
+                                <div className="p-3.5 rounded-xl bg-slate-900/90 border border-emerald-500/50 flex items-center gap-3.5 animate-in fade-in duration-200 shadow-lg">
+                                    <div className="relative h-12 w-12 rounded-full overflow-hidden border-2 border-emerald-400 bg-slate-800 shrink-0">
+                                        {verifiedUser.image ? (
+                                            <img src={verifiedUser.image} alt={verifiedUser.name} className="h-full w-full object-cover" />
+                                        ) : (
+                                            <div className="h-full w-full flex items-center justify-center bg-emerald-950 text-emerald-300 font-bold text-lg">
+                                                {verifiedUser.name?.[0]?.toUpperCase() || 'U'}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-1.5">
+                                            <h4 className="font-bold text-sm text-slate-100 truncate">{verifiedUser.name}</h4>
+                                            <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-slate-400">
+                                            <span className="text-emerald-400 font-semibold">{verifiedUser.userName}</span>
+                                            <span>•</span>
+                                            <span className="font-mono text-slate-300">ID: #{verifiedUser.userId}</span>
+                                        </div>
+                                        <div className="flex items-center gap-3 mt-1 text-[11px]">
+                                            <span className="text-amber-400 font-medium">🪙 {verifiedUser.coins?.toLocaleString()}</span>
+                                            <span className="text-cyan-400 font-medium">💎 {verifiedUser.diamonds?.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {!isVerified && userId.trim() !== '' && (
+                                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs flex items-center gap-2">
+                                    <AlertCircle className="h-4 w-4 text-amber-400 shrink-0" />
+                                    <span>Click <strong>Verify</strong> to confirm user profile details before recharging.</span>
+                                </div>
+                            )}
+
+                            {/* Rupee (₹) Amount Input */}
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-300">Diamonds Amount</label>
+                                <label className="text-sm font-semibold text-slate-300 flex items-center justify-between">
+                                    <span>Amount in Rupees (₹ INR)</span>
+                                    <span className="text-xs text-cyan-400 font-normal">Auto-Calculator</span>
+                                </label>
                                 <div className="relative">
                                     <Input
                                         type="number"
-                                        placeholder="e.g. 985"
+                                        placeholder="Enter Rupees (e.g. 100)"
+                                        value={inrAmount}
+                                        onChange={(e) => handleInrChange(e.target.value)}
+                                    />
+                                    <span className="absolute right-3 top-2.5 text-slate-400 font-bold text-sm">₹</span>
+                                </div>
+                            </div>
+
+                            {/* Calculated Diamonds Count Display & Input */}
+                            <div className="space-y-2">
+                                <label className="text-sm font-semibold text-slate-300">Calculated Diamonds (💎)</label>
+                                <div className="relative">
+                                    <Input
+                                        type="number"
+                                        placeholder="e.g. 1670"
                                         value={amount}
-                                        onChange={(e) => {
-                                            setAmount(e.target.value);
-                                            setSelectedPlan(null);
-                                        }}
+                                        onChange={(e) => handleDiamondsChange(e.target.value)}
                                         required
                                     />
                                     <Coins className="absolute right-3 top-3 h-4 w-4 text-cyan-400" />
                                 </div>
                             </div>
-                            <Button type="submit" className="w-full font-bold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white" disabled={loading}>
+
+                            {/* Conversion Info Badge */}
+                            {amount && Number(amount) > 0 && (
+                                <div className="p-3 rounded-lg bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-between text-xs">
+                                    <span className="text-slate-300 font-medium">Recharge Total:</span>
+                                    <span className="text-cyan-300 font-bold text-sm flex items-center gap-1">
+                                        {inrAmount ? `₹${Number(inrAmount).toLocaleString()}` : ''} ➔ 💎 {Number(amount).toLocaleString()} Diamonds
+                                    </span>
+                                </div>
+                            )}
+
+                            <Button
+                                type="submit"
+                                className="w-full font-bold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                disabled={loading || !isVerified || !verifiedUser}
+                            >
                                 {loading ? 'Crediting Diamonds...' : 'Credit Diamonds'}
                             </Button>
                         </form>
