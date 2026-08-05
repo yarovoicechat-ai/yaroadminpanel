@@ -19,6 +19,7 @@ function HostFormContent() {
         gender: 'female',
         email: '',
         phone: '',
+        meethiChatId: '',
         city: '',
         state: '',
         district: '',
@@ -101,6 +102,8 @@ function HostFormContent() {
                 gender: form.gender,
                 email: form.email.trim(),
                 phone: form.phone.trim(),
+                meethiChatId: form.meethiChatId.trim(),
+                mithiChatId: form.meethiChatId.trim(),
                 role: 'host',
                 referralCode: verifiedReferralCode,
                 voiceAudioUrl: form.portfolio,
@@ -251,6 +254,20 @@ function HostFormContent() {
                             required
                             value={form.phone}
                             onChange={e => setForm({ ...form, phone: e.target.value })}
+                            className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
+                        />
+                    </div>
+
+                    {/* Meethi Chat ID */}
+                    <div>
+                        <label className="text-xs font-semibold text-white/90 mb-1.5 block">
+                            Meethi Chat ID (optional / App User ID)
+                        </label>
+                        <input
+                            type="text"
+                            placeholder="e.g. MC100852 or 50021"
+                            value={form.meethiChatId}
+                            onChange={e => setForm({ ...form, meethiChatId: e.target.value })}
                             className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"
                         />
                     </div>
