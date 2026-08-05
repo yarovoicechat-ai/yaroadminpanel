@@ -78,7 +78,7 @@ export default function ReferralLinks() {
     operator: ['Super Admin', 'Admin', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
     superAdmin: ['Admin', 'Agency', 'Host', 'Customer Service Support'],
     admin: ['Agency', 'Host', 'Customer Service Support'],
-    agency: ['Agency', 'Host'],
+    agency: ['Host'],
     coinSeller: [],
     customerSupport: ['Customer Service Support'],
   };
