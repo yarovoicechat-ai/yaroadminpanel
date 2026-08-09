@@ -11,7 +11,6 @@ const SUPER_ADMIN_DENIED_ROUTES = [
   '/avatar-requests',
   '/bios',
   '/host-management',
-  '/recharges',
   '/withdrawals',
   '/sellers',
 ];
@@ -23,7 +22,6 @@ const ADMIN_DENIED_ROUTES = [
   '/avatar-requests',
   '/bios',
   '/host-management',
-  '/recharges',
   '/withdrawals',
   '/sellers',
 ];
@@ -76,6 +74,10 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
       '/customer-support',
       '/customer-support/create',
       '/customer-support/request',
+      '/recharges',
+      '/recharges/user',
+      '/recharges/seller',
+      '/recharges/history',
       '/reports',
       '/help-support',
       '/referrals',
@@ -85,6 +87,7 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     allowedModules: [
       'Dashboard',
       'Users',
+      'Finance',
       'Reports',
       'Settings',
       'Admin',
@@ -111,6 +114,10 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
       '/customer-support',
       '/customer-support/create',
       '/customer-support/request',
+      '/recharges',
+      '/recharges/user',
+      '/recharges/seller',
+      '/recharges/history',
       '/reports',
       '/help-support',
       '/referrals',
@@ -120,6 +127,7 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     allowedModules: [
       'Dashboard',
       'Users',
+      'Finance',
       'Reports',
       'Settings',
       'Agency',
