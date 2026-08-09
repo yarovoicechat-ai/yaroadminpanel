@@ -241,8 +241,15 @@ const adminSidebarSections: SidebarSection[] = [
                 category: 'Finance',
                 submenu: [
                     { name: 'User', href: '/recharges/user' },
-                    { name: 'Seller (Admin)', href: '/recharges/seller' }
+                    { name: 'Seller (Admin)', href: '/recharges/seller' },
+                    { name: 'Recharge History', href: '/recharges/history' }
                 ]
+            },
+            {
+                name: 'Recharge History',
+                href: '/recharges/history',
+                icon: FileText,
+                category: 'Finance'
             },
             {
                 name: 'Seller Portal',
