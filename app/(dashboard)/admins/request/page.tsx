@@ -203,7 +203,7 @@ export default function AdminRequestsPage() {
                         qualification: d.qualification || '',
                         experience: d.experience || '',
                         previousCompany: d.previousCompany || '',
-                        skills: d.skills ? (Array.isArray(d.skills) ? d.skills : d.skills.split(',')) : [],
+                        skills: d.skills ? (Array.isArray(d.skills) ? d.skills : typeof d.skills === 'string' ? d.skills.split(',') : []) : [],
                         reviewByOperator: {
                             reviewerName: opRev.reviewerName || (opRev.userId ? String(opRev.userId) : 'Operator Team'),
                             reviewDate: opRev.date ? new Date(opRev.date).toLocaleString('en-IN') : '—',

@@ -255,7 +255,7 @@ export default function HostRequestsPage() {
                         voiceWaveform: [30, 50, 70, 90, 60, 40, 80, 95, 75, 45, 85, 65, 90, 50, 35, 75, 85, 60, 40, 25],
                         qualification: d.qualification || '',
                         experience: d.experience || '',
-                        skills: d.skills ? (Array.isArray(d.skills) ? d.skills : d.skills.split(',')) : [],
+                        skills: d.skills ? (Array.isArray(d.skills) ? d.skills : typeof d.skills === 'string' ? d.skills.split(',') : []) : [],
                         status: item.status === 'approved' || item.status === 'active' ? 'active' : 'inactive',
                         hostCode: d.hostCode || d.specialCode || '',
                         agencyName: d.agencyName || d.agencyCode || 'Independent',

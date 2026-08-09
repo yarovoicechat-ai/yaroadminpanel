@@ -164,7 +164,7 @@ export default function OperatorRequestsPage() {
                         name: d.name || 'Applicant',
                         profilePhoto: d.profilePhoto || '',
                         meethiChatId: d.meethiChatId || d.mithiChatId || `MC-${100000 + idx}`,
-                        username: d.username ? `@${d.username.replace('@','')}` : `@operator_${idx+1}`,
+                        username: typeof d.username === 'string' ? `@${d.username.replace('@','')}` : `@operator_${idx+1}`,
                         gender: (d.gender as any) || 'Male',
                         age: d.age || 28,
                         dob: d.dob || '',
@@ -187,7 +187,7 @@ export default function OperatorRequestsPage() {
                         qualification: d.qualification || '',
                         experience: d.experience || '',
                         previousCompany: d.previousCompany || '',
-                        skills: d.skills ? (Array.isArray(d.skills) ? d.skills : d.skills.split(',')) : [],
+                        skills: d.skills ? (Array.isArray(d.skills) ? d.skills : typeof d.skills === 'string' ? d.skills.split(',') : []) : [],
                         reviewByOwner: {
                             reviewerName: ownerRev.reviewerName || (ownerRev.userId ? String(ownerRev.userId) : 'Owner Team'),
                             reviewDate: ownerRev.date ? new Date(ownerRev.date).toLocaleString('en-IN') : '—',

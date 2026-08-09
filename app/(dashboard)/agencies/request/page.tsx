@@ -170,7 +170,7 @@ export default function AgencyRequestsPage() {
                         agencyName: d.agencyName || `Agency ${idx + 1}`,
                         profilePhoto: d.profilePhoto || d.managerPhoto || '',
                         meethiChatId: d.meethiChatId || d.mithiChatId || '',
-                        username: d.username ? `@${d.username.replace('@','')}` : '',
+                        username: typeof d.username === 'string' ? `@${d.username.replace('@','')}` : '',
                         gender: (d.gender as any) || 'Male',
                         age: d.age || 0,
                         dob: d.dob || '',
@@ -193,7 +193,7 @@ export default function AgencyRequestsPage() {
                         qualification: d.qualification || '',
                         experience: d.experience || '',
                         previousCompany: d.previousCompany || '',
-                        skills: d.skills ? (Array.isArray(d.skills) ? d.skills : d.skills.split(',')) : [],
+                        skills: d.skills ? (Array.isArray(d.skills) ? d.skills : typeof d.skills === 'string' ? d.skills.split(',') : []) : [],
                         reviewByOperator: {
                             reviewerName: opRev.reviewerName || (opRev.userId ? String(opRev.userId) : 'Operator Team'),
                             reviewDate: opRev.date ? new Date(opRev.date).toLocaleString('en-IN') : '—',
