@@ -115,6 +115,9 @@ export const API_ENDPOINTS = {
 
     // Gifts
     GIFTS: {
+
+    // Gifts
+    GIFTS: {
         LIST: '/api/gift/admin-all',
         CREATE: '/api/gift/create',
         TOGGLE: (id: string) => `/api/gift/${id}/toggle`,
@@ -124,5 +127,20 @@ export const API_ENDPOINTS = {
     // Events
     EVENTS: {
         BROADCAST: '/api/admin/events/broadcast',
+    },
+
+    // Reports Management
+    REPORTS: {
+        LIST: '/api/admin/reports',
+        GET: (id: string) => `/api/admin/reports/${id}`,
+        RESOLVE: (id: string) => `/api/admin/reports/${id}/resolve`,
+        DISMISS: (id: string) => `/api/admin/reports/${id}/dismiss`,
+    },
+
+    // Help & Support Tickets
+    HELP: {
+        LIST: '/api/admin/help',
+        RESOLVE: '/api/admin/help/resolve',
+        REPLY: (id: string) => `/api/admin/help/${id}/reply`,
     },
 } as const;
