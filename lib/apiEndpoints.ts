@@ -132,4 +132,14 @@ export const API_ENDPOINTS = {
         RESOLVE: '/api/admin/help/resolve',
         REPLY: (id: string) => `/api/admin/help/${id}/reply`,
     },
+
+    // App Releases (APK / AAB Manager)
+    APP_RELEASES: {
+        UPLOAD: '/api/v1/app-releases/upload',
+        ALL: '/api/v1/app-releases/all',
+        LATEST: '/api/v1/app-releases/latest',
+        DOWNLOAD: '/api/v1/app-releases/download',
+        ACTIVATE: (id: string) => `/api/v1/app-releases/${id}/activate`,
+        DELETE: (id: string) => `/api/v1/app-releases/${id}`,
+    },
 } as const;

@@ -9,7 +9,7 @@ import {
     Ban, AlertOctagon, Calendar, MessageSquare, Bell, Share2,
     CheckSquare, FileCheck, DollarSign, Coins, Gem, ChevronDown, ChevronRight,
     Crown, Briefcase, Terminal, ShieldCheck, Settings, Headphones, Globe,
-    FileText, Layers, Radio, Sliders, Image as ImageIcon
+    FileText, Layers, Radio, Sliders, Image as ImageIcon, Download
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -57,6 +57,7 @@ const managementSidebarSections: SidebarSection[] = [
         category: 'Dashboard',
         items: [
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
+            { name: 'App Releases (APK)', href: '/app-releases', icon: Download, category: 'Dashboard' },
             { name: 'App Settings', href: '/settings', icon: Settings, category: 'Settings' },
             { name: 'System Logs', href: '/logs', icon: Terminal, category: 'Developer' }
         ]
@@ -93,7 +94,8 @@ const adminSidebarSections: SidebarSection[] = [
         title: 'Core Console',
         category: 'Dashboard',
         items: [
-            { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' }
+            { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
+            { name: 'App Releases (APK)', href: '/app-releases', icon: Download, category: 'Dashboard' }
         ]
     },
     {
