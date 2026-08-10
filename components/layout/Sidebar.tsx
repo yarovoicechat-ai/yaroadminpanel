@@ -94,8 +94,7 @@ const adminSidebarSections: SidebarSection[] = [
         title: 'Core Console',
         category: 'Dashboard',
         items: [
-            { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
-            { name: 'App Releases (APK)', href: '/app-releases', icon: Download, category: 'Dashboard' }
+            { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' }
         ]
     },
     {
