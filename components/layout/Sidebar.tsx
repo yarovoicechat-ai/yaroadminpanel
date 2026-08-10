@@ -58,6 +58,7 @@ const managementSidebarSections: SidebarSection[] = [
         items: [
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
             { name: 'App Releases (APK)', href: '/app-releases', icon: Download, category: 'Dashboard' },
+            { name: 'Screen Security & Code', href: '/screen-security', icon: ShieldCheck, category: 'Dashboard' },
             { name: 'App Settings', href: '/settings', icon: Settings, category: 'Settings' },
             { name: 'System Logs', href: '/logs', icon: Terminal, category: 'Developer' }
         ]

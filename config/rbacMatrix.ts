@@ -63,6 +63,7 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     allowedRoutes: [
       '/dashboard',
       '/app-releases',
+      '/screen-security',
       '/admins',
       '/admins/create',
       '/admins/request',
@@ -107,6 +108,7 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     allowedRoutes: [
       '/dashboard',
       '/app-releases',
+      '/screen-security',
       '/agencies',
       '/agencies/create',
       '/agencies/request',
@@ -147,6 +149,7 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
     allowedRoutes: [
       '/dashboard',
       '/app-releases',
+      '/screen-security',
       '/users',
       '/recharges',
       '/recharges/user',
