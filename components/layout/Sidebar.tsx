@@ -71,6 +71,7 @@ const managementSidebarSections: SidebarSection[] = [
             { name: 'Banners', href: '/banners', icon: Layers, category: 'Dashboard' },
             { name: 'Ads', href: '/ads', icon: Radio, category: 'Dashboard' },
             { name: 'Referrals', href: '/referrals/links', icon: Share2, category: 'Dashboard' },
+            { name: 'Device Limits & Bans', href: '/bans/device', icon: AlertOctagon, category: 'Dashboard' },
             { name: 'VIP Program', href: '/vip', icon: Crown, category: 'Dashboard' },
             { name: 'Levels', href: '/host-levels', icon: Award, category: 'Dashboard' },
             { name: 'Gifts', href: '/gifts', icon: Gift, category: 'Dashboard' },
@@ -215,7 +216,7 @@ const adminSidebarSections: SidebarSection[] = [
         items: [
             { name: 'Chat Violations', href: '/moderation/violations', icon: ShieldAlert, category: 'Notifications' },
             { name: 'ID Ban', href: '/bans/id', icon: Ban, category: 'Notifications' },
-            { name: 'Device Ban', href: '/bans/device', icon: AlertOctagon, category: 'Notifications' },
+            { name: 'Device Limits & Bans', href: '/bans/device', icon: AlertOctagon, category: 'Notifications' },
             { name: 'Event', href: '/events', icon: Calendar, category: 'Notifications' },
             { name: 'System Message', href: '/messages/system', icon: MessageSquare, category: 'Notifications' },
             { name: 'Activity', href: '/messages/activity', icon: Bell, category: 'Notifications' },
