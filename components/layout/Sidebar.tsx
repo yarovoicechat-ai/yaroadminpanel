@@ -64,14 +64,27 @@ const managementSidebarSections: SidebarSection[] = [
         ]
     },
     {
+        title: 'REFERRAL & REWARDS',
+        category: 'Dashboard',
+        items: [
+            { name: 'Referral Analytics & Rewards', href: '/referrals/links', icon: Share2, category: 'Dashboard' }
+        ]
+    },
+    {
+        title: 'DEVICE & SECURITY CONTROL',
+        category: 'Notifications',
+        items: [
+            { name: 'Device Limits & Bans', href: '/bans/device', icon: AlertOctagon, category: 'Notifications' },
+            { name: 'ID & Account Bans', href: '/bans/id', icon: Ban, category: 'Notifications' }
+        ]
+    },
+    {
         title: 'APP CONTENT & ECONOMY',
         category: 'Dashboard',
         items: [
             { name: 'CMS Editor', href: '/cms', icon: FileText, category: 'Dashboard' },
             { name: 'Banners', href: '/banners', icon: Layers, category: 'Dashboard' },
             { name: 'Ads', href: '/ads', icon: Radio, category: 'Dashboard' },
-            { name: 'Referrals', href: '/referrals/links', icon: Share2, category: 'Dashboard' },
-            { name: 'Device Limits & Bans', href: '/bans/device', icon: AlertOctagon, category: 'Dashboard' },
             { name: 'VIP Program', href: '/vip', icon: Crown, category: 'Dashboard' },
             { name: 'Levels', href: '/host-levels', icon: Award, category: 'Dashboard' },
             { name: 'Gifts', href: '/gifts', icon: Gift, category: 'Dashboard' },
@@ -97,6 +110,13 @@ const adminSidebarSections: SidebarSection[] = [
         category: 'Dashboard',
         items: [
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' }
+        ]
+    },
+    {
+        title: 'Referral Management',
+        category: 'Dashboard',
+        items: [
+            { name: 'Referral Analytics & Links', href: '/referrals/links', icon: Share2, category: 'Dashboard' }
         ]
     },
     {
