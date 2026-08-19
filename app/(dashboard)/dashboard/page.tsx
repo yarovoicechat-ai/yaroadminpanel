@@ -87,7 +87,7 @@ export default function Home() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Dashboard</h2>
-          <p className="text-muted-foreground mt-1">Overview of Dosti app activity</p>
+          <p className="text-muted-foreground mt-1">Overview of Meethi Chat app activity</p>
         </div>
         <div className="flex items-center gap-2 bg-secondary/50 p-2 rounded-lg border border-border">
           <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
