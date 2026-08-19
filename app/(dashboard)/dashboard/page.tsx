@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Users, UserPlus, Heart, AlertTriangle, TrendingUp, Activity, LucideIcon, Coins, Briefcase, DollarSign } from "lucide-react";
+import { Users, UserPlus, Heart, AlertTriangle, TrendingUp, Activity, LucideIcon, Coins, Briefcase, DollarSign, Share2, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RevenueChart, EarningsChart, CallChart, DistributionChart } from "@/components/dashboard/Charts";
 import { apiClient } from '@/lib/apiClient';
@@ -51,7 +51,7 @@ export default function Home() {
 
         // Load allowed dashboard widgets dynamically
         const userObj = JSON.parse(localStorage.getItem('admin_user') || '{}');
-        let widgets = ["Today's Minutes", "Coins Spent Today", "Host Earnings Today", "Today's Revenue", "Total Users", "Total Hosts", "Active Hosts", "Reports Pending"];
+        let widgets = ["Today's Minutes", "Coins Spent Today", "Host Earnings Today", "Today's Revenue", "Total Users", "Total Hosts", "Active Hosts", "Reports Pending", "Total Referrals", "Device Limits"];
         if (userObj.role && userObj.role !== 'owner') {
           try {
             const res = await apiClient.get('/api/ems/my-permissions');
@@ -170,6 +170,24 @@ export default function Home() {
             icon={AlertTriangle}
             trend="down"
             alert={stats?.reportsPending > 0}
+          />
+        )}
+        {isWidgetVisible("Total Referrals") && (
+          <StatsCard
+            title="Total Referrals"
+            value={(stats?.referrals?.totalReferrals || 0).toLocaleString()}
+            change={`${stats?.referrals?.totalDiamondsGranted || 0} 💎 granted`}
+            icon={Share2}
+            trend="up"
+          />
+        )}
+        {isWidgetVisible("Device Limits") && (
+          <StatsCard
+            title="Device Limits"
+            value={(stats?.devices?.totalOverrides || 0).toLocaleString()}
+            change={`${stats?.devices?.defaultMaxAccounts || 1} max accounts/device`}
+            icon={Smartphone}
+            trend="neutral"
           />
         )}
       </div>
