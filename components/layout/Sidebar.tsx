@@ -64,10 +64,11 @@ const managementSidebarSections: SidebarSection[] = [
         ]
     },
     {
-        title: 'REFERRAL & REWARDS',
+        title: 'REFERRAL MANAGEMENT',
         category: 'Dashboard',
         items: [
-            { name: 'Referral Analytics & Rewards', href: '/referrals/links', icon: Share2, category: 'Dashboard' }
+            { name: 'User Refer & Earn', href: '/referrals', icon: Share2, category: 'Dashboard' },
+            { name: 'Admin & Staff Referrals', href: '/referrals/links', icon: Users, category: 'Dashboard' }
         ]
     },
     {
@@ -116,7 +117,8 @@ const adminSidebarSections: SidebarSection[] = [
         title: 'Referral Management',
         category: 'Dashboard',
         items: [
-            { name: 'Referral Analytics & Links', href: '/referrals/links', icon: Share2, category: 'Dashboard' }
+            { name: 'User Refer & Earn', href: '/referrals', icon: Share2, category: 'Dashboard' },
+            { name: 'Admin & Staff Referrals', href: '/referrals/links', icon: Users, category: 'Dashboard' }
         ]
     },
     {
