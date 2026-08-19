@@ -139,7 +139,7 @@ export default function Home() {
           <StatsCard
             title="Total Users"
             value={(stats?.totalUsers || 0).toLocaleString()}
-            change={`${stats?.activeUsers || 0} active`}
+            change={`${stats?.dau || stats?.activeUsers || 0} DAU active (${stats?.mau || 0} MAU)`}
             icon={Users}
             trend="up"
           />
