@@ -15,7 +15,7 @@ import {
     Dialog, DialogContent, DialogHeader,
     DialogTitle, DialogDescription,
 } from '@/components/ui/Dialog';
-import { Gift, Plus, Trash2, Search, PackageOpen, UploadCloud, Loader2, CheckCircle2, FileUp, Sparkles, FolderUp } from 'lucide-react';
+import { Gift, Plus, Trash2, Pencil, Search, PackageOpen, UploadCloud, Loader2, CheckCircle2, FileUp, Sparkles, FolderUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
@@ -46,6 +46,7 @@ export default function GiftsPage() {
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
     const [showAddDialog, setShowAddDialog] = useState(false);
+    const [editingGift, setEditingGift] = useState<GiftItem | null>(null);
     const [deleteTarget, setDeleteTarget] = useState<GiftItem | null>(null);
     const [form, setForm] = useState(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
@@ -75,6 +76,29 @@ export default function GiftsPage() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const openCreateModal = () => {
+        setEditingGift(null);
+        setForm(EMPTY_FORM);
+        setIconFileName('');
+        setAnimationFileName('');
+        setShowAddDialog(true);
+    };
+
+    const openEditModal = (gift: GiftItem) => {
+        setEditingGift(gift);
+        setForm({
+            name: gift.name || '',
+            icon: gift.icon || '',
+            animationUrl: gift.animationUrl || '',
+            mediaType: gift.mediaType || 'image',
+            cost: gift.cost || 0,
+            category: gift.category || 'Standard',
+        });
+        setIconFileName(gift.icon ? 'Current Gift Icon' : '');
+        setAnimationFileName(gift.animationUrl ? 'Current Animation Asset' : '');
+        setShowAddDialog(true);
     };
 
     const handleFileUpload = async (file: File, field: 'icon' | 'animationUrl') => {
@@ -126,24 +150,33 @@ export default function GiftsPage() {
         }
     };
 
-    const handleAddGift = async () => {
+    const handleSaveGift = async () => {
         if (!form.name || !form.icon || !form.cost) {
             toast.error('Gift Name, Icon File and Cost are required');
             return;
         }
         try {
             setSaving(true);
-            const res = await apiClient.post(API_ENDPOINTS.GIFTS.CREATE, form);
+            let res;
+            if (editingGift) {
+                // Update Existing Gift
+                res = await apiClient.put((API_ENDPOINTS.GIFTS as any).UPDATE(editingGift._id), form);
+            } else {
+                // Create New Gift
+                res = await apiClient.post(API_ENDPOINTS.GIFTS.CREATE, form);
+            }
+
             if (res.success) {
-                toast.success('Gift added successfully');
+                toast.success(editingGift ? 'Gift updated successfully' : 'Gift added successfully');
                 setShowAddDialog(false);
                 setForm(EMPTY_FORM);
+                setEditingGift(null);
                 setIconFileName('');
                 setAnimationFileName('');
                 fetchGifts();
             }
         } catch (err: any) {
-            toast.error(err.message || 'Failed to add gift');
+            toast.error(err.message || 'Failed to save gift');
         } finally {
             setSaving(false);
         }
@@ -187,7 +220,7 @@ export default function GiftsPage() {
                 <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-pink-300 to-purple-400 bg-clip-text text-transparent">
                     Gift Management
                 </h2>
-                <p className="text-slate-400 mt-1">Drag & Drop gift asset files (.png, .svga, .gif), set coin prices and toggle live call gifts.</p>
+                <p className="text-slate-400 mt-1">Add, edit gift details, Drag & Drop gift assets (.png, .svga, .gif), set coin prices and toggle live call gifts.</p>
             </div>
 
             {/* Stats */}
@@ -236,8 +269,8 @@ export default function GiftsPage() {
                                     onChange={e => setSearch(e.target.value)}
                                 />
                             </div>
-                            <Button onClick={() => { setForm(EMPTY_FORM); setIconFileName(''); setAnimationFileName(''); setShowAddDialog(true); }}
-                                className="bg-pink-600 hover:bg-pink-500 text-white border-none">
+                            <Button onClick={openCreateModal}
+                                className="bg-pink-600 hover:bg-pink-500 text-white border-none font-bold">
                                 <Plus className="mr-2 h-4 w-4" /> Add Gift
                             </Button>
                         </div>
@@ -303,14 +336,26 @@ export default function GiftsPage() {
                                             />
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <Button
-                                                variant="destructive"
-                                                size="sm"
-                                                className="h-8 w-8 p-0"
-                                                onClick={() => setDeleteTarget(gift)}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            <div className="flex items-center justify-end gap-2">
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0 border-slate-700 text-cyan-400 hover:text-cyan-300 hover:bg-cyan-950/40"
+                                                    onClick={() => openEditModal(gift)}
+                                                    title="Edit Gift"
+                                                >
+                                                    <Pencil className="h-4 w-4" />
+                                                </Button>
+                                                <Button
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    className="h-8 w-8 p-0"
+                                                    onClick={() => setDeleteTarget(gift)}
+                                                    title="Delete Gift"
+                                                >
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -328,16 +373,16 @@ export default function GiftsPage() {
                 </CardContent>
             </Card>
 
-            {/* Add Gift Dialog — HTML5 Drag & Drop File Upload UI */}
+            {/* Create/Edit Gift Dialog */}
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-xl font-extrabold text-pink-400">
                             <Sparkles className="w-5 h-5 text-amber-400" />
-                            Add New Gift (Drag & Drop File Upload)
+                            {editingGift ? `Edit Gift (${editingGift.name})` : 'Add New Gift'}
                         </DialogTitle>
                         <DialogDescription>
-                            Drag & drop gift icon image (.png, .jpg) & full-screen SVGA/GIF animation files directly.
+                            {editingGift ? 'Update gift name, price (coins), icon image or animation asset file.' : 'Drag & drop gift icon image (.png, .jpg) & full-screen SVGA/GIF animation files directly.'}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -355,7 +400,7 @@ export default function GiftsPage() {
                         {/* 1. Gift Icon Native Drag & Drop Zone */}
                         <div className="space-y-2">
                             <Label className="font-bold text-slate-200 flex items-center justify-between">
-                                <span>1. Drag & Drop Gift Icon File <span className="text-rose-400">*</span></span>
+                                <span>1. Gift Icon File <span className="text-rose-400">*</span></span>
                                 <span className="text-xs font-normal text-slate-400">(.PNG, .JPG, .SVG)</span>
                             </Label>
 
@@ -415,7 +460,7 @@ export default function GiftsPage() {
                                                 <p className="text-[11px] text-slate-300 font-semibold truncate mt-0.5">{iconFileName || 'Icon File Uploaded'}</p>
                                             </div>
                                         </div>
-                                        <Button size="sm" variant="outline" className="text-xs border-slate-700 shrink-0">Choose Other</Button>
+                                        <Button size="sm" variant="outline" className="text-xs border-slate-700 shrink-0">Change Icon</Button>
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center py-4">
@@ -451,7 +496,7 @@ export default function GiftsPage() {
                         {/* 2. Animation File Native Drag & Drop Zone */}
                         <div className="space-y-2">
                             <Label className="font-bold text-slate-200 flex items-center justify-between">
-                                <span>2. Drag & Drop Animation Asset File</span>
+                                <span>2. Animation Asset File</span>
                                 <span className="text-xs font-normal text-slate-400">(.SVGA, .GIF, .WEBP)</span>
                             </Label>
 
@@ -506,9 +551,12 @@ export default function GiftsPage() {
                                             </p>
                                             <p className="text-[11px] text-slate-300 font-semibold truncate mt-0.5">{animationFileName || 'Animation File Uploaded'}</p>
                                         </div>
-                                        <Badge variant="outline" className="text-cyan-400 border-cyan-500/40 uppercase text-[10px]">
-                                            {form.mediaType}
-                                        </Badge>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant="outline" className="text-cyan-400 border-cyan-500/40 uppercase text-[10px]">
+                                                {form.mediaType}
+                                            </Badge>
+                                            <Button size="sm" variant="outline" className="text-xs border-slate-700 shrink-0">Change</Button>
+                                        </div>
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center py-4">
@@ -547,8 +595,8 @@ export default function GiftsPage() {
                                 Cancel
                             </Button>
                             <Button className="flex-1 bg-pink-600 hover:bg-pink-500 text-white border-none font-bold shadow-lg shadow-pink-600/20"
-                                onClick={handleAddGift} disabled={saving || uploadingIcon || uploadingAnimation}>
-                                {saving ? 'Adding Gift...' : 'Add Gift'}
+                                onClick={handleSaveGift} disabled={saving || uploadingIcon || uploadingAnimation}>
+                                {saving ? (editingGift ? 'Saving Gift...' : 'Adding Gift...') : (editingGift ? 'Update Gift' : 'Add Gift')}
                             </Button>
                         </div>
                     </div>
