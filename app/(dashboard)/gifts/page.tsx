@@ -50,9 +50,11 @@ export default function GiftsPage() {
     const [form, setForm] = useState(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
 
-    // Direct Upload File Info States
+    // Direct Upload & Drag/Drop States
     const [uploadingIcon, setUploadingIcon] = useState(false);
     const [uploadingAnimation, setUploadingAnimation] = useState(false);
+    const [isDraggingIcon, setIsDraggingIcon] = useState(false);
+    const [isDraggingAnim, setIsDraggingAnim] = useState(false);
     const [iconFileName, setIconFileName] = useState('');
     const [animationFileName, setAnimationFileName] = useState('');
 
@@ -185,7 +187,7 @@ export default function GiftsPage() {
                 <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-pink-300 to-purple-400 bg-clip-text text-transparent">
                     Gift Management
                 </h2>
-                <p className="text-slate-400 mt-1">Upload gift asset files (.png, .svga, .gif), set coin prices and toggle live call gifts.</p>
+                <p className="text-slate-400 mt-1">Drag & Drop gift asset files (.png, .svga, .gif), set coin prices and toggle live call gifts.</p>
             </div>
 
             {/* Stats */}
@@ -326,16 +328,16 @@ export default function GiftsPage() {
                 </CardContent>
             </Card>
 
-            {/* Add Gift Dialog — 100% Direct File Upload UI */}
+            {/* Add Gift Dialog — HTML5 Drag & Drop File Upload UI */}
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-xl font-extrabold text-pink-400">
                             <Sparkles className="w-5 h-5 text-amber-400" />
-                            Add New Gift (Upload Asset Files)
+                            Add New Gift (Drag & Drop File Upload)
                         </DialogTitle>
                         <DialogDescription>
-                            Upload gift icon image (.png, .jpg) & full-screen SVGA/GIF animation files directly.
+                            Drag & drop gift icon image (.png, .jpg) & full-screen SVGA/GIF animation files directly.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -350,10 +352,10 @@ export default function GiftsPage() {
                             />
                         </div>
 
-                        {/* 1. Gift Icon Direct File Dropzone */}
+                        {/* 1. Gift Icon Native Drag & Drop Zone */}
                         <div className="space-y-2">
                             <Label className="font-bold text-slate-200 flex items-center justify-between">
-                                <span>1. Upload Gift Icon File <span className="text-rose-400">*</span></span>
+                                <span>1. Drag & Drop Gift Icon File <span className="text-rose-400">*</span></span>
                                 <span className="text-xs font-normal text-slate-400">(.PNG, .JPG, .SVG)</span>
                             </Label>
 
@@ -370,8 +372,27 @@ export default function GiftsPage() {
 
                             <div
                                 onClick={() => iconInputRef.current?.click()}
+                                onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setIsDraggingIcon(true);
+                                }}
+                                onDragLeave={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setIsDraggingIcon(false);
+                                }}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setIsDraggingIcon(false);
+                                    const file = e.dataTransfer.files?.[0];
+                                    if (file) handleFileUpload(file, 'icon');
+                                }}
                                 className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all ${
-                                    form.icon
+                                    isDraggingIcon
+                                        ? 'border-pink-400 bg-pink-500/20 scale-[1.02] shadow-xl shadow-pink-500/20'
+                                        : form.icon
                                         ? 'border-emerald-500/70 bg-emerald-950/20 hover:bg-emerald-950/30'
                                         : 'border-pink-500/40 bg-slate-900/80 hover:border-pink-500 hover:bg-slate-900'
                                 }`}
@@ -398,8 +419,10 @@ export default function GiftsPage() {
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center py-4">
-                                        <FolderUp className="w-10 h-10 text-pink-400 mb-2 animate-bounce" style={{ animationDuration: '3s' }} />
-                                        <p className="text-sm font-extrabold text-slate-100">Click to Select Gift Icon File</p>
+                                        <FolderUp className={`w-10 h-10 mb-2 transition-transform ${isDraggingIcon ? 'scale-125 text-pink-300' : 'text-pink-400 animate-bounce'}`} style={{ animationDuration: '3s' }} />
+                                        <p className="text-sm font-extrabold text-slate-100">
+                                            {isDraggingIcon ? 'Drop Gift Icon File Here!' : 'Drag & Drop or Click to Choose Icon File'}
+                                        </p>
                                         <p className="text-[11px] text-slate-400 mt-1">Upload PNG or JPG image for live call gift button</p>
                                     </div>
                                 )}
@@ -425,10 +448,10 @@ export default function GiftsPage() {
                             </select>
                         </div>
 
-                        {/* 2. Animation File Direct Dropzone */}
+                        {/* 2. Animation File Native Drag & Drop Zone */}
                         <div className="space-y-2">
                             <Label className="font-bold text-slate-200 flex items-center justify-between">
-                                <span>2. Upload Animation Asset File</span>
+                                <span>2. Drag & Drop Animation Asset File</span>
                                 <span className="text-xs font-normal text-slate-400">(.SVGA, .GIF, .WEBP)</span>
                             </Label>
 
@@ -445,8 +468,27 @@ export default function GiftsPage() {
 
                             <div
                                 onClick={() => animationInputRef.current?.click()}
+                                onDragOver={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setIsDraggingAnim(true);
+                                }}
+                                onDragLeave={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setIsDraggingAnim(false);
+                                }}
+                                onDrop={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setIsDraggingAnim(false);
+                                    const file = e.dataTransfer.files?.[0];
+                                    if (file) handleFileUpload(file, 'animationUrl');
+                                }}
                                 className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all ${
-                                    form.animationUrl
+                                    isDraggingAnim
+                                        ? 'border-cyan-300 bg-cyan-500/20 scale-[1.02] shadow-xl shadow-cyan-500/20'
+                                        : form.animationUrl
                                         ? 'border-cyan-500/70 bg-cyan-950/20 hover:bg-cyan-950/30'
                                         : 'border-cyan-500/40 bg-slate-900/80 hover:border-cyan-400 hover:bg-slate-900'
                                 }`}
@@ -470,8 +512,10 @@ export default function GiftsPage() {
                                     </div>
                                 ) : (
                                     <div className="flex flex-col items-center py-4">
-                                        <FileUp className="w-10 h-10 text-cyan-400 mb-2" />
-                                        <p className="text-sm font-extrabold text-slate-100">Click to Select Animation File</p>
+                                        <FileUp className={`w-10 h-10 mb-2 transition-transform ${isDraggingAnim ? 'scale-125 text-cyan-300' : 'text-cyan-400'}`} />
+                                        <p className="text-sm font-extrabold text-slate-100">
+                                            {isDraggingAnim ? 'Drop Animation File Here!' : 'Drag & Drop or Click to Choose Animation File'}
+                                        </p>
                                         <p className="text-[11px] text-slate-400 mt-1">Upload .svga, .gif, or .webp full-screen animation file</p>
                                     </div>
                                 )}
