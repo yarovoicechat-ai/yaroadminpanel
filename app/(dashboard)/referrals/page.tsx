@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
     Share2, Search, Users, Gift, Calendar, RefreshCw, Trophy,
-    Eye, DollarSign, X, CheckCircle, UserCheck, Smartphone
+    Eye, DollarSign, X, CheckCircle, UserCheck, Smartphone, Wrench, ShieldAlert, ShieldCheck
 } from 'lucide-react';
 import { apiClient } from '@/lib/apiClient';
 import { toast } from 'sonner';
@@ -50,6 +50,7 @@ interface ReferralLog {
 
 export default function ReferralAnalyticsPage() {
     const [loading, setLoading] = useState<boolean>(true);
+    const [reconciling, setReconciling] = useState<boolean>(false);
     const [totalReferrals, setTotalReferrals] = useState<number>(0);
     const [totalDiamondsGranted, setTotalDiamondsGranted] = useState<number>(0);
     const [topReferrers, setTopReferrers] = useState<TopReferrer[]>([]);
@@ -75,6 +76,24 @@ export default function ReferralAnalyticsPage() {
             console.error('Failed to load admin referral analytics:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleRunReconciliation = async () => {
+        setReconciling(true);
+        try {
+            const res = await apiClient.post<any>('/api/admin/referrals/reconcile', {});
+            if (res && res.success) {
+                const { recordsScanned, recordsRecovered, duplicateAttemptsBlocked, financialDriftRepaired } = res.data || {};
+                toast.success(`Reconciliation finished! Scanned: ${recordsScanned || 0}, Recovered: ${recordsRecovered || 0}, Repaired Drift: ${financialDriftRepaired || 0}`);
+                fetchReferralData();
+            } else {
+                toast.error(res?.message || 'Reconciliation failed');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Error executing reconciliation');
+        } finally {
+            setReconciling(false);
         }
     };
 
@@ -114,17 +133,6 @@ export default function ReferralAnalyticsPage() {
         );
     });
 
-    const filteredLogs = referralLogs.filter(log => {
-        const term = searchTerm.toLowerCase();
-        return (
-            (log.referralCode || '').toLowerCase().includes(term) ||
-            (log.referrer?.name || '').toLowerCase().includes(term) ||
-            (log.referee?.name || '').toLowerCase().includes(term) ||
-            String(log.referrer?.userId || '').includes(term) ||
-            String(log.referee?.userId || '').includes(term)
-        );
-    });
-
     return (
         <div className="space-y-6 pb-12">
             {/* Header */}
@@ -132,14 +140,22 @@ export default function ReferralAnalyticsPage() {
                 <div>
                     <h1 className="text-2xl font-bold text-white flex items-center gap-2">
                         <Share2 className="w-7 h-7 text-amber-500" />
-                        User Refer & Earn Performance
+                        User Refer & Earn Performance & Risk Audit
                     </h1>
                     <p className="text-sm text-slate-400 mt-1">
-                        Track who referred whom, total successful joined users, and total referral earnings per user.
+                        Track who referred whom, total successful joined users, financial settlement IDs, and risk scores.
                     </p>
                 </div>
 
                 <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleRunReconciliation}
+                        disabled={reconciling}
+                        className="px-3.5 py-2 bg-gradient-to-r from-amber-600 to-rose-600 hover:from-amber-500 hover:to-rose-500 text-white font-bold rounded-lg text-sm flex items-center gap-2 transition disabled:opacity-50"
+                    >
+                        <Wrench className={`w-4 h-4 ${reconciling ? 'animate-spin' : ''}`} />
+                        {reconciling ? 'Reconciling...' : 'Run Crash Recovery'}
+                    </button>
                     <button
                         onClick={fetchReferralData}
                         className="px-3 py-2 bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 rounded-lg text-sm flex items-center gap-2 transition"
@@ -151,7 +167,7 @@ export default function ReferralAnalyticsPage() {
             </div>
 
             {/* KPI Cards Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-5 bg-slate-900/80 rounded-xl border border-slate-800">
                     <div className="text-xs text-slate-400 flex items-center justify-between uppercase font-semibold">
                         Total Successful Referral Joins <Users className="w-5 h-5 text-blue-400" />
@@ -161,9 +177,16 @@ export default function ReferralAnalyticsPage() {
 
                 <div className="p-5 bg-slate-900/80 rounded-xl border border-slate-800">
                     <div className="text-xs text-slate-400 flex items-center justify-between uppercase font-semibold">
-                        Total Referral Earnings Granted <Gift className="w-5 h-5 text-amber-400" />
+                        Total Coins Rewarded <Gift className="w-5 h-5 text-amber-400" />
                     </div>
-                    <div className="text-3xl font-bold text-amber-400 mt-2">{totalDiamondsGranted} 💎 Granted</div>
+                    <div className="text-3xl font-bold text-amber-400 mt-2">{totalDiamondsGranted || (totalReferrals * 25)} Coins</div>
+                </div>
+
+                <div className="p-5 bg-slate-900/80 rounded-xl border border-slate-800">
+                    <div className="text-xs text-slate-400 flex items-center justify-between uppercase font-semibold">
+                        Max Reward Per Referral <Trophy className="w-5 h-5 text-emerald-400" />
+                    </div>
+                    <div className="text-3xl font-bold text-emerald-400 mt-2">50 Coins (2-Step)</div>
                 </div>
             </div>
 
@@ -172,7 +195,7 @@ export default function ReferralAnalyticsPage() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
                         <Trophy className="w-5 h-5 text-amber-400" />
-                        Referrer Performance & Earnings Breakdown (किसने कितना कमाया)
+                        Referrer Performance & 2-Step Coins Breakdown
                     </h3>
                     <div className="relative max-w-sm w-full">
                         <Search className="w-4 h-4 absolute left-3 top-3 text-slate-500" />
@@ -191,9 +214,9 @@ export default function ReferralAnalyticsPage() {
                         <thead className="bg-slate-950 text-xs font-semibold text-slate-400 uppercase border-b border-slate-800">
                             <tr>
                                 <th className="p-3">Referrer User</th>
-                                <th className="p-3">Meethi ID / Code</th>
-                                <th className="p-3 text-center">Joined Users Count (कितने जॉइन हुए)</th>
-                                <th className="p-3 text-right">Referral Earnings (रेफरल अर्निंग)</th>
+                                <th className="p-3">Referral Code</th>
+                                <th className="p-3 text-center">Joined Users</th>
+                                <th className="p-3 text-right">Referral Coins Earned</th>
                                 <th className="p-3 text-right">Action</th>
                             </tr>
                         </thead>
@@ -229,7 +252,6 @@ export default function ReferralAnalyticsPage() {
                                         </td>
                                         <td className="p-3">
                                             <div className="font-mono font-bold text-cyan-400">{user.referralCode || `MC${user.userId}`}</div>
-                                            <div className="text-xs text-slate-400 font-mono">{user.meethiId || '-'}</div>
                                         </td>
                                         <td className="p-3 text-center">
                                             <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-blue-500/10 text-blue-400 border border-blue-500/20">
@@ -239,9 +261,9 @@ export default function ReferralAnalyticsPage() {
                                         </td>
                                         <td className="p-3 text-right">
                                             <div className="font-extrabold text-amber-400 text-base">
-                                                +{user.totalEarnings ?? (user.totalReferrals * 50)} 💎
+                                                +{user.totalEarnings ?? (user.totalReferrals * 25)} Coins
                                             </div>
-                                            <div className="text-[11px] text-slate-400">Total Reward Granted</div>
+                                            <div className="text-[11px] text-slate-400">Step 1 (+25) + Step 2 (+25)</div>
                                         </td>
                                         <td className="p-3 text-right">
                                             <button
@@ -259,10 +281,10 @@ export default function ReferralAnalyticsPage() {
                 </div>
             </div>
 
-            {/* Modal: Joined Users under Selected Referrer */}
+            {/* Modal: Joined Users under Selected Referrer with 2-Step & Audit Details */}
             {selectedReferrer && (
                 <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-slate-700 rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+                    <div className="bg-slate-900 border border-slate-700 rounded-xl max-w-4xl w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
                         {/* Modal Header */}
                         <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-950">
                             <div>
@@ -303,30 +325,68 @@ export default function ReferralAnalyticsPage() {
                                             <thead className="bg-slate-950 text-xs font-semibold text-slate-400 uppercase border-b border-slate-800">
                                                 <tr>
                                                     <th className="p-2.5">Joined Referee User</th>
-                                                    <th className="p-2.5">Meethi ID / Phone</th>
-                                                    <th className="p-2.5">Joined Date</th>
-                                                    <th className="p-2.5 text-right">Referrer Reward</th>
+                                                    <th className="p-2.5">Risk & Review Status</th>
+                                                    <th className="p-2.5">Step 1 (Reg)</th>
+                                                    <th className="p-2.5">Call Progress</th>
+                                                    <th className="p-2.5">Step 2 Status</th>
+                                                    <th className="p-2.5 text-right">Coins Granted</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="divide-y divide-slate-800/60">
-                                                {joinedRefereesList.map((item: any, i: number) => (
-                                                    <tr key={item.referralId || i} className="hover:bg-slate-800/40">
-                                                        <td className="p-2.5">
-                                                            <div className="font-bold text-white text-xs">{item.referee?.name || 'User'}</div>
-                                                            <div className="text-[11px] text-slate-400 font-mono">User ID: #{item.referee?.userId}</div>
-                                                        </td>
-                                                        <td className="p-2.5 font-mono text-xs text-slate-300">
-                                                            <div>{item.referee?.meethiId || '-'}</div>
-                                                            <div className="text-[11px] text-slate-500">{item.referee?.phoneNumber || '-'}</div>
-                                                        </td>
-                                                        <td className="p-2.5 text-xs text-slate-400">
-                                                            {item.joinedAt ? new Date(item.joinedAt).toLocaleString() : '-'}
-                                                        </td>
-                                                        <td className="p-2.5 text-right font-extrabold text-emerald-400 text-xs">
-                                                            +{item.referrerReward || 50} 💎
-                                                        </td>
-                                                    </tr>
-                                                ))}
+                                            <tbody className="divide-y divide-slate-800/60 text-xs">
+                                                {joinedRefereesList.map((item: any, i: number) => {
+                                                    const callSec = item.totalCallSeconds || 0;
+                                                    const callMin = Math.floor(callSec / 60);
+                                                    const callSecRem = callSec % 60;
+                                                    const formattedTime = `${callMin}:${callSecRem < 10 ? '0' : ''}${callSecRem}`;
+                                                    const isStep2Done = Boolean(item.step2Claimed) || item.step2RewardStatus === 'COMPLETED';
+                                                    const riskLevel = item.riskLevel || 'LOW';
+
+                                                    return (
+                                                        <tr key={item.referralId || i} className="hover:bg-slate-800/40">
+                                                            <td className="p-2.5">
+                                                                <div className="font-bold text-white text-xs">{item.referee?.name || 'User'}</div>
+                                                                <div className="text-[11px] text-slate-400 font-mono">ID: #{item.referee?.userId}</div>
+                                                            </td>
+                                                            <td className="p-2.5">
+                                                                {riskLevel === 'HIGH' ? (
+                                                                    <span className="px-2 py-0.5 rounded bg-rose-500/20 text-rose-300 border border-rose-500/30 font-bold text-[10px] flex items-center gap-1 w-fit">
+                                                                        <ShieldAlert className="w-3 h-3 text-rose-400" /> HIGH RISK
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-semibold text-[10px] flex items-center gap-1 w-fit">
+                                                                        <ShieldCheck className="w-3 h-3 text-emerald-400" /> PASSED
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="p-2.5">
+                                                                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-[10px]">
+                                                                    ✅ +25 Coins
+                                                                </span>
+                                                            </td>
+                                                            <td className="p-2.5 font-mono text-slate-200">
+                                                                {formattedTime} / 5:00
+                                                            </td>
+                                                            <td className="p-2.5">
+                                                                {isStep2Done ? (
+                                                                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-bold text-[10px]">
+                                                                        ✅ COMPLETED (+25)
+                                                                    </span>
+                                                                ) : item.step2RewardStatus === 'PROCESSING' ? (
+                                                                    <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] animate-pulse">
+                                                                        ⏳ PROCESSING
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px]">
+                                                                        🔒 PENDING (300s req)
+                                                                    </span>
+                                                                )}
+                                                            </td>
+                                                            <td className="p-2.5 text-right font-extrabold text-amber-400 text-xs">
+                                                                +{isStep2Done ? 50 : 25} Coins
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
                                             </tbody>
                                         </table>
                                     </div>

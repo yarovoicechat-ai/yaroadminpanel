@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -15,7 +15,7 @@ import {
     Dialog, DialogContent, DialogHeader,
     DialogTitle, DialogDescription,
 } from '@/components/ui/Dialog';
-import { Gift, Plus, Trash2, Search, PackageOpen } from 'lucide-react';
+import { Gift, Plus, Trash2, Search, PackageOpen, UploadCloud, Loader2, CheckCircle2, FileUp, Sparkles, FolderUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
@@ -50,6 +50,15 @@ export default function GiftsPage() {
     const [form, setForm] = useState(EMPTY_FORM);
     const [saving, setSaving] = useState(false);
 
+    // Direct Upload File Info States
+    const [uploadingIcon, setUploadingIcon] = useState(false);
+    const [uploadingAnimation, setUploadingAnimation] = useState(false);
+    const [iconFileName, setIconFileName] = useState('');
+    const [animationFileName, setAnimationFileName] = useState('');
+
+    const iconInputRef = useRef<HTMLInputElement>(null);
+    const animationInputRef = useRef<HTMLInputElement>(null);
+
     useEffect(() => { fetchGifts(); }, []);
 
     const fetchGifts = async () => {
@@ -66,9 +75,58 @@ export default function GiftsPage() {
         }
     };
 
+    const handleFileUpload = async (file: File, field: 'icon' | 'animationUrl') => {
+        if (!file) return;
+
+        const isAnimation = field === 'animationUrl';
+        if (isAnimation) {
+            setUploadingAnimation(true);
+            setAnimationFileName(file.name);
+        } else {
+            setUploadingIcon(true);
+            setIconFileName(file.name);
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await apiClient.uploadFile('/api/upload/file', formData);
+            if (res.success && res.data?.url) {
+                const uploadedUrl = res.data.url;
+                setForm(prev => {
+                    const ext = file.name.toLowerCase().split('.').pop();
+                    let autoType = prev.mediaType;
+                    if (isAnimation) {
+                        if (ext === 'svga') autoType = 'svga';
+                        else if (ext === 'gif') autoType = 'gif';
+                        else if (ext === 'webp') autoType = 'webp';
+                        else if (ext === 'svg') autoType = 'svg';
+                    }
+                    return {
+                        ...prev,
+                        [field]: uploadedUrl,
+                        mediaType: isAnimation ? autoType : prev.mediaType,
+                    };
+                });
+                toast.success(`${isAnimation ? 'Animation Asset' : 'Gift Icon'} file uploaded successfully!`);
+            } else {
+                toast.error(res.message || 'File upload failed');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to upload file');
+        } finally {
+            if (isAnimation) {
+                setUploadingAnimation(false);
+            } else {
+                setUploadingIcon(false);
+            }
+        }
+    };
+
     const handleAddGift = async () => {
         if (!form.name || !form.icon || !form.cost) {
-            toast.error('Name, Icon URL and Cost are required');
+            toast.error('Gift Name, Icon File and Cost are required');
             return;
         }
         try {
@@ -78,6 +136,8 @@ export default function GiftsPage() {
                 toast.success('Gift added successfully');
                 setShowAddDialog(false);
                 setForm(EMPTY_FORM);
+                setIconFileName('');
+                setAnimationFileName('');
                 fetchGifts();
             }
         } catch (err: any) {
@@ -125,7 +185,7 @@ export default function GiftsPage() {
                 <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-pink-300 to-purple-400 bg-clip-text text-transparent">
                     Gift Management
                 </h2>
-                <p className="text-slate-400 mt-1">Add, manage and toggle gifts shown in the live call screen.</p>
+                <p className="text-slate-400 mt-1">Upload gift asset files (.png, .svga, .gif), set coin prices and toggle live call gifts.</p>
             </div>
 
             {/* Stats */}
@@ -174,7 +234,7 @@ export default function GiftsPage() {
                                     onChange={e => setSearch(e.target.value)}
                                 />
                             </div>
-                            <Button onClick={() => { setForm(EMPTY_FORM); setShowAddDialog(true); }}
+                            <Button onClick={() => { setForm(EMPTY_FORM); setIconFileName(''); setAnimationFileName(''); setShowAddDialog(true); }}
                                 className="bg-pink-600 hover:bg-pink-500 text-white border-none">
                                 <Plus className="mr-2 h-4 w-4" /> Add Gift
                             </Button>
@@ -192,6 +252,7 @@ export default function GiftsPage() {
                                     <TableHead>Name</TableHead>
                                     <TableHead>Category</TableHead>
                                     <TableHead>Cost (Coins)</TableHead>
+                                    <TableHead>Format</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Active</TableHead>
                                     <TableHead className="text-right">Actions</TableHead>
@@ -224,6 +285,11 @@ export default function GiftsPage() {
                                             <span className="font-bold text-yellow-400">🪙 {gift.cost}</span>
                                         </TableCell>
                                         <TableCell>
+                                            <Badge variant="outline" className="text-cyan-400 border-cyan-500/30 uppercase text-[10px]">
+                                                {gift.mediaType || 'image'}
+                                            </Badge>
+                                        </TableCell>
+                                        <TableCell>
                                             <Badge variant={gift.isActive ? 'success' : 'destructive'}>
                                                 {gift.isActive ? 'Active' : 'Inactive'}
                                             </Badge>
@@ -248,7 +314,7 @@ export default function GiftsPage() {
                                 ))}
                                 {filtered.length === 0 && (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-10 text-slate-500">
+                                        <TableCell colSpan={8} className="text-center py-10 text-slate-500">
                                             <Gift className="h-10 w-10 mx-auto mb-3 opacity-30" />
                                             No gifts found. Add your first gift!
                                         </TableCell>
@@ -260,84 +326,185 @@ export default function GiftsPage() {
                 </CardContent>
             </Card>
 
-            {/* Add Gift Dialog */}
+            {/* Add Gift Dialog — 100% Direct File Upload UI */}
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-                <DialogContent className="max-w-md">
+                <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
-                        <DialogTitle>Add New Gift</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2 text-xl font-extrabold text-pink-400">
+                            <Sparkles className="w-5 h-5 text-amber-400" />
+                            Add New Gift (Upload Asset Files)
+                        </DialogTitle>
                         <DialogDescription>
-                            Add a gift that users can send during live calls.
+                            Upload gift icon image (.png, .jpg) & full-screen SVGA/GIF animation files directly.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="space-y-4 py-2">
+
+                    <div className="space-y-5 py-2">
+                        {/* Gift Name */}
                         <div className="space-y-1.5">
-                            <Label>Gift Name</Label>
-                            <Input placeholder="e.g. Rose, Diamond Ring..."
+                            <Label className="font-bold text-slate-200">Gift Name</Label>
+                            <Input placeholder="e.g. Rose, Crown, Sports Car, Magic Wand..."
                                 value={form.name}
-                                onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
+                                onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                                className="bg-slate-900 border-slate-700"
+                            />
                         </div>
-                        <div className="space-y-1.5">
-                            <Label>Icon URL <span className="text-slate-500 text-xs">(image or SVG URL)</span></Label>
-                            <Input placeholder="https://..."
-                                value={form.icon}
-                                onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} />
-                            {form.icon && (
-                                <div className="mt-2 p-3 bg-slate-800 rounded-lg border border-slate-700 flex items-center gap-3">
-                                    <img src={form.icon} alt="preview" className="w-12 h-12 object-contain"
-                                        onError={e => { (e.target as HTMLImageElement).src = ''; }} />
-                                    <span className="text-xs text-slate-400">Preview</span>
-                                </div>
-                            )}
+
+                        {/* 1. Gift Icon Direct File Dropzone */}
+                        <div className="space-y-2">
+                            <Label className="font-bold text-slate-200 flex items-center justify-between">
+                                <span>1. Upload Gift Icon File <span className="text-rose-400">*</span></span>
+                                <span className="text-xs font-normal text-slate-400">(.PNG, .JPG, .SVG)</span>
+                            </Label>
+
+                            <input
+                                type="file"
+                                ref={iconInputRef}
+                                accept="image/*,.svg,.svga"
+                                className="hidden"
+                                onChange={e => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleFileUpload(file, 'icon');
+                                }}
+                            />
+
+                            <div
+                                onClick={() => iconInputRef.current?.click()}
+                                className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all ${
+                                    form.icon
+                                        ? 'border-emerald-500/70 bg-emerald-950/20 hover:bg-emerald-950/30'
+                                        : 'border-pink-500/40 bg-slate-900/80 hover:border-pink-500 hover:bg-slate-900'
+                                }`}
+                            >
+                                {uploadingIcon ? (
+                                    <div className="flex flex-col items-center py-2">
+                                        <Loader2 className="w-8 h-8 text-pink-400 animate-spin mb-2" />
+                                        <p className="text-xs font-bold text-slate-300">Uploading Gift Icon File...</p>
+                                    </div>
+                                ) : form.icon ? (
+                                    <div className="flex items-center justify-between gap-3 text-left">
+                                        <div className="flex items-center gap-3 min-w-0">
+                                            <div className="w-12 h-12 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden shrink-0">
+                                                <img src={form.icon} alt="preview" className="w-10 h-10 object-contain" />
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-xs font-bold text-emerald-400 flex items-center gap-1">
+                                                    <CheckCircle2 className="w-4 h-4 shrink-0" /> Gift Icon Ready!
+                                                </p>
+                                                <p className="text-[11px] text-slate-300 font-semibold truncate mt-0.5">{iconFileName || 'Icon File Uploaded'}</p>
+                                            </div>
+                                        </div>
+                                        <Button size="sm" variant="outline" className="text-xs border-slate-700 shrink-0">Choose Other</Button>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center py-4">
+                                        <FolderUp className="w-10 h-10 text-pink-400 mb-2 animate-bounce" style={{ animationDuration: '3s' }} />
+                                        <p className="text-sm font-extrabold text-slate-100">Click to Select Gift Icon File</p>
+                                        <p className="text-[11px] text-slate-400 mt-1">Upload PNG or JPG image for live call gift button</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
+
+                        {/* Gift Media Format */}
                         <div className="space-y-1.5">
-                            <Label>Gift Media Type</Label>
+                            <Label className="font-bold text-slate-200">Gift Animation Format</Label>
                             <select
                                 value={form.mediaType}
                                 onChange={e => setForm(f => ({
                                     ...f,
                                     mediaType: e.target.value as GiftItem['mediaType'],
                                 }))}
-                                className="flex h-10 w-full rounded-md border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100"
+                                className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-100 focus:border-pink-500"
                             >
-                                <option value="image">Static Image</option>
-                                <option value="gif">Animated GIF</option>
-                                <option value="webp">Animated WebP</option>
-                                <option value="svg">SVG</option>
-                                <option value="svga">SVGA Animation</option>
+                                <option value="image">Static Image (.png, .jpg)</option>
+                                <option value="svga">SVGA Animation (.svga)</option>
+                                <option value="gif">Animated GIF (.gif)</option>
+                                <option value="webp">Animated WebP (.webp)</option>
+                                <option value="svg">SVG Vector (.svg)</option>
                             </select>
                         </div>
-                        <div className="space-y-1.5">
-                            <Label>
-                                Animation URL <span className="text-slate-500 text-xs">(GIF, WebP or .svga)</span>
+
+                        {/* 2. Animation File Direct Dropzone */}
+                        <div className="space-y-2">
+                            <Label className="font-bold text-slate-200 flex items-center justify-between">
+                                <span>2. Upload Animation Asset File</span>
+                                <span className="text-xs font-normal text-slate-400">(.SVGA, .GIF, .WEBP)</span>
                             </Label>
-                            <Input
-                                placeholder="https://.../gift.svga"
-                                value={form.animationUrl}
-                                onChange={e => setForm(f => ({ ...f, animationUrl: e.target.value }))}
+
+                            <input
+                                type="file"
+                                ref={animationInputRef}
+                                accept=".svga,.gif,.webp,image/*"
+                                className="hidden"
+                                onChange={e => {
+                                    const file = e.target.files?.[0];
+                                    if (file) handleFileUpload(file, 'animationUrl');
+                                }}
                             />
-                            <p className="text-xs text-slate-500">
-                                Optional for images. For animated gifts, this media plays full-screen during the call.
-                            </p>
+
+                            <div
+                                onClick={() => animationInputRef.current?.click()}
+                                className={`border-2 border-dashed rounded-2xl p-5 text-center cursor-pointer transition-all ${
+                                    form.animationUrl
+                                        ? 'border-cyan-500/70 bg-cyan-950/20 hover:bg-cyan-950/30'
+                                        : 'border-cyan-500/40 bg-slate-900/80 hover:border-cyan-400 hover:bg-slate-900'
+                                }`}
+                            >
+                                {uploadingAnimation ? (
+                                    <div className="flex flex-col items-center py-2">
+                                        <Loader2 className="w-8 h-8 text-cyan-400 animate-spin mb-2" />
+                                        <p className="text-xs font-bold text-slate-300">Uploading Animation File (.svga/.gif)...</p>
+                                    </div>
+                                ) : form.animationUrl ? (
+                                    <div className="flex items-center justify-between gap-3 text-left">
+                                        <div>
+                                            <p className="text-xs font-bold text-cyan-400 flex items-center gap-1">
+                                                <CheckCircle2 className="w-4 h-4" /> Animation Asset Ready!
+                                            </p>
+                                            <p className="text-[11px] text-slate-300 font-semibold truncate mt-0.5">{animationFileName || 'Animation File Uploaded'}</p>
+                                        </div>
+                                        <Badge variant="outline" className="text-cyan-400 border-cyan-500/40 uppercase text-[10px]">
+                                            {form.mediaType}
+                                        </Badge>
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-center py-4">
+                                        <FileUp className="w-10 h-10 text-cyan-400 mb-2" />
+                                        <p className="text-sm font-extrabold text-slate-100">Click to Select Animation File</p>
+                                        <p className="text-[11px] text-slate-400 mt-1">Upload .svga, .gif, or .webp full-screen animation file</p>
+                                    </div>
+                                )}
+                            </div>
                         </div>
-                        <div className="space-y-1.5">
-                            <Label>Cost (in Coins)</Label>
-                            <Input type="number" min={1} placeholder="e.g. 50"
-                                value={form.cost || ''}
-                                onChange={e => setForm(f => ({ ...f, cost: parseInt(e.target.value) || 0 }))} />
+
+                        {/* Price & Category Grid */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1.5">
+                                <Label className="font-bold text-slate-200">Gift Price (Coins)</Label>
+                                <Input type="number" min={1} placeholder="e.g. 50"
+                                    value={form.cost || ''}
+                                    onChange={e => setForm(f => ({ ...f, cost: parseInt(e.target.value) || 0 }))}
+                                    className="bg-slate-900 border-slate-700"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="font-bold text-slate-200">Category</Label>
+                                <Input placeholder="Standard, Luxury, Special..."
+                                    value={form.category}
+                                    onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                                    className="bg-slate-900 border-slate-700"
+                                />
+                            </div>
                         </div>
-                        <div className="space-y-1.5">
-                            <Label>Category</Label>
-                            <Input placeholder="Standard, Premium, Special..."
-                                value={form.category}
-                                onChange={e => setForm(f => ({ ...f, category: e.target.value }))} />
-                        </div>
-                        <div className="flex gap-3 pt-2">
-                            <Button variant="outline" className="flex-1" onClick={() => setShowAddDialog(false)}>
+
+                        <div className="flex gap-3 pt-3 border-t border-slate-800">
+                            <Button variant="outline" className="flex-1 border-slate-700" onClick={() => setShowAddDialog(false)}>
                                 Cancel
                             </Button>
-                            <Button className="flex-1 bg-pink-600 hover:bg-pink-500 text-white border-none"
-                                onClick={handleAddGift} disabled={saving}>
-                                {saving ? 'Adding...' : 'Add Gift'}
+                            <Button className="flex-1 bg-pink-600 hover:bg-pink-500 text-white border-none font-bold shadow-lg shadow-pink-600/20"
+                                onClick={handleAddGift} disabled={saving || uploadingIcon || uploadingAnimation}>
+                                {saving ? 'Adding Gift...' : 'Add Gift'}
                             </Button>
                         </div>
                     </div>
