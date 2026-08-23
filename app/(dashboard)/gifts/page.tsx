@@ -206,10 +206,168 @@ export default function GiftsPage() {
         }
     };
 
-    const filtered = gifts.filter(g =>
-        g.name.toLowerCase().includes(search.toLowerCase()) ||
-        g.category?.toLowerCase().includes(search.toLowerCase())
+    const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('All');
+    const [isCreatingNewCategory, setIsCreatingNewCategory] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState('');
+
+    const existingCategories = Array.from(
+        new Set(['Popular', 'Luxury', 'Romantic', 'Special', ...gifts.map(g => g.category).filter(Boolean)])
     );
+
+    const openCreateModal = () => {
+        setEditingGift(null);
+        setForm(EMPTY_FORM);
+        setIsCreatingNewCategory(false);
+        setNewCategoryName('');
+        setIconFileName('');
+        setAnimationFileName('');
+        setShowAddDialog(true);
+    };
+
+    const openEditModal = (gift: GiftItem) => {
+        setEditingGift(gift);
+        setForm({
+            name: gift.name || '',
+            icon: gift.icon || '',
+            animationUrl: gift.animationUrl || '',
+            mediaType: gift.mediaType || 'image',
+            cost: gift.cost || 0,
+            category: gift.category || 'Popular',
+        });
+        setIsCreatingNewCategory(false);
+        setNewCategoryName('');
+        setIconFileName(gift.icon ? 'Current Gift Icon' : '');
+        setAnimationFileName(gift.animationUrl ? 'Current Animation Asset' : '');
+        setShowAddDialog(true);
+    };
+
+    const handleFileUpload = async (file: File, field: 'icon' | 'animationUrl') => {
+        if (!file) return;
+
+        const isAnimation = field === 'animationUrl';
+        if (isAnimation) {
+            setUploadingAnimation(true);
+            setAnimationFileName(file.name);
+        } else {
+            setUploadingIcon(true);
+            setIconFileName(file.name);
+        }
+
+        try {
+            const formData = new FormData();
+            formData.append('file', file);
+
+            const res = await apiClient.uploadFile('/api/upload/file', formData);
+            if (res.success && res.data?.url) {
+                const uploadedUrl = res.data.url;
+                setForm(prev => {
+                    const ext = file.name.toLowerCase().split('.').pop();
+                    let autoType = prev.mediaType;
+                    if (isAnimation) {
+                        if (ext === 'svga') autoType = 'svga';
+                        else if (ext === 'gif') autoType = 'gif';
+                        else if (ext === 'webp') autoType = 'webp';
+                        else if (ext === 'svg') autoType = 'svg';
+                    }
+                    return {
+                        ...prev,
+                        [field]: uploadedUrl,
+                        mediaType: isAnimation ? autoType : prev.mediaType,
+                    };
+                });
+                toast.success(`${isAnimation ? 'Animation Asset' : 'Gift Icon'} file uploaded successfully!`);
+            } else {
+                toast.error(res.message || 'File upload failed');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to upload file');
+        } finally {
+            if (isAnimation) {
+                setUploadingAnimation(false);
+            } else {
+                setUploadingIcon(false);
+            }
+        }
+    };
+
+    const handleSaveGift = async () => {
+        const targetCategory = isCreatingNewCategory ? newCategoryName.trim() : form.category;
+
+        if (!form.name || !form.icon || !form.cost) {
+            toast.error('Gift Name, Icon File and Cost are required');
+            return;
+        }
+
+        if (!targetCategory) {
+            toast.error('Please select or type a Category name');
+            return;
+        }
+
+        const payload = {
+            ...form,
+            category: targetCategory,
+        };
+
+        try {
+            setSaving(true);
+            let res;
+            if (editingGift) {
+                // Update Existing Gift
+                res = await apiClient.put((API_ENDPOINTS.GIFTS as any).UPDATE(editingGift._id), payload);
+            } else {
+                // Create New Gift
+                res = await apiClient.post(API_ENDPOINTS.GIFTS.CREATE, payload);
+            }
+
+            if (res.success) {
+                toast.success(editingGift ? 'Gift updated successfully' : `Gift added under category "${targetCategory}"!`);
+                setShowAddDialog(false);
+                setForm(EMPTY_FORM);
+                setEditingGift(null);
+                setIsCreatingNewCategory(false);
+                setNewCategoryName('');
+                setIconFileName('');
+                setAnimationFileName('');
+                fetchGifts();
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to save gift');
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleToggle = async (gift: GiftItem) => {
+        try {
+            await apiClient.patch(API_ENDPOINTS.GIFTS.TOGGLE(gift._id), {
+                isActive: !gift.isActive,
+            });
+            toast.success(`Gift ${!gift.isActive ? 'enabled' : 'disabled'}`);
+            fetchGifts();
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to update gift');
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
+        try {
+            await apiClient.delete(API_ENDPOINTS.GIFTS.DELETE(deleteTarget._id));
+            toast.success('Gift deleted');
+            setDeleteTarget(null);
+            fetchGifts();
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to delete gift');
+        }
+    };
+
+    const filtered = gifts.filter(g => {
+        const matchesSearch = g.name.toLowerCase().includes(search.toLowerCase()) ||
+            g.category?.toLowerCase().includes(search.toLowerCase());
+        const matchesCategory = selectedCategoryFilter === 'All' ||
+            (g.category || 'Popular').toLowerCase() === selectedCategoryFilter.toLowerCase();
+        return matchesSearch && matchesCategory;
+    });
 
     const activeCount = gifts.filter(g => g.isActive).length;
 
@@ -218,13 +376,13 @@ export default function GiftsPage() {
             {/* Header */}
             <div>
                 <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-pink-300 to-purple-400 bg-clip-text text-transparent">
-                    Gift Management
+                    Gift & Category Management
                 </h2>
-                <p className="text-slate-400 mt-1">Add, edit gift details, Drag & Drop gift assets (.png, .svga, .gif), set coin prices and toggle live call gifts.</p>
+                <p className="text-slate-400 mt-1">Add new gift categories, upload SVGA/GIF assets, set coin prices and publish gifts directly to live Play Store app builds.</p>
             </div>
 
             {/* Stats */}
-            <div className="grid gap-4 md:grid-cols-3">
+            <div className="grid gap-4 md:grid-cols-4">
                 <Card glass className="bg-slate-900/40">
                     <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                         <CardTitle className="text-sm font-medium text-slate-400">Total Gifts</CardTitle>
@@ -252,13 +410,40 @@ export default function GiftsPage() {
                         <div className="text-2xl font-bold text-slate-400">{gifts.length - activeCount}</div>
                     </CardContent>
                 </Card>
+                <Card glass className="bg-slate-900/40">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                        <CardTitle className="text-sm font-medium text-slate-400">Total Categories</CardTitle>
+                        <Sparkles className="h-4 w-4 text-cyan-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold text-cyan-400">{existingCategories.length}</div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Category Filter Bar */}
+            <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+                <span className="text-xs font-bold text-slate-400 mr-1 uppercase tracking-wider shrink-0">Category Filter:</span>
+                {['All', ...existingCategories].map(cat => (
+                    <button
+                        key={cat}
+                        onClick={() => setSelectedCategoryFilter(cat)}
+                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all shrink-0 border ${
+                            selectedCategoryFilter.toLowerCase() === cat.toLowerCase()
+                                ? 'bg-pink-600 border-pink-500 text-white shadow-lg shadow-pink-600/30'
+                                : 'bg-slate-900/70 border-slate-800 text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                        }`}
+                    >
+                        {cat}
+                    </button>
+                ))}
             </div>
 
             {/* Table */}
             <Card glass>
                 <CardHeader>
                     <div className="flex items-center justify-between">
-                        <CardTitle>All Gifts</CardTitle>
+                        <CardTitle>All Gifts ({filtered.length})</CardTitle>
                         <div className="flex items-center gap-3">
                             <div className="relative w-56">
                                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-slate-500" />
@@ -270,8 +455,8 @@ export default function GiftsPage() {
                                 />
                             </div>
                             <Button onClick={openCreateModal}
-                                className="bg-pink-600 hover:bg-pink-500 text-white border-none font-bold">
-                                <Plus className="mr-2 h-4 w-4" /> Add Gift
+                                className="bg-pink-600 hover:bg-pink-500 text-white border-none font-bold shadow-lg shadow-pink-600/20">
+                                <Plus className="mr-2 h-4 w-4" /> Add Gift / Category
                             </Button>
                         </div>
                     </div>
@@ -312,8 +497,8 @@ export default function GiftsPage() {
                                         </TableCell>
                                         <TableCell className="font-semibold text-slate-100">{gift.name}</TableCell>
                                         <TableCell>
-                                            <Badge variant="secondary" className="bg-slate-700/50 text-slate-300">
-                                                {gift.category || 'Standard'}
+                                            <Badge variant="secondary" className="bg-pink-950/40 text-pink-300 border border-pink-800/40 font-semibold">
+                                                {gift.category || 'Popular'}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
@@ -363,7 +548,7 @@ export default function GiftsPage() {
                                     <TableRow>
                                         <TableCell colSpan={8} className="text-center py-10 text-slate-500">
                                             <Gift className="h-10 w-10 mx-auto mb-3 opacity-30" />
-                                            No gifts found. Add your first gift!
+                                            No gifts found in this category. Add your first gift!
                                         </TableCell>
                                     </TableRow>
                                 )}
@@ -373,16 +558,16 @@ export default function GiftsPage() {
                 </CardContent>
             </Card>
 
-            {/* Create/Edit Gift Dialog */}
+            {/* Create/Edit Gift & Category Dialog */}
             <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                 <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-xl font-extrabold text-pink-400">
                             <Sparkles className="w-5 h-5 text-amber-400" />
-                            {editingGift ? `Edit Gift (${editingGift.name})` : 'Add New Gift'}
+                            {editingGift ? `Edit Gift (${editingGift.name})` : 'Add New Gift & Category'}
                         </DialogTitle>
                         <DialogDescription>
-                            {editingGift ? 'Update gift name, price (coins), icon image or animation asset file.' : 'Drag & drop gift icon image (.png, .jpg) & full-screen SVGA/GIF animation files directly.'}
+                            Create custom gift categories or pick an existing category, set coin prices, and drag/drop gift icon and animation files.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -395,6 +580,79 @@ export default function GiftsPage() {
                                 onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
                                 className="bg-slate-900 border-slate-700"
                             />
+                        </div>
+
+                        {/* Category Selector & Custom Category Creation */}
+                        <div className="space-y-2.5 bg-slate-900/60 p-4 rounded-2xl border border-slate-800">
+                            <div className="flex items-center justify-between">
+                                <Label className="font-bold text-slate-200 flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-pink-400" />
+                                    Gift Category
+                                </Label>
+                                <button
+                                    type="button"
+                                    onClick={() => setIsCreatingNewCategory(!isCreatingNewCategory)}
+                                    className="text-xs font-bold text-pink-400 hover:text-pink-300 underline flex items-center gap-1"
+                                >
+                                    {isCreatingNewCategory ? '← Pick Existing Category' : '+ Add New Category'}
+                                </button>
+                            </div>
+
+                            {isCreatingNewCategory ? (
+                                <div className="space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+                                    <Input
+                                        placeholder="Type NEW Category Name (e.g. Super Cars, 3D Anime, Bollywood, Royal)..."
+                                        value={newCategoryName}
+                                        onChange={e => setNewCategoryName(e.target.value)}
+                                        className="bg-slate-950 border-pink-500/70 text-pink-200 placeholder:text-pink-400/50 font-bold focus:border-pink-400"
+                                        autoFocus
+                                    />
+                                    <p className="text-[11px] text-pink-400/80 font-medium">
+                                        ✨ Entering a new category name will automatically create a new Category Tab in the Mobile App gift picker!
+                                    </p>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    <select
+                                        value={form.category}
+                                        onChange={e => {
+                                            if (e.target.value === '__NEW__') {
+                                                setIsCreatingNewCategory(true);
+                                            } else {
+                                                setForm(f => ({ ...f, category: e.target.value }));
+                                            }
+                                        }}
+                                        className="flex h-10 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-slate-100 font-medium focus:border-pink-500"
+                                    >
+                                        {existingCategories.map(cat => (
+                                            <option key={cat} value={cat}>
+                                                {cat} Category
+                                            </option>
+                                        ))}
+                                        <option value="__NEW__" className="text-pink-400 font-bold">
+                                            + Add New Custom Category...
+                                        </option>
+                                    </select>
+
+                                    {/* Quick Pills */}
+                                    <div className="flex flex-wrap gap-1.5 pt-1">
+                                        {existingCategories.map(cat => (
+                                            <button
+                                                key={cat}
+                                                type="button"
+                                                onClick={() => setForm(f => ({ ...f, category: cat }))}
+                                                className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all ${
+                                                    form.category === cat
+                                                        ? 'bg-pink-600 text-white shadow'
+                                                        : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                                                }`}
+                                            >
+                                                {cat}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* 1. Gift Icon Native Drag & Drop Zone */}
@@ -570,24 +828,14 @@ export default function GiftsPage() {
                             </div>
                         </div>
 
-                        {/* Price & Category Grid */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label className="font-bold text-slate-200">Gift Price (Coins)</Label>
-                                <Input type="number" min={1} placeholder="e.g. 50"
-                                    value={form.cost || ''}
-                                    onChange={e => setForm(f => ({ ...f, cost: parseInt(e.target.value) || 0 }))}
-                                    className="bg-slate-900 border-slate-700"
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label className="font-bold text-slate-200">Category</Label>
-                                <Input placeholder="Standard, Luxury, Special..."
-                                    value={form.category}
-                                    onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
-                                    className="bg-slate-900 border-slate-700"
-                                />
-                            </div>
+                        {/* Price Input */}
+                        <div className="space-y-1.5">
+                            <Label className="font-bold text-slate-200">Gift Price (Coins)</Label>
+                            <Input type="number" min={1} placeholder="e.g. 50"
+                                value={form.cost || ''}
+                                onChange={e => setForm(f => ({ ...f, cost: parseInt(e.target.value) || 0 }))}
+                                className="bg-slate-900 border-slate-700"
+                            />
                         </div>
 
                         <div className="flex gap-3 pt-3 border-t border-slate-800">
@@ -596,7 +844,7 @@ export default function GiftsPage() {
                             </Button>
                             <Button className="flex-1 bg-pink-600 hover:bg-pink-500 text-white border-none font-bold shadow-lg shadow-pink-600/20"
                                 onClick={handleSaveGift} disabled={saving || uploadingIcon || uploadingAnimation}>
-                                {saving ? (editingGift ? 'Saving Gift...' : 'Adding Gift...') : (editingGift ? 'Update Gift' : 'Add Gift')}
+                                {saving ? (editingGift ? 'Saving Gift...' : 'Adding Gift...') : (editingGift ? 'Update Gift' : 'Add Gift & Category')}
                             </Button>
                         </div>
                     </div>
