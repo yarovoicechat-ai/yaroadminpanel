@@ -36,6 +36,10 @@ interface UserBrief {
   image?: string;
   role?: string;
   isBlocked?: boolean;
+  chatMuteUntil?: string;
+  chatMuteReason?: string;
+  accountReviewRequired?: boolean;
+  lastEscalationAction?: string;
 }
 
 interface ChatViolationItem {
@@ -115,6 +119,54 @@ export default function ChatViolationsPage() {
   useEffect(() => {
     fetchViolations();
   }, [fetchViolations]);
+
+  useEffect(() => {
+    const handleNewViolationEvent = (e: any) => {
+      console.log('⚡ Real-time violation event received on violations page:', e.detail);
+      fetchViolations();
+    };
+
+    if (typeof window !== 'undefined') {
+      window.addEventListener('moderationViolation:new', handleNewViolationEvent);
+      window.addEventListener('moderationEscalation:new', handleNewViolationEvent);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('moderationViolation:new', handleNewViolationEvent);
+        window.removeEventListener('moderationEscalation:new', handleNewViolationEvent);
+      }
+    };
+  }, [fetchViolations]);
+
+  const handleUnmuteUser = async (userId: string) => {
+    setActionLoading(true);
+    try {
+      const res = await apiClient.post<any>(`/api/moderation/users/${userId}/unmute`, {});
+      if (res.success) {
+        toast.success("User chat unmuted successfully!");
+        fetchViolations();
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to unmute user");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDismissReview = async (userId: string) => {
+    setActionLoading(true);
+    try {
+      const res = await apiClient.patch<any>(`/api/moderation/users/${userId}/review-status`, {});
+      if (res.success) {
+        toast.success("Account review status cleared!");
+        fetchViolations();
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to clear review status");
+    } finally {
+      setActionLoading(false);
+    }
+  };
 
   const handleDismiss = async () => {
     if (!selectedViolation) return;
@@ -376,8 +428,23 @@ export default function ChatViolationsPage() {
                                 BLOCKED
                               </span>
                             )}
+                            {item.sender?.chatMuteUntil && new Date(item.sender.chatMuteUntil).getTime() > Date.now() && (
+                              <span className="bg-amber-500/20 text-amber-400 text-[10px] px-1.5 py-0.5 rounded border border-amber-500/30">
+                                MUTED
+                              </span>
+                            )}
+                            {item.sender?.accountReviewRequired && (
+                              <span className="bg-purple-500/20 text-purple-400 text-[10px] px-1.5 py-0.5 rounded border border-purple-500/30">
+                                REVIEW REQ
+                              </span>
+                            )}
                           </p>
                           <p className="text-[11px] text-slate-400">ID: {item.sender?.userId || 'N/A'}</p>
+                          {item.sender?.chatMuteUntil && new Date(item.sender.chatMuteUntil).getTime() > Date.now() && (
+                            <p className="text-[10px] text-amber-400 font-semibold mt-0.5">
+                              Chat restricted until: {new Date(item.sender.chatMuteUntil).toLocaleString()}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -590,7 +657,40 @@ export default function ChatViolationsPage() {
                 </div>
               </div>
 
-              <div className="border-t border-slate-800 pt-3 flex justify-end gap-2">
+              <div className="border-t border-slate-800 pt-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {selectedViolation.sender?.chatMuteUntil &&
+                    new Date(selectedViolation.sender.chatMuteUntil).getTime() > Date.now() && (
+                      <Button
+                        size="sm"
+                        disabled={actionLoading}
+                        onClick={() => {
+                          if (selectedViolation.sender?._id) {
+                            handleUnmuteUser(selectedViolation.sender._id);
+                            setDetailsModalOpen(false);
+                          }
+                        }}
+                        className="bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 text-xs"
+                      >
+                        Unmute User
+                      </Button>
+                    )}
+                  {selectedViolation.sender?.accountReviewRequired && (
+                    <Button
+                      size="sm"
+                      disabled={actionLoading}
+                      onClick={() => {
+                        if (selectedViolation.sender?._id) {
+                          handleDismissReview(selectedViolation.sender._id);
+                          setDetailsModalOpen(false);
+                        }
+                      }}
+                      className="bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/40 text-xs"
+                    >
+                      Clear Review Status
+                    </Button>
+                  )}
+                </div>
                 <Button
                   onClick={() => setDetailsModalOpen(false)}
                   variant="outline"

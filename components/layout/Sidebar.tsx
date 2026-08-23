@@ -15,6 +15,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
+import { useModerationSocket } from '@/components/providers/ModerationSocketProvider';
 import { apiClient } from '@/lib/apiClient';
 import { isRouteAllowed } from '@/config/rbacMatrix';
 
@@ -352,6 +353,7 @@ const adminSidebarSections: SidebarSection[] = [
 
 export default function Sidebar() {
     const { user, logout } = useAuth();
+    const { unreadViolationCount } = useModerationSocket();
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(true);
     const [isMobile, setIsMobile] = useState(false);
@@ -612,7 +614,12 @@ export default function Sidebar() {
                                             )}
                                         >
                                             <item.icon size={18} className={cn(isActive ? "text-primary" : "text-slate-500 group-hover:text-slate-400")} />
-                                            <span>{item.name}</span>
+                                            <span className="flex-1">{item.name}</span>
+                                            {item.href === '/moderation/violations' && unreadViolationCount > 0 && (
+                                                <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-bold text-white shadow-sm">
+                                                    {unreadViolationCount}
+                                                </span>
+                                            )}
                                         </Link>
                                     );
                                 })}
