@@ -567,7 +567,7 @@ export default function UsersPage() {
                                             )}
                                             {showCol('Username') && (
                                                 <TableCell className="text-fuchsia-400 font-bold text-xs">
-                                                    {user.userName || '-'}
+                                                    {user.userName || (user as any).meethiId || (user as any).mithiId || '-'}
                                                 </TableCell>
                                             )}
                                             {showCol('UniqueId') && (
