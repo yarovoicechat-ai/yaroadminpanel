@@ -34,7 +34,7 @@ export function MeethiChatStyleDashboard() {
     fetchData();
   }, []);
 
-  const userName = dbProfile?.name || user?.name || 'Shivansh Bajpeyi';
+  const userName = dbProfile?.name || user?.name || 'User Profile';
   const roleDisplay = (user?.role as string) === 'agency' 
     ? 'Agency Head' 
     : ((user?.role as string) === 'superAdmin' || (user?.role as string) === 'super-admin') 
@@ -47,24 +47,24 @@ export function MeethiChatStyleDashboard() {
             ? 'Merchant Lead' 
             : 'Team Head';
 
-  const userCode = dbProfile?.employeeCode || dbProfile?.referralCode || (user as any)?.employeeCode || (user as any)?.referralCode || (user as any)?.specialCode || (user as any)?.mithiId || '1068';
+  const userCode = dbProfile?.employeeCode || dbProfile?.referralCode || (user as any)?.employeeCode || (user as any)?.referralCode || (user as any)?.specialCode || (user as any)?.mithiId || 'N/A';
   const rawPhone = dbProfile?.phone || dbProfile?.phoneNumber || dbProfile?.whatsappNumber || (user as any)?.phone || (user as any)?.phoneNumber || (user as any)?.whatsappNumber || (user as any)?.whatsapp || '';
   const whatsappNumber = rawPhone || 'Not Provided';
-  const userEmail = dbProfile?.email || user?.email || 'shivansh55523@gmail.com';
+  const userEmail = dbProfile?.email || user?.email || 'N/A';
 
-  // Stats calculation with real API fallbacks
-  const todayNewUsers = stats?.analytics?.todayNewUsers || stats?.users?.todayNew || 128;
-  const userReferrals = stats?.referrals?.totalReferrals || stats?.stats?.userReferrals || 452;
-  const activeReferrers = stats?.referrals?.activeReferrers || 86;
-  const referralEarnings = stats?.referrals?.totalCoinsGranted || 12500;
+  // Real Database Stats (Pure Real Data)
+  const todayNewUsers = stats?.analytics?.todayNewUsers ?? stats?.users?.todayNew ?? 0;
+  const userReferrals = stats?.referrals?.totalReferrals ?? stats?.stats?.userReferrals ?? 0;
+  const activeReferrers = stats?.referrals?.activeReferrers ?? 0;
+  const referralEarnings = stats?.referrals?.totalCoinsGranted ?? 0;
 
-  const totalDiamonds = stats?.stats?.totalDiamonds || stats?.referrals?.totalDiamondsGranted || 573;
-  const weeklyDiamonds = stats?.stats?.weeklyDiamonds || stats?.analytics?.weeklyEarnings || 243;
-  const prevWeekDiamonds = stats?.stats?.prevWeekDiamonds || 0;
-  const monthlyDiamonds = stats?.stats?.monthlyDiamonds || stats?.analytics?.monthlyEarnings || 243;
-  const prevMonthDiamonds = stats?.stats?.prevMonthDiamonds || 330;
-  const totalNewHosts = stats?.stats?.totalNewHosts || stats?.hostsCount?.newHosts || 10;
-  const totalHosts = stats?.stats?.totalHosts || stats?.hostsCount?.total || 20;
+  const totalDiamonds = stats?.stats?.totalDiamonds ?? stats?.referrals?.totalDiamondsGranted ?? 0;
+  const weeklyDiamonds = stats?.stats?.weeklyDiamonds ?? stats?.analytics?.weeklyEarnings ?? 0;
+  const prevWeekDiamonds = stats?.stats?.prevWeekDiamonds ?? 0;
+  const monthlyDiamonds = stats?.stats?.monthlyDiamonds ?? stats?.analytics?.monthlyEarnings ?? 0;
+  const prevMonthDiamonds = stats?.stats?.prevMonthDiamonds ?? 0;
+  const totalNewHosts = stats?.stats?.totalNewHosts ?? stats?.hostsCount?.newHosts ?? 0;
+  const totalHosts = stats?.stats?.totalHosts ?? stats?.hostsCount?.total ?? 0;
 
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 space-y-6 font-sans">

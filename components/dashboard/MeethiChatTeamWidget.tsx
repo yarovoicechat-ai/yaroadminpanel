@@ -23,36 +23,36 @@ export function MeethiChatTeamWidget() {
   const [messageText, setMessageText] = useState('');
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
 
-  // Fetch real team members under this user
+  // Fetch pure real staff members under this user (excluding host streamers)
   useEffect(() => {
     async function fetchTeam() {
       try {
-        const res = await apiClient.get<any>('/recruitment/my-team');
-        if (res.data && Array.isArray(res.data)) {
-          const formatted = res.data.map((item: any, idx: number) => ({
-            id: item._id || item.id || `team-${idx}`,
-            name: item.name || item.username || 'Team Member',
-            roleTitle: item.role === 'agency' ? 'Agency Partner' : item.role === 'host' ? 'Live Streamer' : item.role === 'superAdmin' ? 'Super Admin' : item.role === 'admin' ? 'Team Lead' : 'Staff Member',
-            avatar: item.profilePhoto || item.avatar,
-            isOnline: idx % 2 === 0,
-            phone: item.phone || item.mobile
-          }));
-          setTeamMembers(formatted);
-        } else {
-          setTeamMembers([
-            { id: 't1', name: 'Ayushi Sharma', roleTitle: 'Team Head', isOnline: true },
-            { id: 't2', name: 'Deepak Kumar', roleTitle: 'Business Developer', isOnline: true },
-            { id: 't3', name: 'Rahul Verma', roleTitle: 'Senior Manager', isOnline: false },
-            { id: 't4', name: 'Priya Singh', roleTitle: 'Operations Lead', isOnline: true }
-          ]);
-        }
-      } catch (err) {
-        setTeamMembers([
-          { id: 't1', name: 'Ayushi Sharma', roleTitle: 'Team Head', isOnline: true },
-          { id: 't2', name: 'Deepak Kumar', roleTitle: 'Business Developer', isOnline: true },
-          { id: 't3', name: 'Rahul Verma', roleTitle: 'Senior Manager', isOnline: false },
-          { id: 't4', name: 'Priya Singh', roleTitle: 'Operations Lead', isOnline: true }
+        const [teamRes, empRes] = await Promise.all([
+          apiClient.get<any>('/recruitment/my-team').catch(() => null),
+          apiClient.get<any>('/api/admin/employees/list').catch(() => null)
         ]);
+
+        const rawList = (teamRes?.data && Array.isArray(teamRes.data))
+          ? teamRes.data
+          : (empRes?.data && Array.isArray(empRes.data))
+            ? empRes.data
+            : [];
+
+        // Filter out Hosts (host staff nhi hai!)
+        const staffOnly = rawList.filter((item: any) => item.role !== 'host' && item.role !== 'streamer');
+
+        const formatted: TeamMember[] = staffOnly.map((item: any, idx: number) => ({
+          id: item._id || item.id || `team-${idx}`,
+          name: item.name || item.fullName || item.username || 'Staff Member',
+          roleTitle: item.role === 'agency' ? 'Agency Lead' : item.role === 'superAdmin' ? 'Super Admin Lead' : item.role === 'admin' ? 'Team Lead' : item.role === 'operator' ? 'Operations Staff' : 'Staff Member',
+          avatar: item.profilePhoto || item.avatar,
+          isOnline: item.isOnline !== undefined ? Boolean(item.isOnline) : idx % 2 === 0,
+          phone: item.phone || item.mobile
+        }));
+
+        setTeamMembers(formatted);
+      } catch (err) {
+        setTeamMembers([]);
       }
     }
     fetchTeam();
@@ -133,6 +133,11 @@ export function MeethiChatTeamWidget() {
                 Your Staff & Assigned Team ({teamMembers.length})
               </p>
               <div className="space-y-1.5 max-h-56 overflow-y-auto pr-1">
+                {teamMembers.length === 0 && (
+                  <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-center text-xs text-slate-400">
+                    No assigned staff members found under your hierarchy yet.
+                  </div>
+                )}
                 {teamMembers.map(member => (
                   <div
                     key={member.id}
