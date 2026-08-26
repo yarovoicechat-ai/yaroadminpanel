@@ -1,6 +1,7 @@
 'use client';
 
 import Sidebar from '@/components/layout/Sidebar';
+import TopHeader from '@/components/layout/TopHeader';
 import { Badge } from '@/components/ui/Badge';
 import { Gem, ShieldCheck } from 'lucide-react';
 
@@ -8,7 +9,9 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
     return (
         <div className="flex h-screen overflow-hidden bg-slate-950 text-slate-100">
             <Sidebar />
-            <main className="flex-1 overflow-y-auto w-full p-4 pt-16 md:p-8 md:pt-6 relative">
+            <div className="flex-1 flex flex-col overflow-hidden">
+                <TopHeader />
+                <main className="flex-1 overflow-y-auto w-full p-4 md:p-8 relative">
                 {/* Seller Portal Header Indicator */}
                 <div className="mb-6 pb-4 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
@@ -36,5 +39,6 @@ export default function SellerLayout({ children }: { children: React.ReactNode }
                 {children}
             </main>
         </div>
-    );
+    </div>
+);
 }
