@@ -32,7 +32,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/AlertDialog";
-import { Ban, Edit2, Search, ShieldCheck, UserPlus, Trash2, CheckCircle, Save, Users, UserCheck, Coins, Info, History as HistoryIcon, Bell, Copy, Clock, User as UserIcon, Key } from "lucide-react";
+import { Ban, Edit2, Search, ShieldCheck, UserPlus, Trash2, CheckCircle, Save, Users, UserCheck, Coins, Info, History as HistoryIcon, Bell, Copy, Clock, User as UserIcon, Key, Calendar, RotateCcw, Filter } from "lucide-react";
 import { toast } from 'sonner';
 import { Pagination } from "@/components/ui/Pagination";
 import { apiClient } from '@/lib/apiClient';
@@ -110,6 +110,10 @@ export default function UsersPage() {
         limit: 10
     });
 
+    // Date Range Calendar States
+    const [startDate, setStartDate] = useState<string>('');
+    const [endDate, setEndDate] = useState<string>('');
+
     // Add User State
     const [isAddingUser, setIsAddingUser] = useState(false);
     const [newUserEmail, setNewUserEmail] = useState('');
@@ -135,6 +139,47 @@ export default function UsersPage() {
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [filterRole, setFilterRole] = useState<string>('all');
     const [filterLevel, setFilterLevel] = useState<string>('all');
+
+    const formatDateForInput = (d: Date) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    const handlePresetToday = () => {
+        const todayStr = formatDateForInput(new Date());
+        setStartDate(todayStr);
+        setEndDate(todayStr);
+    };
+
+    const handlePreset7Days = () => {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - 6);
+        setStartDate(formatDateForInput(start));
+        setEndDate(formatDateForInput(end));
+    };
+
+    const handlePreset30Days = () => {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(end.getDate() - 29);
+        setStartDate(formatDateForInput(start));
+        setEndDate(formatDateForInput(end));
+    };
+
+    const handlePresetThisMonth = () => {
+        const end = new Date();
+        const start = new Date(end.getFullYear(), end.getMonth(), 1);
+        setStartDate(formatDateForInput(start));
+        setEndDate(formatDateForInput(end));
+    };
+
+    const handleResetDates = () => {
+        setStartDate('');
+        setEndDate('');
+    };
 
     useEffect(() => {
         const fetchPerms = async () => {
@@ -188,7 +233,7 @@ export default function UsersPage() {
 
         fetchPerms();
         fetchUsers(pagination.currentPage);
-    }, [pagination.currentPage, filterRole, search]);
+    }, [pagination.currentPage, filterRole, search, startDate, endDate]);
 
     const showCol = (col: string) => visibleColumns.includes(col);
     const showBtn = (btn: string) => allowedButtons.includes(btn);
@@ -202,6 +247,12 @@ export default function UsersPage() {
             }
             if (search) {
                 params.search = search;
+            }
+            if (startDate) {
+                params.startDate = startDate;
+            }
+            if (endDate) {
+                params.endDate = endDate;
             }
             const response = await apiClient.get(API_ENDPOINTS.USERS.LIST, params);
             if (response.success && response.data) {
@@ -392,7 +443,7 @@ export default function UsersPage() {
             </div>
 
             {/* User Stats */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 <Card glass className="bg-slate-900/40">
                     <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
                         <CardTitle className="text-sm font-medium text-slate-400">Total Users</CardTitle>
@@ -400,6 +451,7 @@ export default function UsersPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-slate-100">{pagination.totalCount}</div>
+                        <p className="text-xs text-slate-500 mt-1">{startDate || endDate ? 'Matching date filter' : 'All time total'}</p>
                     </CardContent>
                 </Card>
                 <Card glass className="bg-slate-900/40">
@@ -409,6 +461,21 @@ export default function UsersPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-slate-100">{activeUsersCount}</div>
+                        <p className="text-xs text-slate-500 mt-1">Currently active on this page</p>
+                    </CardContent>
+                </Card>
+                <Card glass className="bg-slate-900/40">
+                    <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+                        <CardTitle className="text-sm font-medium text-slate-400">Date Range Filter Result</CardTitle>
+                        <Calendar className="h-4 w-4 text-indigo-400" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-lg font-bold text-indigo-300">
+                            {startDate || endDate ? `${startDate || 'Any'} → ${endDate || 'Today'}` : 'All Time'}
+                        </div>
+                        <p className="text-xs text-indigo-400/80 font-medium mt-1">
+                            {startDate || endDate ? `✨ ${pagination.totalCount} users joined in range` : 'Select dates to filter registrations'}
+                        </p>
                     </CardContent>
                 </Card>
             </div>
@@ -451,6 +518,64 @@ export default function UsersPage() {
                     </div>
                 </CardHeader>
                 <CardContent>
+                    {/* Calendar Date Range & Presets Filter */}
+                    <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800/80 mb-6 space-y-3">
+                        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                            <div className="flex items-center gap-2">
+                                <Calendar className="h-5 w-5 text-indigo-400" />
+                                <span className="text-sm font-semibold text-slate-200">Registration Date Range (Calendar Filter)</span>
+                            </div>
+                            {/* Preset Buttons */}
+                            <div className="flex flex-wrap items-center gap-2">
+                                <Button variant="outline" size="sm" onClick={handlePresetToday} className="text-xs h-8 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border-slate-700">
+                                    Today
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={handlePreset7Days} className="text-xs h-8 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border-slate-700">
+                                    Last 7 Days
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={handlePreset30Days} className="text-xs h-8 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border-slate-700">
+                                    Last 30 Days
+                                </Button>
+                                <Button variant="outline" size="sm" onClick={handlePresetThisMonth} className="text-xs h-8 bg-slate-800/80 hover:bg-slate-700 text-slate-200 border-slate-700">
+                                    This Month
+                                </Button>
+                                {(startDate || endDate) && (
+                                    <Button variant="ghost" size="sm" onClick={handleResetDates} className="text-xs h-8 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10">
+                                        <RotateCcw className="h-3 w-3 mr-1" /> Reset Date Filter
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-1">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-medium text-slate-400">From Date (Start Date)</label>
+                                <Input
+                                    type="date"
+                                    value={startDate}
+                                    onChange={(e) => setStartDate(e.target.value)}
+                                    className="h-9 text-xs bg-slate-950 border-slate-800"
+                                />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-xs font-medium text-slate-400">To Date (End Date)</label>
+                                <Input
+                                    type="date"
+                                    value={endDate}
+                                    onChange={(e) => setEndDate(e.target.value)}
+                                    className="h-9 text-xs bg-slate-950 border-slate-800"
+                                />
+                            </div>
+                            {(startDate || endDate) && (
+                                <div className="sm:col-span-2 lg:col-span-1 flex items-end">
+                                    <div className="w-full bg-indigo-500/10 border border-indigo-500/30 rounded-lg p-2 flex items-center justify-between text-xs text-indigo-300">
+                                        <span>Joined in Range:</span>
+                                        <span className="font-bold text-sm text-indigo-200">{pagination.totalCount} Users</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     {/* Filters Row */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                         {/* Gender Selector */}

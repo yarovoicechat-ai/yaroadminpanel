@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import { Users, UserPlus, Heart, AlertTriangle, TrendingUp, Activity, LucideIcon, Coins, Briefcase, DollarSign, Share2, Smartphone } from "lucide-react";
+import { Users, UserPlus, Heart, AlertTriangle, TrendingUp, Activity, LucideIcon, Coins, Briefcase, DollarSign, Share2, Smartphone, Calendar, UserCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { RevenueChart, EarningsChart, CallChart, DistributionChart } from "@/components/dashboard/Charts";
 import { apiClient } from '@/lib/apiClient';
@@ -51,7 +51,7 @@ export default function Home() {
 
         // Load allowed dashboard widgets dynamically
         const userObj = JSON.parse(localStorage.getItem('admin_user') || '{}');
-        let widgets = ["Today's Minutes", "Coins Spent Today", "Host Earnings Today", "Today's Revenue", "Total Users", "Total Hosts", "Active Hosts", "Reports Pending", "Total Referrals", "Device Limits"];
+        let widgets = ["Today's Minutes", "Coins Spent Today", "Host Earnings Today", "Today's Revenue", "Total Users", "Today's Users", "7 Days Users", "30 Days Users", "Total Hosts", "Active Hosts", "Reports Pending", "Total Referrals", "Device Limits"];
         if (userObj.role && userObj.role !== 'owner') {
           try {
             const res = await apiClient.get('/api/ems/my-permissions');
@@ -134,13 +134,40 @@ export default function Home() {
           />
         )}
 
-        {/* Row 2: User Base Stats */}
+        {/* Row 2: User Base & Registration Stats */}
         {isWidgetVisible("Total Users") && (
           <StatsCard
             title="Total Users"
             value={(stats?.totalUsers || 0).toLocaleString()}
             change={`${stats?.dau || stats?.activeUsers || 0} DAU active (${stats?.mau || 0} MAU)`}
             icon={Users}
+            trend="up"
+          />
+        )}
+        {isWidgetVisible("Today's Users") && (
+          <StatsCard
+            title="Today's Users"
+            value={(stats?.registrations?.today || 0).toLocaleString()}
+            change="New registrations today"
+            icon={UserCheck}
+            trend="up"
+          />
+        )}
+        {isWidgetVisible("7 Days Users") && (
+          <StatsCard
+            title="7 Days Users"
+            value={(stats?.registrations?.weekly || 0).toLocaleString()}
+            change="New registrations (7 days)"
+            icon={Calendar}
+            trend="up"
+          />
+        )}
+        {isWidgetVisible("30 Days Users") && (
+          <StatsCard
+            title="30 Days Users"
+            value={(stats?.registrations?.monthly || 0).toLocaleString()}
+            change="New registrations (30 days)"
+            icon={Calendar}
             trend="up"
           />
         )}
