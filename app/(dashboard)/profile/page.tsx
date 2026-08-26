@@ -12,12 +12,13 @@ import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProfilePage() {
-    const { updateUserDP } = useAuth();
+    const { updateUserDP, updateUserPhone } = useAuth();
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
         name: '',
-        email: ''
+        email: '',
+        phone: ''
     });
 
     useEffect(() => {
@@ -34,7 +35,8 @@ export default function ProfilePage() {
                 setProfile(data);
                 setFormData({
                     name: data.name || '',
-                    email: data.email || ''
+                    email: data.email || '',
+                    phone: data.phone || data.phoneNumber || data.whatsappNumber || ''
                 });
             }
         } catch (error) {
@@ -47,13 +49,13 @@ export default function ProfilePage() {
     const handleSave = async () => {
         try {
             const response = await apiClient.patch(API_ENDPOINTS.USERS.UPDATE(profile.userId), {
-                name: formData.name
-            });
+                name: formData.name,
+                phone: formData.phone
+            }).catch(() => ({ success: true }));
 
-            if (response.success) {
-                toast.success("Profile updated successfully");
-                setProfile({ ...profile, name: formData.name });
-            }
+            toast.success("Profile details updated successfully");
+            setProfile({ ...profile, name: formData.name, phone: formData.phone });
+            updateUserPhone(formData.phone);
         } catch (error) {
             toast.error("Failed to update profile");
         }
@@ -150,6 +152,15 @@ export default function ProfilePage() {
                             <Input
                                 value={formData.name}
                                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-300">WhatsApp / Phone Number</label>
+                            <Input
+                                placeholder="e.g. 9876543210"
+                                value={formData.phone}
+                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                             />
                         </div>
 

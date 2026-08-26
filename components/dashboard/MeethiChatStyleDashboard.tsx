@@ -4,13 +4,15 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/apiClient';
 import { toast } from 'sonner';
-import { User, Clock, Bell, Gem, Calendar, Users, TrendingUp, Sparkles, Phone, Mail, Award, ShieldCheck, Camera } from 'lucide-react';
+import { User, Clock, Bell, Gem, Calendar, Users, TrendingUp, Sparkles, Phone, Mail, Award, ShieldCheck, Camera, Edit2, Check } from 'lucide-react';
 import { MeethiChatTeamWidget } from './MeethiChatTeamWidget';
 
 export function MeethiChatStyleDashboard() {
-  const { user, updateUserDP } = useAuth();
+  const { user, updateUserDP, updateUserPhone } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isEditingPhone, setIsEditingPhone] = useState(false);
+  const [phoneInput, setPhoneInput] = useState('');
 
   useEffect(() => {
     async function fetchDashboardStats() {
@@ -18,7 +20,7 @@ export function MeethiChatStyleDashboard() {
         const response = await apiClient.get<any>('/analytics/dashboard');
         setStats(response.data || response);
       } catch (error) {
-        console.error('Failed to load dashboard analytics:', error);
+        console.warn('Dashboard API fallback enabled', error);
       } finally {
         setLoading(false);
       }
@@ -40,7 +42,8 @@ export function MeethiChatStyleDashboard() {
             : 'Team Head';
 
   const userCode = (user as any)?.employeeCode || (user as any)?.referralCode || (user as any)?.specialCode || (user as any)?.mithiId || '1068';
-  const whatsappNumber = (user as any)?.phone || (user as any)?.phoneNumber || '07234816631';
+  const rawPhone = (user as any)?.phone || (user as any)?.phoneNumber || (user as any)?.whatsappNumber || (user as any)?.whatsapp || '';
+  const whatsappNumber = rawPhone || '07234816631';
   const userEmail = user?.email || 'shivansh55523@gmail.com';
 
   // Stats calculation with real API fallbacks
@@ -124,7 +127,45 @@ export function MeethiChatStyleDashboard() {
 
           <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800/50">
             <span className="font-semibold text-slate-500">Whatsapp Number:</span>
-            <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{whatsappNumber}</span>
+            {isEditingPhone ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value)}
+                  placeholder="Enter phone/WhatsApp"
+                  className="bg-slate-900 border border-indigo-500/50 rounded-lg px-2.5 py-1 text-xs text-white font-mono focus:outline-none w-40"
+                  autoFocus
+                />
+                <button
+                  onClick={() => {
+                    if (phoneInput.trim()) {
+                      updateUserPhone(phoneInput.trim());
+                      toast.success('WhatsApp number updated!');
+                    }
+                    setIsEditingPhone(false);
+                  }}
+                  className="p-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all"
+                  title="Save Number"
+                >
+                  <Check className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{whatsappNumber}</span>
+                <button
+                  onClick={() => {
+                    setPhoneInput(whatsappNumber !== '07234816631' ? whatsappNumber : '');
+                    setIsEditingPhone(true);
+                  }}
+                  className="p-1 text-slate-400 hover:text-indigo-400 transition-colors"
+                  title="Edit WhatsApp Number"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between py-1.5">

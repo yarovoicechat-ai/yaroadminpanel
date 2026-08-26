@@ -10,6 +10,7 @@ interface AuthContextType {
     login: (u: string, p: string) => Promise<void>;
     logout: () => Promise<void>;
     updateUserDP: (newDPUrl: string) => void;
+    updateUserPhone: (newPhone: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -85,8 +86,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     };
 
+    const updateUserPhone = (newPhone: string) => {
+        if (user) {
+            const updated = { ...user, phone: newPhone, phoneNumber: newPhone, whatsappNumber: newPhone };
+            setUser(updated as any);
+            localStorage.setItem('admin_user', JSON.stringify(updated));
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, logout, updateUserDP }}>
+        <AuthContext.Provider value={{ user, isLoading, login, logout, updateUserDP, updateUserPhone }}>
             {children}
         </AuthContext.Provider>
     );
