@@ -465,6 +465,12 @@ export default function Sidebar() {
         if (!hasDynamicMenu(section.category)) return null;
         if (user?.role === 'admin' && section.title.toUpperCase().includes('REFERRAL')) return null;
 
+        const roleStr = user?.role ? String(user.role).toLowerCase() : '';
+        const isRestrictedRole = roleStr === 'admin' || roleStr === 'superadmin' || roleStr === 'super-admin' || roleStr === 'agency';
+        if (isRestrictedRole && (section.title.toUpperCase().includes('FINANCE') || section.title.toUpperCase().includes('RECHARGE'))) {
+            return null;
+        }
+
         const filteredItems = section.items.map(item => {
             if (item.submenu && item.submenu.length > 0) {
                 const validSubmenu = item.submenu.filter(sub =>

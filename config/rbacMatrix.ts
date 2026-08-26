@@ -13,6 +13,11 @@ const SUPER_ADMIN_DENIED_ROUTES = [
   '/host-management',
   '/withdrawals',
   '/sellers',
+  '/recharges',
+  '/recharges/user',
+  '/recharges/seller',
+  '/recharges/history',
+  '/finance',
 ];
 
 const ADMIN_DENIED_ROUTES = [
@@ -24,6 +29,11 @@ const ADMIN_DENIED_ROUTES = [
   '/host-management',
   '/withdrawals',
   '/sellers',
+  '/recharges',
+  '/recharges/user',
+  '/recharges/seller',
+  '/recharges/history',
+  '/finance',
 ];
 
 const OPERATOR_DENIED_ROUTES = [
