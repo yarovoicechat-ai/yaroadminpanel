@@ -379,7 +379,7 @@ export default function AgencyRequestsPage() {
         isOpen: false,
         request: null
     });
-    const [targetRecipient, setTargetRecipient] = useState('Vikramaditya Singh (Super Admin)');
+    const [targetRecipient, setTargetRecipient] = useState('Super Admin Lead');
     const [transferNote, setTransferNote] = useState('');
     const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
 
@@ -391,12 +391,12 @@ export default function AgencyRequestsPage() {
             request: req
         });
         setActionRemarks('');
-        setAssignedCode(req.agencyCode || `AGY-${req.district.slice(0, 3).toUpperCase()}-00${req.srNo}`);
+        setAssignedCode(req.agencyCode || `AG-${req.district.slice(0, 3).toUpperCase()}-00${req.srNo}`);
     };
 
     const handleOpenTransfer = (req: AgencyRequestData) => {
         setTransferModal({ isOpen: true, request: req });
-        setTargetRecipient('Vikramaditya Singh (Super Admin)');
+        setTargetRecipient('Super Admin Lead');
         setTransferNote('');
     };
 

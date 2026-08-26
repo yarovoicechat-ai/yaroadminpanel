@@ -422,7 +422,7 @@ export default function HostRequestsPage() {
         isOpen: false,
         request: null
     });
-    const [targetRecipient, setTargetRecipient] = useState('Royal Media Agency');
+    const [targetRecipient, setTargetRecipient] = useState('Primary Agency Network');
     const [transferNote, setTransferNote] = useState('');
     const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
 
@@ -439,7 +439,7 @@ export default function HostRequestsPage() {
 
     const handleOpenTransfer = (req: HostRequestData) => {
         setTransferModal({ isOpen: true, request: req });
-        setTargetRecipient('Royal Media Agency');
+        setTargetRecipient('Primary Agency Network');
         setTransferNote('');
     };
 
@@ -1891,11 +1891,10 @@ export default function HostRequestsPage() {
                                         onChange={(e) => setTargetRecipient(e.target.value)}
                                         className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none"
                                     >
-                                        <option value="Royal Media Agency">Royal Media Agency</option>
-                                        <option value="Star Talent Agency">Star Talent Agency</option>
-                                        <option value="Apex Live Media">Apex Live Media</option>
-                                        <option value="Galaxy Host Management">Galaxy Host Management</option>
-                                        <option value="Direct Meethi Host Network">Direct Meethi Host Network</option>
+                                        <option value="Primary Agency Network">Primary Agency Network</option>
+                                        <option value="Direct System Admin">Direct System Admin</option>
+                                        <option value="Regional Operations Lead">Regional Operations Lead</option>
+                                        <option value="Super Admin Lead">Super Admin Lead</option>
                                     </select>
                                 </div>
                                 <div>

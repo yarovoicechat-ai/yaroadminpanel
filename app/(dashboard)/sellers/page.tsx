@@ -162,7 +162,7 @@ export default function SellersPage() {
 
     // Transfer Modal
     const [transferModal, setTransferModal] = useState<{ isOpen: boolean; seller: SellerListItem | null }>({ isOpen: false, seller: null });
-    const [targetRecipient, setTargetRecipient] = useState('Super Admin Siddharth');
+    const [targetRecipient, setTargetRecipient] = useState('Super Admin Lead');
     const [transferNote, setTransferNote] = useState('');
     const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
 
@@ -789,7 +789,7 @@ export default function SellersPage() {
                                         {/* 15. Transfer */}
                                         <td className="p-3.5 text-center whitespace-nowrap">
                                             <button
-                                                onClick={() => { setTransferModal({ isOpen: true, seller }); setTargetRecipient(seller.invitedBy || 'Super Admin Siddharth'); setTransferNote(''); }}
+                                                onClick={() => { setTransferModal({ isOpen: true, seller }); setTargetRecipient(seller.invitedBy || 'Super Admin Lead'); setTransferNote(''); }}
                                                 className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition-all shadow-xs"
                                                 title="Transfer Seller Assignment"
                                             >
@@ -944,9 +944,9 @@ export default function SellersPage() {
                                 <div>
                                     <label className="block font-semibold text-slate-700 dark:text-slate-300 mb-1">Target Super Admin / Network</label>
                                     <select value={targetRecipient} onChange={(e) => setTargetRecipient(e.target.value)} className="w-full p-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold">
-                                        <option value="Super Admin Siddharth">Super Admin Siddharth</option>
-                                        <option value="Rajesh Malhotra (Owner)">Rajesh Malhotra (Owner)</option>
-                                        <option value="Royal Merchant Group">Royal Merchant Group</option>
+                                        <option value="Super Admin Lead">Super Admin Lead</option>
+                                        <option value="Executive Management">Executive Management</option>
+                                        <option value="Operations Network">Operations Network</option>
                                     </select>
                                 </div>
                             </div>

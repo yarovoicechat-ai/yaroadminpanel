@@ -383,7 +383,7 @@ export default function SuperAdminRequestsPage() {
         isOpen: false,
         request: null
     });
-    const [targetRecipient, setTargetRecipient] = useState('Vikramaditya Singh (Super Admin)');
+    const [targetRecipient, setTargetRecipient] = useState('Super Admin Lead');
     const [transferNote, setTransferNote] = useState('');
     const [isSubmittingTransfer, setIsSubmittingTransfer] = useState(false);
 
@@ -400,7 +400,7 @@ export default function SuperAdminRequestsPage() {
 
     const handleOpenTransfer = (req: SuperAdminRequestData) => {
         setTransferModal({ isOpen: true, request: req });
-        setTargetRecipient('Vikramaditya Singh (Super Admin)');
+        setTargetRecipient('Super Admin Lead');
         setTransferNote('');
     };
 
@@ -1936,12 +1936,10 @@ export default function SuperAdminRequestsPage() {
                                         onChange={(e) => setTargetRecipient(e.target.value)}
                                         className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none"
                                     >
-                                        <option value="Rajesh Malhotra (Owner)">Rajesh Malhotra (Owner)</option>
-                                        <option value="Vikramaditya Singh (Super Admin)">Vikramaditya Singh (Super Admin)</option>
-                                        <option value="Priya Sundaram (Super Admin)">Priya Sundaram (Super Admin)</option>
-                                        <option value="Royal Media Agency">Royal Media Agency</option>
-                                        <option value="Star Talent Agency">Star Talent Agency</option>
-                                        <option value="Operator Team Queue">Operator Team Queue</option>
+                                        <option value="Platform Owner">Platform Owner</option>
+                                        <option value="Super Admin Lead">Super Admin Lead</option>
+                                        <option value="Primary Agency Network">Primary Agency Network</option>
+                                        <option value="Operations Queue">Operations Queue</option>
                                     </select>
                                 </div>
                                 <div>

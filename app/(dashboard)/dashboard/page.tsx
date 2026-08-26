@@ -25,16 +25,6 @@ export type StatsCardProps = {
 };
 
 export default function Home() {
-  const { user } = useAuth();
-  
-  if (user?.role === 'owner') {
-    return <OwnerDashboardPage />;
-  }
-
-  if (user?.role === 'operator') {
-    return <OperatorDashboardPage />;
-  }
-
   return <MeethiChatStyleDashboard />;
 
   const [loading, setLoading] = useState(true);
