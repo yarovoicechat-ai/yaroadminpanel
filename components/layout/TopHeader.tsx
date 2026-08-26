@@ -35,6 +35,11 @@ export default function TopHeader() {
     <header className="w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 md:px-6 py-2.5 flex items-center justify-between sticky top-0 z-30 shadow-md">
       {/* Left Section: Menu & Search */}
       <div className="flex items-center gap-3 md:gap-4 flex-1">
+        <img
+          src="/meethi-chat-logo.png"
+          alt="Meethi Chat Logo"
+          className="w-7 h-7 rounded-lg object-cover shadow-sm ring-1 ring-pink-500/30 md:hidden"
+        />
         <form onSubmit={handleSearchSubmit} className="relative max-w-md w-full">
           <div className="relative flex items-center">
             <input

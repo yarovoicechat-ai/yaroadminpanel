@@ -528,9 +528,11 @@ export default function Sidebar() {
             >
                 <div className="px-6 mb-6 mt-4 md:mt-0 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-pink-600 via-rose-500 to-amber-400 flex items-center justify-center text-white font-black shadow-lg shadow-pink-500/20 ring-2 ring-pink-400/30">
-                            <span className="text-base">💖</span>
-                        </div>
+                        <img
+                            src="/meethi-chat-logo.png"
+                            alt="Meethi Chat Logo"
+                            className="w-9 h-9 rounded-xl object-cover shadow-lg shadow-pink-500/20 ring-2 ring-pink-400/30"
+                        />
                         <div>
                             <h1 className="text-base font-black bg-gradient-to-r from-pink-400 via-rose-300 to-amber-300 bg-clip-text text-transparent tracking-tight leading-none" suppressHydrationWarning>
                                 Meethi Chat
