@@ -988,16 +988,18 @@ export default function HostListPage() {
                                             </td>
 
                                             {/* 15. Transfer Column */}
-                                            <td className="p-3.5 text-center whitespace-nowrap">
-                                                <button
-                                                    onClick={() => { setTransferModal({ isOpen: true, host }); setDestinationAgency(host.agencyName || 'Royal Media Agency'); setTransferNote(''); }}
-                                                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition-all shadow-xs"
-                                                    title="Transfer Host to Another Agency or Admin"
-                                                >
-                                                    <ArrowLeftRight className="w-3.5 h-3.5" />
-                                                    <span>Transfer</span>
-                                                </button>
-                                            </td>
+                                            {!['admin', 'superAdmin', 'super-admin', 'agency'].includes(currentUser?.role || '') && (
+                                                <td className="p-3.5 text-center whitespace-nowrap">
+                                                    <button
+                                                        onClick={() => { setTransferModal({ isOpen: true, host }); setDestinationAgency(host.agencyName || 'Royal Media Agency'); setTransferNote(''); }}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold transition-all shadow-xs"
+                                                        title="Transfer Host to Another Agency or Admin"
+                                                    >
+                                                        <ArrowLeftRight className="w-3.5 h-3.5" />
+                                                        <span>Transfer</span>
+                                                    </button>
+                                                </td>
+                                            )}
                                         </tr>
                                     );
                                 })

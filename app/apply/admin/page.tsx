@@ -144,6 +144,9 @@ function AdminFormContent() {
         }
     };
 
+    const isRestrictedReferral = Boolean(referral.referrerRole && ['admin', 'superAdmin', 'super-admin', 'agency'].includes(referral.referrerRole));
+    const effectiveSteps = isRestrictedReferral ? ADMIN_STEPS.filter(s => s.id !== 'oath') : ADMIN_STEPS;
+
     return (
         <RoleCreateLayout
             roleKey="admin"
@@ -152,7 +155,7 @@ function AdminFormContent() {
             badgeText="Platform Administrator Application"
             themeGradient="from-slate-950 via-blue-950 to-indigo-950"
             accentColor="blue"
-            steps={ADMIN_STEPS}
+            steps={effectiveSteps}
             currentStep={currentStep}
             onStepChange={handleStepChange}
             onReferralVerified={setReferral}

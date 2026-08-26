@@ -65,6 +65,8 @@ function HostFormContent() {
             return;
         }
 
+        const isRestrictedReferral = Boolean(referralState?.referrerRole && ['admin', 'superAdmin', 'super-admin', 'agency'].includes(referralState.referrerRole));
+
         if (
             !form.name.trim() ||
             !form.age ||
@@ -75,11 +77,11 @@ function HostFormContent() {
             !form.state.trim() ||
             !form.district.trim() ||
             !form.country.trim() ||
-            !(form.adharFront || form.idProof) ||
-            !(form.adharBack || form.addressProof) ||
-            !form.pan ||
-            !form.portfolio ||
-            !form.personalNote.trim()
+            (!isRestrictedReferral && (
+                !(form.adharFront || form.idProof) ||
+                !(form.adharBack || form.addressProof) ||
+                !form.pan
+            ))
         ) {
             toast.error('Please fill in all required fields including Meethi Chat ID');
             return;
@@ -330,63 +332,67 @@ function HostFormContent() {
                         />
                     </div>
 
-                    {/* Documents Upload Section */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FileUpload
-                            label="Aadhaar Card Front Side"
-                            name="adharFront"
-                            required
-                            value={form.adharFront || form.idProof}
-                            onChange={(fileOrUrl) => {
-                                if (typeof fileOrUrl === 'string') {
-                                    setForm(prev => ({ ...prev, adharFront: fileOrUrl, idProof: fileOrUrl }));
-                                } else if (fileOrUrl instanceof File) {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => setForm(prev => ({ ...prev, adharFront: reader.result as string, idProof: reader.result as string }));
-                                    reader.readAsDataURL(fileOrUrl);
-                                }
-                            }}
-                        />
-                        <FileUpload
-                            label="Aadhaar Card Back Side"
-                            name="adharBack"
-                            required
-                            value={form.adharBack || form.addressProof}
-                            onChange={(fileOrUrl) => {
-                                if (typeof fileOrUrl === 'string') {
-                                    setForm(prev => ({ ...prev, adharBack: fileOrUrl, addressProof: fileOrUrl }));
-                                } else if (fileOrUrl instanceof File) {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => setForm(prev => ({ ...prev, adharBack: reader.result as string, addressProof: reader.result as string }));
-                                    reader.readAsDataURL(fileOrUrl);
-                                }
-                            }}
-                        />
-                    </div>
+                    {/* Documents Upload Section (Hidden for Admin/SuperAdmin/Agency referral) */}
+                    {!referralState?.referrerRole || !['admin', 'superAdmin', 'super-admin', 'agency'].includes(referralState.referrerRole) ? (
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FileUpload
+                                    label="Aadhaar Card Front Side"
+                                    name="adharFront"
+                                    required
+                                    value={form.adharFront || form.idProof}
+                                    onChange={(fileOrUrl) => {
+                                        if (typeof fileOrUrl === 'string') {
+                                            setForm(prev => ({ ...prev, adharFront: fileOrUrl, idProof: fileOrUrl }));
+                                        } else if (fileOrUrl instanceof File) {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => setForm(prev => ({ ...prev, adharFront: reader.result as string, idProof: reader.result as string }));
+                                            reader.readAsDataURL(fileOrUrl);
+                                        }
+                                    }}
+                                />
+                                <FileUpload
+                                    label="Aadhaar Card Back Side"
+                                    name="adharBack"
+                                    required
+                                    value={form.adharBack || form.addressProof}
+                                    onChange={(fileOrUrl) => {
+                                        if (typeof fileOrUrl === 'string') {
+                                            setForm(prev => ({ ...prev, adharBack: fileOrUrl, addressProof: fileOrUrl }));
+                                        } else if (fileOrUrl instanceof File) {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => setForm(prev => ({ ...prev, adharBack: reader.result as string, addressProof: reader.result as string }));
+                                            reader.readAsDataURL(fileOrUrl);
+                                        }
+                                    }}
+                                />
+                            </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <FileUpload
-                            label="PAN Card Document"
-                            name="pan"
-                            required
-                            value={form.pan || form.experienceLetter}
-                            onChange={(fileOrUrl) => {
-                                if (typeof fileOrUrl === 'string') {
-                                    setForm(prev => ({ ...prev, pan: fileOrUrl }));
-                                } else if (fileOrUrl instanceof File) {
-                                    const reader = new FileReader();
-                                    reader.onloadend = () => setForm(prev => ({ ...prev, pan: reader.result as string }));
-                                    reader.readAsDataURL(fileOrUrl);
-                                }
-                            }}
-                        />
-                        <Audio30SecRecorder
-                            label="Host 30-Second Voice Sample / Audition"
-                            required
-                            value={form.portfolio}
-                            onChange={(base64Data) => setForm(prev => ({ ...prev, portfolio: base64Data }))}
-                        />
-                    </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <FileUpload
+                                    label="PAN Card Document"
+                                    name="pan"
+                                    required
+                                    value={form.pan || form.experienceLetter}
+                                    onChange={(fileOrUrl) => {
+                                        if (typeof fileOrUrl === 'string') {
+                                            setForm(prev => ({ ...prev, pan: fileOrUrl }));
+                                        } else if (fileOrUrl instanceof File) {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => setForm(prev => ({ ...prev, pan: reader.result as string }));
+                                            reader.readAsDataURL(fileOrUrl);
+                                        }
+                                    }}
+                                />
+                                <Audio30SecRecorder
+                                    label="Host 30-Second Voice Sample / Audition"
+                                    required
+                                    value={form.portfolio}
+                                    onChange={(base64Data) => setForm(prev => ({ ...prev, portfolio: base64Data }))}
+                                />
+                            </div>
+                        </>
+                    ) : null}
 
                     {/* Personal Note */}
                     <div>

@@ -10,6 +10,9 @@ import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 import { toast } from 'sonner';
 import { AvatarRequestsWidget } from '@/components/dashboard/AvatarRequestsWidget';
 
+import { useAuth } from '@/contexts/AuthContext';
+import { YociStyleDashboard } from '@/components/dashboard/YociStyleDashboard';
+
 export type StatsCardProps = {
   title: string;
   value: string;
@@ -20,6 +23,7 @@ export type StatsCardProps = {
 };
 
 export default function Home() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
   const [revenueData, setRevenueData] = useState([]);
@@ -76,6 +80,10 @@ export default function Home() {
 
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen text-slate-400">Loading dashboard...</div>;
+  }
+
+  if (user?.role && ['superAdmin', 'super-admin', 'agency', 'admin'].includes(user.role)) {
+    return <YociStyleDashboard />;
   }
 
   const isWidgetVisible = (title: string) => {

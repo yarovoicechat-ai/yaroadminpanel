@@ -1336,16 +1336,18 @@ export default function HostRequestsPage() {
                                     <Mic className="w-3.5 h-3.5 text-blue-500" />
                                     Voice Audition & Waveform
                                 </button>
-                                <button
-                                    onClick={() => setDetailTab('identity')}
-                                    className={`py-3 px-4 border-b-2 transition-colors whitespace-nowrap ${
-                                        detailTab === 'identity'
-                                            ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-bold'
-                                            : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
-                                    }`}
-                                >
-                                    Verification Documents (KYC)
-                                </button>
+                                 {!['admin', 'superAdmin', 'super-admin', 'agency'].includes(currentUser?.role || '') && (
+                                     <button
+                                         onClick={() => setDetailTab('identity')}
+                                         className={`py-3 px-4 border-b-2 transition-colors whitespace-nowrap ${
+                                             detailTab === 'identity'
+                                                 ? 'border-blue-600 text-blue-600 dark:text-blue-400 font-bold'
+                                                 : 'border-transparent text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'
+                                         }`}
+                                     >
+                                         Verification Documents (KYC)
+                                     </button>
+                                 )}
                                 <button
                                     onClick={() => setDetailTab('registration')}
                                     className={`py-3 px-4 border-b-2 transition-colors whitespace-nowrap ${

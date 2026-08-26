@@ -158,6 +158,9 @@ function AgencyFormContent() {
         }
     };
 
+    const isRestrictedReferral = Boolean(referral.referrerRole && ['admin', 'superAdmin', 'super-admin', 'agency'].includes(referral.referrerRole));
+    const effectiveSteps = isRestrictedReferral ? AGENCY_STEPS.filter(s => s.id !== 'documents') : AGENCY_STEPS;
+
     return (
         <RoleCreateLayout
             roleKey="agency"
@@ -166,7 +169,7 @@ function AgencyFormContent() {
             badgeText="Official Agency Partner Onboarding"
             themeGradient="from-slate-950 via-purple-950 to-indigo-950"
             accentColor="purple"
-            steps={AGENCY_STEPS}
+            steps={effectiveSteps}
             currentStep={currentStep}
             onStepChange={handleStepChange}
             onReferralVerified={setReferral}

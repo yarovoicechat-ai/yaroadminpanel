@@ -9,10 +9,12 @@ import { Badge } from "@/components/ui/Badge";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
+import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, Save, ShieldCheck, User as UserIcon, Coins, Award, Globe, Calendar, Ban, CheckCircle, Info, Mail, Phone, Lock, Edit3 } from 'lucide-react';
 import type { User } from '@/types/models';
 
 export default function UserDetailPage() {
+    const { user: currentUser } = useAuth();
     const params = useParams();
     const router = useRouter();
     const id = params.id as string;
@@ -304,14 +306,16 @@ export default function UserDetailPage() {
                                         <Input id="edit-phone" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} className="bg-slate-950 border-slate-800 text-slate-200" />
                                     </div>
 
-                                    {/* Password Reset */}
-                                    <div className="grid gap-1.5 sm:col-span-2">
-                                        <label htmlFor="edit-password" className="text-xs font-semibold text-slate-400">Change Password (Leave blank to keep current)</label>
-                                        <div className="relative">
-                                            <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
-                                            <Input id="edit-password" type="password" placeholder="Enter new strong password" value={password} onChange={e => setPassword(e.target.value)} className="pl-9 bg-slate-950 border-slate-800 text-slate-200" />
+                                    {/* Password Reset (Hidden for Admin/SuperAdmin/Agency) */}
+                                    {!['admin', 'superAdmin', 'super-admin', 'agency'].includes(currentUser?.role || '') && (
+                                        <div className="grid gap-1.5 sm:col-span-2">
+                                            <label htmlFor="edit-password" className="text-xs font-semibold text-slate-400">Change Password (Leave blank to keep current)</label>
+                                            <div className="relative">
+                                                <Lock className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                                                <Input id="edit-password" type="password" placeholder="Enter new strong password" value={password} onChange={e => setPassword(e.target.value)} className="pl-9 bg-slate-950 border-slate-800 text-slate-200" />
+                                            </div>
                                         </div>
-                                    </div>
+                                    )}
 
                                     {/* Gender */}
                                     <div className="grid gap-1.5">

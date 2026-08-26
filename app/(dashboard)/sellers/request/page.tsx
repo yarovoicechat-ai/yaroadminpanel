@@ -839,13 +839,19 @@ export default function SellerRequestsPage() {
                                 <th className="p-3.5 whitespace-nowrap">State</th>
                                 <th className="p-3.5 whitespace-nowrap">District</th>
                                 <th className="p-3.5 whitespace-nowrap">Reg Date & Time</th>
-                                <th className="p-3.5 whitespace-nowrap text-center">Aadhaar Front</th>
-                                <th className="p-3.5 whitespace-nowrap text-center">Aadhaar Back</th>
-                                <th className="p-3.5 whitespace-nowrap text-center">PAN Card</th>
-                                <th className="p-3.5 whitespace-nowrap text-center">Resume / CV</th>
+                                {!['admin', 'superAdmin', 'super-admin', 'agency'].includes(currentUser?.role || '') && (
+                                    <>
+                                        <th className="p-3.5 whitespace-nowrap text-center">Aadhaar Front</th>
+                                        <th className="p-3.5 whitespace-nowrap text-center">Aadhaar Back</th>
+                                        <th className="p-3.5 whitespace-nowrap text-center">PAN Card</th>
+                                        <th className="p-3.5 whitespace-nowrap text-center">Resume / CV</th>
+                                    </>
+                                )}
                                 <th className="p-3.5 whitespace-nowrap text-center">Review By Operator</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">Review By Super Admin</th>
-                                <th className="p-3.5 whitespace-nowrap text-center">Password</th>
+                                {!['admin', 'superAdmin', 'super-admin', 'agency'].includes(currentUser?.role || '') && (
+                                    <th className="p-3.5 whitespace-nowrap text-center">Password</th>
+                                )}
                                 <th className="p-3.5 whitespace-nowrap text-center">Action</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">Status</th>
                             </tr>
@@ -973,101 +979,104 @@ export default function SellerRequestsPage() {
                                             {req.registrationDate}
                                         </td>
 
-                                         {/* Aadhaar Front */}
-                                        <td className="p-3.5 text-center whitespace-nowrap">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarFront, title: `${req.name} - Aadhaar Front`, zoom: 1, rotate: 0 })}
-                                                    className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-blue-500 transition-all"
-                                                >
-                                                    <img src={req.aadhaarFront} alt="Aadhaar Front" className="w-12 h-8 object-cover" />
-                                                    <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
-                                                        <Eye className="w-3.5 h-3.5" />
-                                                    </div>
-                                                </button>
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarFront, title: `${req.name} - Aadhaar Front`, zoom: 1, rotate: 0 })}
-                                                    className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
-                                                >
-                                                    View
-                                                </button>
-                                            </div>
-                                        </td>
+                                         {/* Aadhaar & PAN & Resume Documents (Hidden for Admin/SuperAdmin/Agency) */}
+                                         {!['admin', 'superAdmin', 'super-admin', 'agency'].includes(currentUser?.role || '') && (
+                                             <>
+                                                 <td className="p-3.5 text-center whitespace-nowrap">
+                                                     <div className="flex items-center justify-center gap-1.5">
+                                                         <button
+                                                             onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarFront, title: `${req.name} - Aadhaar Front`, zoom: 1, rotate: 0 })}
+                                                             className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-blue-500 transition-all"
+                                                         >
+                                                             <img src={req.aadhaarFront} alt="Aadhaar Front" className="w-12 h-8 object-cover" />
+                                                             <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                                                 <Eye className="w-3.5 h-3.5" />
+                                                             </div>
+                                                         </button>
+                                                         <button
+                                                             onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarFront, title: `${req.name} - Aadhaar Front`, zoom: 1, rotate: 0 })}
+                                                             className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
+                                                         >
+                                                             View
+                                                         </button>
+                                                     </div>
+                                                 </td>
 
-                                        {/* Aadhaar Back */}
-                                        <td className="p-3.5 text-center whitespace-nowrap">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarBack, title: `${req.name} - Aadhaar Back`, zoom: 1, rotate: 0 })}
-                                                    className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-blue-500 transition-all"
-                                                >
-                                                    <img src={req.aadhaarBack} alt="Aadhaar Back" className="w-12 h-8 object-cover" />
-                                                    <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
-                                                        <Eye className="w-3.5 h-3.5" />
-                                                    </div>
-                                                </button>
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarBack, title: `${req.name} - Aadhaar Back`, zoom: 1, rotate: 0 })}
-                                                    className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
-                                                >
-                                                    View
-                                                </button>
-                                            </div>
-                                        </td>
+                                                 <td className="p-3.5 text-center whitespace-nowrap">
+                                                     <div className="flex items-center justify-center gap-1.5">
+                                                         <button
+                                                             onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarBack, title: `${req.name} - Aadhaar Back`, zoom: 1, rotate: 0 })}
+                                                             className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-blue-500 transition-all"
+                                                         >
+                                                             <img src={req.aadhaarBack} alt="Aadhaar Back" className="w-12 h-8 object-cover" />
+                                                             <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                                                 <Eye className="w-3.5 h-3.5" />
+                                                             </div>
+                                                         </button>
+                                                         <button
+                                                             onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarBack, title: `${req.name} - Aadhaar Back`, zoom: 1, rotate: 0 })}
+                                                             className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
+                                                         >
+                                                             View
+                                                         </button>
+                                                     </div>
+                                                 </td>
 
-                                        {/* PAN Card */}
-                                        <td className="p-3.5 text-center whitespace-nowrap">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.panCard, title: `${req.name} - PAN Card`, zoom: 1, rotate: 0 })}
-                                                    className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-emerald-500 transition-all"
-                                                >
-                                                    <img src={req.panCard} alt="PAN Card" className="w-12 h-8 object-cover" />
-                                                    <div className="absolute inset-0 bg-emerald-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
-                                                        <Eye className="w-3.5 h-3.5" />
-                                                    </div>
-                                                </button>
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.panCard, title: `${req.name} - PAN Card`, zoom: 1, rotate: 0 })}
-                                                    className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
-                                                >
-                                                    View
-                                                </button>
-                                            </div>
-                                        </td>
+                                                 <td className="p-3.5 text-center whitespace-nowrap">
+                                                     <div className="flex items-center justify-center gap-1.5">
+                                                         <button
+                                                             onClick={() => setImageZoom({ isOpen: true, url: req.panCard, title: `${req.name} - PAN Card`, zoom: 1, rotate: 0 })}
+                                                             className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-emerald-500 transition-all"
+                                                         >
+                                                             <img src={req.panCard} alt="PAN Card" className="w-12 h-8 object-cover" />
+                                                             <div className="absolute inset-0 bg-emerald-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
+                                                                 <Eye className="w-3.5 h-3.5" />
+                                                             </div>
+                                                         </button>
+                                                         <button
+                                                             onClick={() => setImageZoom({ isOpen: true, url: req.panCard, title: `${req.name} - PAN Card`, zoom: 1, rotate: 0 })}
+                                                             className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
+                                                         >
+                                                             View
+                                                         </button>
+                                                     </div>
+                                                 </td>
 
-                                        {/* Resume / CV Document */}
-                                        <td className="p-3.5 text-center whitespace-nowrap">
-                                            <div className="flex items-center justify-center gap-1.5">
-                                                <button
-                                                    onClick={() => setImageZoom({ isOpen: true, url: req.resumeUrl, title: `${req.name} - Resume / CV Document`, zoom: 1, rotate: 0 })}
-                                                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 font-semibold text-[11px] border border-purple-200 dark:border-purple-800/60"
-                                                >
-                                                    <File className="w-3.5 h-3.5 text-purple-600" />
-                                                    <span>View Resume</span>
-                                                </button>
-                                            </div>
-                                        </td>
+                                                 <td className="p-3.5 text-center whitespace-nowrap">
+                                                     <div className="flex items-center justify-center gap-1.5">
+                                                         <button
+                                                             onClick={() => setImageZoom({ isOpen: true, url: req.resumeUrl, title: `${req.name} - Resume / CV Document`, zoom: 1, rotate: 0 })}
+                                                             className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-700 dark:bg-purple-950/40 dark:text-purple-300 font-semibold text-[11px] border border-purple-200 dark:border-purple-800/60"
+                                                         >
+                                                             <File className="w-3.5 h-3.5 text-purple-600" />
+                                                             <span>View Resume</span>
+                                                         </button>
+                                                     </div>
+                                                 </td>
+                                             </>
+                                         )}
 
-                                        {/* Review By Operator */}
-                                        <td className="p-3.5 text-center whitespace-nowrap">
-                                            {renderReviewBadge(req.reviewByOperator)}
-                                        </td>
+                                         {/* Review By Operator */}
+                                         <td className="p-3.5 text-center whitespace-nowrap">
+                                             {renderReviewBadge(req.reviewByOperator)}
+                                         </td>
 
-                                        {/* Review By Super Admin */}
-                                        <td className="p-3.5 text-center whitespace-nowrap">
-                                            {renderReviewBadge(req.reviewBySuperAdmin)}
-                                        </td>
+                                         {/* Review By Super Admin */}
+                                         <td className="p-3.5 text-center whitespace-nowrap">
+                                             {renderReviewBadge(req.reviewBySuperAdmin)}
+                                         </td>
 
-                                        {/* Password Masked */}
-                                        <td className="p-3.5 text-center whitespace-nowrap font-mono">
-                                            <div className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
-                                                <span>{visiblePasswords[req.id] ? req.password : '••••••••'}</span>
-                                                <button onClick={() => togglePasswordVisibility(req.id)} className="text-slate-400 hover:text-blue-600">
-                                                    {visiblePasswords[req.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
-                                                </button>
-                                            </div>
-                                        </td>
+                                         {/* Password Masked (Hidden for Admin/SuperAdmin/Agency) */}
+                                         {!['admin', 'superAdmin', 'super-admin', 'agency'].includes(currentUser?.role || '') && (
+                                             <td className="p-3.5 text-center whitespace-nowrap font-mono">
+                                                 <div className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                                                     <span>{visiblePasswords[req.id] ? req.password : '••••••••'}</span>
+                                                     <button onClick={() => togglePasswordVisibility(req.id)} className="text-slate-400 hover:text-blue-600">
+                                                         {visiblePasswords[req.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
+                                                     </button>
+                                                 </div>
+                                             </td>
+                                         )}
 
                                         {/* Action Column */}
                                         <td className="p-3.5 whitespace-nowrap text-center">

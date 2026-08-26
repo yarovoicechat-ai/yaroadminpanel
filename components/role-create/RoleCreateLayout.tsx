@@ -161,89 +161,97 @@ export function RoleCreateLayout({
                             </div>
                         </div>
                     ) : (
-                        <>
-                            {/* Progress Stepper Header */}
-                            <div className="space-y-3 pb-4 border-b border-white/10">
-                                <div className="flex items-center justify-between text-xs text-white/70">
-                                    <span className="font-semibold uppercase tracking-wider">
-                                        Step {currentStep + 1} of {steps.length}: {steps[currentStep]?.title}
-                                    </span>
-                                    <div className="flex items-center gap-2">
-                                        {draftSaved && (
-                                            <span className="text-[11px] text-emerald-400 flex items-center gap-1 bg-emerald-500/20 px-2 py-0.5 rounded">
-                                                <Save className="w-3 h-3" /> Auto-Saved
+                        (() => {
+                            const isRestrictedReferral = referralState?.referrerRole && ['admin', 'superAdmin', 'super-admin', 'agency'].includes(referralState.referrerRole);
+                            const effectiveSteps = isRestrictedReferral ? steps.filter(s => s.id !== 'documents' && s.id !== 'oath') : steps;
+                            const activeStepIndex = Math.min(currentStep, effectiveSteps.length - 1);
+
+                            return (
+                                <>
+                                    {/* Progress Stepper Header */}
+                                    <div className="space-y-3 pb-4 border-b border-white/10">
+                                        <div className="flex items-center justify-between text-xs text-white/70">
+                                            <span className="font-semibold uppercase tracking-wider">
+                                                Step {activeStepIndex + 1} of {effectiveSteps.length}: {effectiveSteps[activeStepIndex]?.title}
                                             </span>
-                                        )}
-                                        <button
-                                            type="button"
-                                            onClick={handleClearDraft}
-                                            title="Reset form draft"
-                                            className="text-white/50 hover:text-white text-xs flex items-center gap-1"
-                                        >
-                                            <RotateCcw className="w-3 h-3" /> Reset
-                                        </button>
+                                            <div className="flex items-center gap-2">
+                                                {draftSaved && (
+                                                    <span className="text-[11px] text-emerald-400 flex items-center gap-1 bg-emerald-500/20 px-2 py-0.5 rounded">
+                                                        <Save className="w-3 h-3" /> Auto-Saved
+                                                    </span>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={handleClearDraft}
+                                                    title="Reset form draft"
+                                                    className="text-white/50 hover:text-white text-xs flex items-center gap-1"
+                                                >
+                                                    <RotateCcw className="w-3 h-3" /> Reset
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Step Progress Bar */}
+                                        <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden flex gap-1">
+                                            {effectiveSteps.map((step, idx) => (
+                                                <div
+                                                    key={step.id}
+                                                    className={`h-full flex-1 transition-all duration-300 ${
+                                                        idx <= activeStepIndex ? 'bg-gradient-to-r from-amber-400 to-emerald-400' : 'bg-white/10'
+                                                    }`}
+                                                />
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
 
-                                {/* Step Progress Bar */}
-                                <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden flex gap-1">
-                                    {steps.map((step, idx) => (
-                                        <div
-                                            key={step.id}
-                                            className={`h-full flex-1 transition-all duration-300 ${
-                                                idx <= currentStep ? 'bg-gradient-to-r from-amber-400 to-emerald-400' : 'bg-white/10'
-                                            }`}
-                                        />
-                                    ))}
-                                </div>
-                            </div>
+                                    {/* Step Body Content */}
+                                    <div className="pt-2">
+                                        {children}
+                                    </div>
 
-                            {/* Step Body Content */}
-                            <div className="pt-2">
-                                {children}
-                            </div>
+                                    {/* Step Navigation Controls */}
+                                    <div className="pt-6 border-t border-white/10 flex items-center justify-between gap-4">
+                                        {activeStepIndex > 0 ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => onStepChange(activeStepIndex - 1)}
+                                                className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-xs border border-white/20 transition-all flex items-center gap-2"
+                                            >
+                                                <ArrowLeft className="w-4 h-4" /> Previous
+                                            </button>
+                                        ) : <div />}
 
-                            {/* Step Navigation Controls */}
-                            <div className="pt-6 border-t border-white/10 flex items-center justify-between gap-4">
-                                {currentStep > 0 ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => onStepChange(currentStep - 1)}
-                                        className="px-5 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-medium text-xs border border-white/20 transition-all flex items-center gap-2"
-                                    >
-                                        <ArrowLeft className="w-4 h-4" /> Previous
-                                    </button>
-                                ) : <div />}
-
-                                {currentStep < steps.length - 1 ? (
-                                    <button
-                                        type="button"
-                                        onClick={() => onStepChange(currentStep + 1)}
-                                        className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg transition-all flex items-center gap-2"
-                                    >
-                                        Next Step <ArrowRight className="w-4 h-4" />
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={onSubmit}
-                                        disabled={submitting}
-                                        className="px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-sm shadow-xl transition-all border border-emerald-400/30 disabled:opacity-50 flex items-center gap-2"
-                                    >
-                                        {submitting ? (
-                                            <>
-                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                                Submitting...
-                                            </>
+                                        {activeStepIndex < effectiveSteps.length - 1 ? (
+                                            <button
+                                                type="button"
+                                                onClick={() => onStepChange(activeStepIndex + 1)}
+                                                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg transition-all flex items-center gap-2"
+                                            >
+                                                Next Step <ArrowRight className="w-4 h-4" />
+                                            </button>
                                         ) : (
-                                            <>
-                                                Submit Application <CheckCircle className="w-4 h-4" />
-                                            </>
+                                            <button
+                                                type="button"
+                                                onClick={onSubmit}
+                                                disabled={submitting}
+                                                className="px-8 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-black text-sm shadow-xl transition-all border border-emerald-400/30 disabled:opacity-50 flex items-center gap-2"
+                                            >
+                                                {submitting ? (
+                                                    <>
+                                                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                                        Submitting...
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        Submit Application <CheckCircle className="w-4 h-4" />
+                                                    </>
+                                                )}
+                                            </button>
                                         )}
-                                    </button>
-                                )}
-                            </div>
-                        </>
+                                    </div>
+                                </>
+                            );
+                        })()
                     )}
 
                 </div>

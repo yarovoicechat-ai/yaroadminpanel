@@ -926,9 +926,9 @@ export default function SellersPage() {
                 )}
             </AnimatePresence>
 
-            {/* TRANSFER MODAL */}
+            {/* TRANSFER MODAL (Hidden for Admin/SuperAdmin/Agency) */}
             <AnimatePresence>
-                {transferModal.isOpen && transferModal.seller && (
+                {transferModal.isOpen && transferModal.seller && !['admin', 'superAdmin', 'super-admin', 'agency'].includes(currentUser?.role || '') && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-xs p-4">
                         <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="w-full max-w-md bg-white dark:bg-slate-900 rounded-[14px] border border-slate-200 dark:border-slate-800 p-6 space-y-4">
                             <div className="flex items-center gap-3">

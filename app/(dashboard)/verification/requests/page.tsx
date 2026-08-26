@@ -220,7 +220,7 @@ export default function RequestCenter() {
                       <span className="font-bold text-primary">{selectedRequest.data.referralCode}</span>
                     </div>
                   )}
-                  {selectedRequest.data.documents && selectedRequest.data.documents.length > 0 && (
+                  {selectedRequest.data.documents && selectedRequest.data.documents.length > 0 && !['admin', 'superAdmin', 'super-admin', 'agency'].includes(user?.role || '') && (
                     <div className="space-y-1 pt-1">
                       <span className="text-slate-500">Documents Attached:</span>
                       <div className="flex flex-col gap-1 max-h-20 overflow-y-auto mt-1">
@@ -240,8 +240,8 @@ export default function RequestCenter() {
                   )}
                 </div>
 
-                {/* Password Configuration (For Owner Only) */}
-                {selectedRequest.status === 'pending' && (
+                {/* Password Configuration (For Owner Only, Hidden for Admin/SuperAdmin/Agency) */}
+                {selectedRequest.status === 'pending' && !['admin', 'superAdmin', 'super-admin', 'agency'].includes(user?.role || '') && (
                   <div className="space-y-3 border-t border-slate-850 pt-4">
                     <h4 className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1.5">
                       <Key className="h-3.5 w-3.5 text-primary" /> Generated Credentials
