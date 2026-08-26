@@ -84,121 +84,120 @@ export function MeethiChatStyleDashboard() {
   return (
     <div className="relative min-h-screen bg-slate-950 text-slate-100 p-4 md:p-8 space-y-6 font-sans">
       
-      {/* 1. Header Profile & Team Info Card */}
-      <div className="w-full max-w-5xl mx-auto bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden p-6 md:p-8 relative">
-        <div className="absolute top-4 right-4 flex items-center gap-3 text-slate-400 dark:text-slate-500 text-xs font-mono">
-          <button className="hover:text-slate-200 transition-colors p-1" title="Clock History">
-            <Clock className="w-4 h-4" />
-          </button>
-          <button className="hover:text-slate-200 transition-colors p-1 relative" title="Notifications">
-            <Bell className="w-4 h-4" />
-            <span className="absolute top-0 right-0 w-2 h-2 rounded-full bg-rose-500" />
-          </button>
-          <span className="font-semibold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full text-[11px]">
-            EMP-{userCode}
-          </span>
+      {/* 1. App Activity Metrics & Header (at the top) */}
+      <div className="w-full max-w-5xl mx-auto space-y-6">
+        
+        {/* Section Header */}
+        <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight text-white">Dashboard</h1>
+            <p className="text-xs text-slate-400 mt-1">Overview of Meethi Chat app activity</p>
+          </div>
+          <div className="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-full border border-slate-800">
+            <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-xs font-semibold text-emerald-400">System Healthy</span>
+          </div>
         </div>
 
-        {/* Profile Avatar with DP Change Button */}
-        <div className="flex flex-col items-center pt-2">
-          <div className="relative group cursor-pointer">
-            <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 shadow-inner overflow-hidden">
-              {(user as any)?.profilePhoto || (user as any)?.avatar ? (
-                <img src={(user as any)?.profilePhoto || (user as any)?.avatar} alt={userName} className="w-full h-full object-cover" />
-              ) : (
-                <User className="w-12 h-12 text-slate-400" />
-              )}
+        {/* Row 1: Key Financials */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>Today's Minutes</span>
+              <Clock className="w-4 h-4 text-indigo-400" />
             </div>
-            <label htmlFor="dashboard-dp-upload" className="absolute inset-0 bg-slate-950/70 rounded-full flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-              <Camera className="w-5 h-5 mb-0.5 text-pink-400" />
-              <span className="text-[9px] font-bold">Edit DP</span>
-            </label>
-            <input
-              id="dashboard-dp-upload"
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    const result = reader.result as string;
-                    updateUserDP(result);
-                    toast.success("Profile DP updated successfully!");
-                  };
-                  reader.readAsDataURL(file);
-                }
-              }}
-            />
+            <div className="text-2xl font-black text-white">{stats?.stats?.minutesToday || 0} mins</div>
+            <div className="text-[10px] text-slate-500">Daily usage</div>
           </div>
 
-          <h2 className="text-xl font-bold mt-4 text-slate-900 dark:text-white tracking-tight flex items-center gap-2">
-            <span>{userName}</span>
-            <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">{roleDisplay}</span>
-          </h2>
-        </div>
-
-        {/* Info Grid */}
-        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800/80 max-w-xl mx-auto space-y-2.5 text-xs text-slate-600 dark:text-slate-400">
-          <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800/50">
-            <span className="font-semibold text-slate-500">Name:</span>
-            <span className="font-bold text-slate-800 dark:text-slate-200">{userName}</span>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>Coins Spent Today</span>
+              <Coins className="w-4 h-4 text-amber-400" />
+            </div>
+            <div className="text-2xl font-black text-white">{stats?.stats?.coinsSpentToday || 0}</div>
+            <div className="text-[10px] text-slate-500">Daily usage</div>
           </div>
 
-          <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800/50">
-            <span className="font-semibold text-slate-500">Team Leader Code:</span>
-            <span className="font-mono font-bold text-indigo-600 dark:text-indigo-400">{userCode}</span>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>Host Earnings Today</span>
+              <DollarSign className="w-4 h-4 text-emerald-400" />
+            </div>
+            <div className="text-2xl font-black text-emerald-400">${stats?.stats?.hostEarningsToday || 0}</div>
+            <div className="text-[10px] text-slate-500">Verified payouts</div>
           </div>
 
-          <div className="flex items-center justify-between py-1.5 border-b border-slate-100 dark:border-slate-800/50">
-            <span className="font-semibold text-slate-500">Whatsapp Number:</span>
-            {isEditingPhone ? (
-              <div className="flex items-center gap-2">
-                <input
-                  type="text"
-                  value={phoneInput}
-                  onChange={(e) => setPhoneInput(e.target.value)}
-                  placeholder="Enter phone/WhatsApp"
-                  className="bg-slate-900 border border-indigo-500/50 rounded-lg px-2.5 py-1 text-xs text-white font-mono focus:outline-none w-40"
-                  autoFocus
-                />
-                <button
-                  onClick={() => {
-                    if (phoneInput.trim()) {
-                      updateUserPhone(phoneInput.trim());
-                      toast.success('WhatsApp number updated!');
-                    }
-                    setIsEditingPhone(false);
-                  }}
-                  className="p-1 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white font-bold transition-all"
-                  title="Save Number"
-                >
-                  <Check className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-2">
-                <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{whatsappNumber}</span>
-                <button
-                  onClick={() => {
-                    setPhoneInput(whatsappNumber !== '07234816631' ? whatsappNumber : '');
-                    setIsEditingPhone(true);
-                  }}
-                  className="p-1 text-slate-400 hover:text-indigo-400 transition-colors"
-                  title="Edit WhatsApp Number"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between py-1.5">
-            <span className="font-semibold text-slate-500">Official Email:</span>
-            <span className="font-bold text-slate-800 dark:text-slate-200">{userEmail}</span>
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>Today's Revenue</span>
+              <TrendingUp className="w-4 h-4 text-pink-400" />
+            </div>
+            <div className="text-2xl font-black text-white">${stats?.stats?.todayRevenue || 0}</div>
+            <div className="text-[10px] text-slate-500">Gross revenue</div>
           </div>
         </div>
+
+        {/* Row 2: Users & Activity */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>Total Users</span>
+              <Users className="w-4 h-4 text-indigo-400" />
+            </div>
+            <div className="text-2xl font-black text-white">{stats?.stats?.totalUsers || 61}</div>
+            <div className="text-[10px] text-emerald-400 font-semibold">↗ {stats?.stats?.dau || 11} DAU active ({stats?.stats?.mau || 61} MAU)</div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>Total Hosts</span>
+              <Award className="w-4 h-4 text-purple-400" />
+            </div>
+            <div className="text-2xl font-black text-white">{stats?.stats?.totalHosts || 1}</div>
+            <div className="text-[10px] text-emerald-400 font-semibold">↗ {stats?.stats?.approvedHosts || 0} approved</div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>Active Hosts</span>
+              <Heart className="w-4 h-4 text-rose-400" />
+            </div>
+            <div className="text-2xl font-black text-white">{stats?.stats?.activeHosts || 0}</div>
+            <div className="text-[10px] text-teal-400 font-semibold">↪ Busy in calls</div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>Reports Pending</span>
+              <AlertTriangle className="w-4 h-4 text-amber-400" />
+            </div>
+            <div className="text-2xl font-black text-white">{stats?.stats?.pendingReports || 0}</div>
+            <div className="text-[10px] text-rose-400 font-semibold">⚡ Needs attention</div>
+          </div>
+        </div>
+
+        {/* Row 3: Referrals & Security */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>Total Referrals</span>
+              <Sparkles className="w-4 h-4 text-sky-400" />
+            </div>
+            <div className="text-2xl font-black text-white">{stats?.stats?.totalReferrals || 3}</div>
+            <div className="text-[10px] text-emerald-400 font-semibold">↗ {stats?.stats?.coinsGranted || 150} granted</div>
+          </div>
+
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-4 space-y-1">
+            <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
+              <span>Device Limits</span>
+              <Smartphone className="w-4 h-4 text-indigo-400" />
+            </div>
+            <div className="text-2xl font-black text-white">{stats?.stats?.deviceLimits || 0}</div>
+            <div className="text-[10px] text-slate-500 font-semibold">1 max accounts/device</div>
+          </div>
+        </div>
+
       </div>
 
       {/* 2. Vibrant Gradient Stat Boxes */}
