@@ -3,11 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/apiClient';
-import { User, Clock, Bell, Gem, Calendar, Users, TrendingUp, Sparkles, Phone, Mail, Award, ShieldCheck } from 'lucide-react';
+import { toast } from 'sonner';
+import { User, Clock, Bell, Gem, Calendar, Users, TrendingUp, Sparkles, Phone, Mail, Award, ShieldCheck, Camera } from 'lucide-react';
 import { MeethiChatTeamWidget } from './MeethiChatTeamWidget';
 
 export function MeethiChatStyleDashboard() {
-  const { user } = useAuth();
+  const { user, updateUserDP } = useAuth();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -69,14 +70,38 @@ export function MeethiChatStyleDashboard() {
           </span>
         </div>
 
-        {/* Profile Avatar */}
+        {/* Profile Avatar with DP Change Button */}
         <div className="flex flex-col items-center pt-2">
-          <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 shadow-inner overflow-hidden">
-            {(user as any)?.profilePhoto || (user as any)?.avatar ? (
-              <img src={(user as any)?.profilePhoto || (user as any)?.avatar} alt={userName} className="w-full h-full object-cover" />
-            ) : (
-              <User className="w-12 h-12 text-slate-400" />
-            )}
+          <div className="relative group cursor-pointer">
+            <div className="w-24 h-24 rounded-full bg-slate-200 dark:bg-slate-800 border-2 border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 shadow-inner overflow-hidden">
+              {(user as any)?.profilePhoto || (user as any)?.avatar ? (
+                <img src={(user as any)?.profilePhoto || (user as any)?.avatar} alt={userName} className="w-full h-full object-cover" />
+              ) : (
+                <User className="w-12 h-12 text-slate-400" />
+              )}
+            </div>
+            <label htmlFor="dashboard-dp-upload" className="absolute inset-0 bg-slate-950/70 rounded-full flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+              <Camera className="w-5 h-5 mb-0.5 text-pink-400" />
+              <span className="text-[9px] font-bold">Edit DP</span>
+            </label>
+            <input
+              id="dashboard-dp-upload"
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onloadend = () => {
+                    const result = reader.result as string;
+                    updateUserDP(result);
+                    toast.success("Profile DP updated successfully!");
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
           </div>
 
           <h2 className="text-xl font-bold mt-4 text-slate-900 dark:text-white tracking-tight flex items-center gap-2">

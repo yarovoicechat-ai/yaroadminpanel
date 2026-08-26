@@ -9,6 +9,7 @@ interface AuthContextType {
     isLoading: boolean;
     login: (u: string, p: string) => Promise<void>;
     logout: () => Promise<void>;
+    updateUserDP: (newDPUrl: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -76,8 +77,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [user, isLoading, pathname, router]);
 
+    const updateUserDP = (newDPUrl: string) => {
+        if (user) {
+            const updated = { ...user, profilePhoto: newDPUrl, avatar: newDPUrl };
+            setUser(updated as any);
+            localStorage.setItem('admin_user', JSON.stringify(updated));
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, isLoading, login, logout }}>
+        <AuthContext.Provider value={{ user, isLoading, login, logout, updateUserDP }}>
             {children}
         </AuthContext.Provider>
     );

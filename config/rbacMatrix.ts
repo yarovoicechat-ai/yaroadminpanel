@@ -29,7 +29,6 @@ const ADMIN_DENIED_ROUTES = [
 const OPERATOR_DENIED_ROUTES = [
   '/operators',
   '/organization',
-  '/tasks',
   '/events',
   '/settings',
   '/security',
@@ -44,7 +43,6 @@ const OPERATOR_DENIED_ROUTES = [
   '/sellers',
   '/deletions',
   '/bans',
-  '/messages',
   '/kyc',
   '/withdrawals',
   '/moderation',
@@ -307,10 +305,17 @@ export const ROLE_PERMISSION_MATRIX: Record<string, RoleDefinition> = {
  */
 export const isRouteAllowed = (role: string, route: string): boolean => {
   if (!role || role === 'owner') return true;
-  const roleDef = ROLE_PERMISSION_MATRIX[role];
-  if (!roleDef) return true;
 
   const path = route.split('?')[0].split('#')[0];
+
+  // Universal routes accessible to all authenticated roles
+  const UNIVERSAL_ALLOWED_ROUTES = ['/dashboard', '/profile', '/tasks', '/messages/system', '/messages/activity'];
+  if (UNIVERSAL_ALLOWED_ROUTES.some((allowed) => path === allowed || path.startsWith(`${allowed}/`))) {
+    return true;
+  }
+
+  const roleDef = ROLE_PERMISSION_MATRIX[role];
+  if (!roleDef) return true;
 
   if (role === 'superAdmin' && SUPER_ADMIN_DENIED_ROUTES.some(
     (denied) => path === denied || path.startsWith(`${denied}/`)

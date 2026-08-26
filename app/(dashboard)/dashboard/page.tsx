@@ -12,6 +12,8 @@ import { AvatarRequestsWidget } from '@/components/dashboard/AvatarRequestsWidge
 
 import { useAuth } from '@/contexts/AuthContext';
 import { MeethiChatStyleDashboard } from '@/components/dashboard/MeethiChatStyleDashboard';
+import OwnerDashboardPage from '@/app/(owner)/owner/page';
+import OperatorDashboardPage from '@/app/(operator)/operator/page';
 
 export type StatsCardProps = {
   title: string;
@@ -25,6 +27,14 @@ export type StatsCardProps = {
 export default function Home() {
   const { user } = useAuth();
   
+  if (user?.role === 'owner') {
+    return <OwnerDashboardPage />;
+  }
+
+  if (user?.role === 'operator') {
+    return <OperatorDashboardPage />;
+  }
+
   return <MeethiChatStyleDashboard />;
 
   const [loading, setLoading] = useState(true);

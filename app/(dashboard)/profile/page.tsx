@@ -9,8 +9,10 @@ import { User, Mail, Shield, Calendar, MapPin, Camera, Save } from "lucide-react
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function ProfilePage() {
+    const { updateUserDP } = useAuth();
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [formData, setFormData] = useState({
@@ -74,14 +76,37 @@ export default function ProfilePage() {
                 <div className="space-y-6">
                     <Card glass className="text-center">
                         <CardHeader>
-                            <div className="relative mx-auto w-32 h-32 mb-4">
+                            <div className="relative mx-auto w-32 h-32 mb-4 group cursor-pointer">
                                 <div className="w-full h-full rounded-full bg-gradient-to-br from-dosti-500 to-indigo-600 flex items-center justify-center text-4xl font-bold text-white border-4 border-slate-900 shadow-xl overflow-hidden">
-                                    {profile.image ? (
-                                        <img src={profile.image} alt="Profile" className="w-full h-full object-cover" />
+                                    {profile.image || profile.profilePhoto || profile.avatar ? (
+                                        <img src={profile.image || profile.profilePhoto || profile.avatar} alt="Profile" className="w-full h-full object-cover" />
                                     ) : (
                                         initials
                                     )}
                                 </div>
+                                <label htmlFor="dp-upload" className="absolute inset-0 bg-slate-950/60 rounded-full flex flex-col items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                                    <Camera className="w-6 h-6 mb-1 text-pink-400" />
+                                    <span className="text-[10px] font-bold">Change DP</span>
+                                </label>
+                                <input
+                                    id="dp-upload"
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                            const reader = new FileReader();
+                                            reader.onloadend = () => {
+                                                const result = reader.result as string;
+                                                setProfile((prev: any) => ({ ...prev, image: result, profilePhoto: result }));
+                                                updateUserDP(result);
+                                                toast.success("Display picture (DP) updated successfully!");
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }
+                                    }}
+                                />
                             </div>
                             <CardTitle>{profile.name}</CardTitle>
                             <CardDescription className="capitalize">{profile.role}</CardDescription>
