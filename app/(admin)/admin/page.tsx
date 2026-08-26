@@ -1,8 +1,8 @@
 'use client';
 
-import { YociStyleDashboard } from '@/components/dashboard/YociStyleDashboard';
+import { MeethiChatStyleDashboard } from '@/components/dashboard/MeethiChatStyleDashboard';
 
 export default function AdminDashboardPage() {
-    return <YociStyleDashboard />;
+    return <MeethiChatStyleDashboard />;
 }
 

@@ -460,10 +460,11 @@ export default function Sidebar() {
     }, [pathname]);
 
     const activeSections = (mounted && isManagementPanel) ? managementSidebarSections : adminSidebarSections;
-    const panelTitle = (mounted && isManagementPanel) ? 'App Management Panel' : 'Mithi Chat EMS';
 
     const filteredSections = activeSections.map(section => {
         if (!hasDynamicMenu(section.category)) return null;
+        if (user?.role === 'admin' && section.title.toUpperCase().includes('REFERRAL')) return null;
+
         const filteredItems = section.items.map(item => {
             if (item.submenu && item.submenu.length > 0) {
                 const validSubmenu = item.submenu.filter(sub =>
@@ -489,7 +490,7 @@ export default function Sidebar() {
         };
     }).filter(Boolean) as SidebarSection[];
 
-    const displayedSections = mounted ? filteredSections : activeSections;
+    const displayedSections = filteredSections;
     const currentRole = user?.role ? (roleConfig[user.role] || defaultRoleConfig) : defaultRoleConfig;
     const RoleIcon = currentRole.icon;
 
@@ -526,9 +527,17 @@ export default function Sidebar() {
                 )}
             >
                 <div className="px-6 mb-6 mt-4 md:mt-0 flex items-center justify-between">
-                    <h1 className="text-xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent" suppressHydrationWarning>
-                        {panelTitle}
-                    </h1>
+                    <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-pink-600 via-rose-500 to-amber-400 flex items-center justify-center text-white font-black shadow-lg shadow-pink-500/20 ring-2 ring-pink-400/30">
+                            <span className="text-base">💖</span>
+                        </div>
+                        <div>
+                            <h1 className="text-base font-black bg-gradient-to-r from-pink-400 via-rose-300 to-amber-300 bg-clip-text text-transparent tracking-tight leading-none" suppressHydrationWarning>
+                                Meethi Chat
+                            </h1>
+                            <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase mt-0.5">EMS Enterprise</p>
+                        </div>
+                    </div>
                 </div>
 
                 <nav className="flex-1 px-4 space-y-4 overflow-y-auto pb-6">
