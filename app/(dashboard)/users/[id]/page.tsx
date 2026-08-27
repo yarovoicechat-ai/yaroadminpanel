@@ -12,6 +12,7 @@ import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, Save, ShieldCheck, User as UserIcon, Coins, Award, Globe, Calendar, Ban, CheckCircle, Info, Mail, Phone, Lock, Edit3 } from 'lucide-react';
 import type { User } from '@/types/models';
+import { getAdminAvatar } from '@/lib/avatar';
 
 export default function UserDetailPage() {
     const { user: currentUser } = useAuth();
@@ -155,11 +156,7 @@ export default function UserDetailPage() {
             {/* Profile Cover Header */}
             <div className="relative rounded-xl overflow-hidden bg-gradient-to-r from-violet-900/40 via-fuchsia-900/30 to-[#0f0e15] border border-slate-800/80 p-6 flex flex-col sm:flex-row items-center gap-6">
                 <div className="h-24 w-24 rounded-full bg-slate-900 border-2 border-fuchsia-500/50 flex items-center justify-center text-3xl font-bold text-slate-300 overflow-hidden shadow-2xl">
-                    {user.image ? (
-                        <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
-                    ) : (
-                        user.name?.charAt(0) || 'U'
-                    )}
+                    <img src={getAdminAvatar(user)} alt={user.name} className="h-full w-full object-cover" />
                 </div>
                 <div className="text-center sm:text-left">
                     <h1 className="text-3xl font-bold text-white tracking-tight">{user.name}</h1>

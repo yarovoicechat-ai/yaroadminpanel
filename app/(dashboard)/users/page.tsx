@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { getAdminAvatar } from '@/lib/avatar';
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
@@ -677,11 +677,7 @@ export default function UsersPage() {
                                             {showCol('Image') && (
                                                 <TableCell>
                                                     <div className="h-8 w-8 rounded overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center">
-                                                        {user.image ? (
-                                                            <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
-                                                        ) : (
-                                                            <UserIcon className="h-4 w-4 text-slate-500" />
-                                                        )}
+                                                        <img src={getAdminAvatar(user)} alt={user.name} className="h-full w-full object-cover" />
                                                     </div>
                                                 </TableCell>
                                             )}

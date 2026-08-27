@@ -17,6 +17,7 @@ import {
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { ImageZoomModal } from '@/components/ui/ImageZoomModal';
+import { getAdminAvatar } from '@/lib/avatar';
 
 interface HostUser {
     _id: string;
@@ -311,16 +312,10 @@ export default function HostManagementPage() {
                                             {/* Photo */}
                                             <TableCell>
                                                 <div className="relative w-10 h-10">
-                                                    {host.image ? (
-                                                        <img src={host.image} alt={host.name}
-                                                            className="h-10 w-10 rounded-full object-cover ring-2 ring-violet-500/30 cursor-pointer hover:scale-110 transition-all"
-                                                            title="Click to view & zoom photo"
-                                                            onClick={() => setPreviewData({ url: host.image!, title: `Host Photo - ${host.name} (#${host.userId})` })} />
-                                                    ) : (
-                                                        <div className="h-10 w-10 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white font-bold text-sm ring-2 ring-violet-500/20">
-                                                            {host.name?.charAt(0)?.toUpperCase() || 'H'}
-                                                        </div>
-                                                    )}
+                                                    <img src={getAdminAvatar(host, 'female')} alt={host.name}
+                                                        className="h-10 w-10 rounded-full object-cover ring-2 ring-violet-500/30 cursor-pointer hover:scale-110 transition-all"
+                                                        title="Click to view & zoom photo"
+                                                        onClick={() => setPreviewData({ url: getAdminAvatar(host, 'female'), title: `Host Photo - ${host.name} (#${host.userId})` })} />
                                                     {host.isOnline && (
                                                         <span className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-emerald-400 rounded-full border-2 border-slate-900" />
                                                     )}
