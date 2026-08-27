@@ -13,6 +13,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/Table";
+import { getAdminAvatar } from '@/lib/avatar';
 import {
     Dialog,
     DialogContent,
@@ -172,11 +173,7 @@ export default function RoomsPage() {
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <div className="h-7 w-7 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center font-bold text-xs">
-                                                    {room.ownerId?.image ? (
-                                                        <img src={room.ownerId.image} alt={room.ownerId.name} className="h-full w-full object-cover" />
-                                                    ) : (
-                                                        room.ownerId?.name?.[0]?.toUpperCase() || 'H'
-                                                    )}
+                                                    <img src={getAdminAvatar(room.ownerId)} alt={room.ownerId?.name} className="h-full w-full object-cover" />
                                                 </div>
                                                 <div>
                                                     <p className="text-sm font-semibold text-slate-200">{room.ownerId?.name || 'Unknown'}</p>

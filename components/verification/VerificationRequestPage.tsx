@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/Table';
+import { getAdminAvatar } from '@/lib/avatar';
 
 type Kind = 'face' | 'kyc';
 const statuses = ['ALL', 'PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'RESUBMISSION_REQUIRED'];
@@ -141,7 +142,7 @@ export default function VerificationRequestPage({ kind }: { kind: Kind }) {
         {!loading && !items.length ? <TableRow><TableCell colSpan={7} className="h-32 text-center text-muted-foreground">No requests found.</TableCell></TableRow> :
           items.map(item => { const user = item.userId || {}; const rowStatus = item.status || item.overallStatus; return <TableRow key={item.requestId}>
             <TableCell className="font-mono text-xs">{item.requestId}</TableCell>
-            <TableCell><div className="flex items-center gap-2">{user.image ? <img src={user.image} alt="" className="h-8 w-8 rounded-full object-cover" /> : null}<div><p className="font-semibold">{user.name || user.userName || 'User'}</p><p className="text-xs text-muted-foreground">{user.meethiId || user.userId} · {user.phoneNumber || '—'}</p></div></div></TableCell>
+            <TableCell><div className="flex items-center gap-2"><img src={getAdminAvatar(user)} alt="" className="h-8 w-8 rounded-full object-cover" /><div><p className="font-semibold">{user.name || user.userName || 'User'}</p><p className="text-xs text-muted-foreground">{user.meethiId || user.userId} · {user.phoneNumber || '—'}</p></div></div></TableCell>
             {kind === 'kyc' && <TableCell><p>{item.document?.type?.replaceAll('_', ' ')}</p><p className="font-mono text-xs text-muted-foreground">{item.document?.maskedDocumentNumber}</p></TableCell>}
             <TableCell><Badge variant={rowStatus === 'APPROVED' ? 'success' : rowStatus === 'REJECTED' ? 'destructive' : 'secondary'}>{rowStatus}</Badge></TableCell>
             <TableCell>{item.priority}</TableCell><TableCell className="text-xs">{new Date(item.submittedAt).toLocaleString()}</TableCell>
@@ -161,8 +162,7 @@ export default function VerificationRequestPage({ kind }: { kind: Kind }) {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-xl border border-white/10 bg-black/20 p-2">
               <p className="mb-2 text-xs font-semibold text-muted-foreground">Current profile</p>
-              {detail.request.userId?.image ? <a href={detail.request.userId.image} target="_blank" rel="noreferrer"><img src={detail.request.userId.image} alt="Current profile" className="h-52 w-full rounded-lg object-contain" /></a>
-                : <div className="flex h-52 items-center justify-center text-xs text-muted-foreground">No profile image</div>}
+              <a href={getAdminAvatar(detail.request.userId)} target="_blank" rel="noreferrer"><img src={getAdminAvatar(detail.request.userId)} alt="Current profile" className="h-52 w-full rounded-lg object-contain" /></a>
             </div>
             <PrivateImage label="Live submitted selfie" path={kind === 'face' ? detail.request.faceImageUrl : detail.request.face?.liveSelfieUrl} />
             {kind === 'kyc' && <PrivateImage label="Document front" path={detail.request.document?.frontImageUrl} />}

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getAdminAvatar } from '@/lib/avatar';
 import { Badge } from "@/components/ui/Badge";
