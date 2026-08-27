@@ -21,7 +21,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     value,
     onChange,
     error: propError,
-    acceptedFormats = ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg'],
+    acceptedFormats = ['pdf', 'doc', 'docx', 'png', 'jpg', 'jpeg', 'webp', 'svg', 'txt'],
     maxSizeMB = 10,
 }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);

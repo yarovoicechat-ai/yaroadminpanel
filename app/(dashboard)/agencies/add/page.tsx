@@ -186,7 +186,7 @@ export default function CreateAgencyPage() {
                                         <span>{uploadingLogo ? 'Processing...' : agencyLogo ? 'Change Image' : 'Select Logo Image'}</span>
                                         <input
                                             type="file"
-                                            accept="image/*"
+                                            accept="image/*,application/pdf,.pdf,.doc,.docx"
                                             className="hidden"
                                             onChange={handleLogoFileChange}
                                         />
