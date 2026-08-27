@@ -18,6 +18,36 @@ export function normalizeGender(gender: any): 'female' | 'male' | 'neutral' {
 }
 
 /**
+ * Validates if custom avatar string is a valid web image URL
+ */
+export function isValidAvatarUrl(url: any): boolean {
+  if (!url || typeof url !== 'string') return false;
+  const str = url.trim();
+  if (
+    str === '' ||
+    str.toLowerCase() === 'null' ||
+    str.toLowerCase() === 'undefined' ||
+    str.toLowerCase().includes('placeholder')
+  ) {
+    return false;
+  }
+
+  const lower = str.toLowerCase();
+  // Valid avatar URL must start with http://, https://, data:image/, /uploads/, /avatars/, or static asset path
+  if (
+    lower.startsWith('http://') ||
+    lower.startsWith('https://') ||
+    lower.startsWith('data:image/') ||
+    lower.startsWith('/uploads/') ||
+    lower.startsWith('/avatars/')
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Resolves avatar image URL for Admin Panel users, hosts, and verification items.
  * Priority:
  * 1. Valid custom avatar URL (image, avatar, profilePic, photo, imageUrl, etc.)
@@ -55,15 +85,8 @@ export function getAdminAvatar(userOrHost: any, fallbackGender?: string): string
   }
 
   // Validate custom URL string
-  if (
-    customUrl &&
-    typeof customUrl === 'string' &&
-    customUrl.trim() !== '' &&
-    customUrl.trim().toLowerCase() !== 'null' &&
-    customUrl.trim().toLowerCase() !== 'undefined' &&
-    !customUrl.includes('placeholder.com')
-  ) {
-    let cleanUrl = customUrl.trim();
+  if (isValidAvatarUrl(customUrl)) {
+    let cleanUrl = (customUrl as string).trim();
     if (cleanUrl.startsWith('http://')) {
       cleanUrl = cleanUrl.replace(/^http:\/\//, 'https://');
     }

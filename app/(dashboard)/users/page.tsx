@@ -678,7 +678,14 @@ export default function UsersPage() {
                                             {showCol('Image') && (
                                                 <TableCell>
                                                     <div className="h-8 w-8 rounded overflow-hidden bg-slate-800 border border-slate-700 flex items-center justify-center">
-                                                        <img src={getAdminAvatar(user)} alt={user.name} className="h-full w-full object-cover" />
+                                                        <img
+                                                            src={getAdminAvatar(user)}
+                                                            alt={user.name}
+                                                            className="h-full w-full object-cover"
+                                                            onError={(e) => {
+                                                                (e.target as HTMLImageElement).src = getAdminAvatar(null, user.gender);
+                                                            }}
+                                                        />
                                                     </div>
                                                 </TableCell>
                                             )}
