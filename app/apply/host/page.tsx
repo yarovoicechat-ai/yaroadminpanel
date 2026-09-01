@@ -89,7 +89,7 @@ function HostFormContent() {
                 { name: 'Resume', documentType: 'Resume', url: form.resume },
                 { name: 'Aadhaar Front', documentType: 'GovtID', url: form.adharFront || form.idProof },
                 { name: 'Aadhaar Back', documentType: 'GovtID', url: form.adharBack || form.addressProof },
-                { name: 'PAN Card', documentType: 'Certificate', url: form.pan },
+                { name: 'Selfie with ID Card', documentType: 'SelfieWithID', url: form.pan },
                 { name: 'Host 30Sec Voice Audition', documentType: 'Voice', url: form.portfolio },
                 { name: 'Portfolio', documentType: 'Portfolio', url: form.portfolio },
                 { name: 'Experience Letter', documentType: 'Experience', url: form.experienceLetter },
@@ -108,6 +108,7 @@ function HostFormContent() {
                 voiceAudioUrl: form.portfolio,
                 audio: form.portfolio,
                 voice: form.portfolio,
+                selfieWithIdCard: form.pan,
                 documents,
                 city: form.city.trim(),
                 state: form.state.trim(),
@@ -364,10 +365,10 @@ function HostFormContent() {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <FileUpload
-                            label="PAN Card Document"
+                            label="Selfie with ID Card"
                             name="pan"
                             required
-                            value={form.pan || form.experienceLetter}
+                            value={form.pan}
                             onChange={(fileOrUrl) => {
                                 if (typeof fileOrUrl === 'string') {
                                     setForm(prev => ({ ...prev, pan: fileOrUrl }));

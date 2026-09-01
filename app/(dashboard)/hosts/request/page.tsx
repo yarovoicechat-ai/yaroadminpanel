@@ -54,7 +54,7 @@ export interface HostRequestData {
     panNo?: string;
     aadhaarFront: string;
     aadhaarBack: string;
-    panCard: string;
+    selfieWithIdCard: string;
     voiceAudioUrl: string;
     voiceDuration: string; // e.g. "0:28"
     voiceWaveform: number[]; // Array of waveform heights
@@ -249,7 +249,7 @@ export default function HostRequestsPage() {
                         panNo: d.panNo || '',
                         aadhaarFront: d.adharFront || d.aadhaarFront || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('front') || doc.documentType === 'GovtID')?.url : '') || '',
                         aadhaarBack: d.adharBack || d.aadhaarBack || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('back'))?.url : '') || '',
-                        panCard: d.pan || d.panCard || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('pan') || doc.documentType === 'Certificate')?.url : '') || '',
+                        selfieWithIdCard: d.selfieWithIdCard || d.pan || d.panCard || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('selfie') || doc.name?.toLowerCase().includes('pan') || doc.documentType === 'SelfieWithID' || doc.documentType === 'Certificate')?.url : '') || '',
                         voiceAudioUrl: d.voiceAudioUrl || d.audio || d.audioUrl || d.voiceUrl || d.voice || d.portfolio || d.introAudio || d.audioURL || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.documentType === 'Voice' || doc.documentType === 'Audio' || doc.documentType === 'Portfolio' || doc.name?.toLowerCase().includes('voice') || doc.name?.toLowerCase().includes('portfolio') || doc.name?.toLowerCase().includes('audition'))?.url : '') || '',
                         voiceDuration: d.voiceDuration || '0:30',
                         voiceWaveform: [30, 50, 70, 90, 60, 40, 80, 95, 75, 45, 85, 65, 90, 50, 35, 75, 85, 60, 40, 25],
@@ -863,7 +863,7 @@ export default function HostRequestsPage() {
                                 </th>
                                 <th className="p-3.5 whitespace-nowrap text-center">Aadhaar Front</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">Aadhaar Back</th>
-                                <th className="p-3.5 whitespace-nowrap text-center">PAN Card</th>
+                                <th className="p-3.5 whitespace-nowrap text-center">Selfie with ID Card</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">Host Voice</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">Action</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">
@@ -1108,21 +1108,21 @@ export default function HostRequestsPage() {
                                             )}
                                         </td>
 
-                                        {/* 16. PAN Card */}
+                                        {/* 16. Selfie with ID Card */}
                                         <td className="p-3.5 text-center whitespace-nowrap">
-                                            {req.panCard ? (
+                                            {req.selfieWithIdCard ? (
                                                 <div className="flex items-center justify-center gap-1.5">
                                                     <button
-                                                        onClick={() => setImageZoom({ isOpen: true, url: req.panCard, title: `${req.name} - PAN Card`, zoom: 1, rotate: 0 })}
+                                                        onClick={() => setImageZoom({ isOpen: true, url: req.selfieWithIdCard, title: `${req.name} - Selfie with ID Card`, zoom: 1, rotate: 0 })}
                                                         className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-emerald-500 transition-all"
                                                     >
-                                                        <img src={req.panCard} alt="PAN Card" className="w-12 h-8 object-cover" />
+                                                        <img src={req.selfieWithIdCard} alt="Selfie with ID Card" className="w-12 h-8 object-cover" />
                                                         <div className="absolute inset-0 bg-emerald-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
                                                             <Eye className="w-3.5 h-3.5" />
                                                         </div>
                                                     </button>
                                                     <button
-                                                        onClick={() => setImageZoom({ isOpen: true, url: req.panCard, title: `${req.name} - PAN Card`, zoom: 1, rotate: 0 })}
+                                                        onClick={() => setImageZoom({ isOpen: true, url: req.selfieWithIdCard, title: `${req.name} - Selfie with ID Card`, zoom: 1, rotate: 0 })}
                                                         className="text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
                                                     >
                                                         View
@@ -1562,20 +1562,20 @@ export default function HostRequestsPage() {
                                             <p className="text-[11px] text-slate-500">Address Proof Verified</p>
                                         </div>
 
-                                        {/* PAN Card */}
+                                        {/* Selfie with ID Card */}
                                         <div className="bg-slate-50 dark:bg-slate-800/40 p-4 rounded-xl border border-slate-200/80 dark:border-slate-800 space-y-3">
                                             <div className="flex items-center justify-between">
-                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">PAN Card</h4>
-                                                <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${selectedReq.panCard ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950' : 'text-slate-400 bg-slate-100 dark:bg-slate-800'}`}>
-                                                    {selectedReq.panCard ? 'Uploaded' : 'Not Uploaded'}
+                                                <h4 className="font-bold text-slate-800 dark:text-slate-200">Selfie with ID Card</h4>
+                                                <span className={`text-[10px] px-2 py-0.5 rounded font-bold ${selectedReq.selfieWithIdCard ? 'text-emerald-600 bg-emerald-50 dark:bg-emerald-950' : 'text-slate-400 bg-slate-100 dark:bg-slate-800'}`}>
+                                                    {selectedReq.selfieWithIdCard ? 'Uploaded' : 'Not Uploaded'}
                                                 </span>
                                             </div>
-                                            {selectedReq.panCard ? (
+                                            {selectedReq.selfieWithIdCard ? (
                                                 <div
-                                                    onClick={() => setImageZoom({ isOpen: true, url: selectedReq.panCard, title: `${selectedReq.name} - PAN Card`, zoom: 1, rotate: 0 })}
+                                                    onClick={() => setImageZoom({ isOpen: true, url: selectedReq.selfieWithIdCard, title: `${selectedReq.name} - Selfie with ID Card`, zoom: 1, rotate: 0 })}
                                                     className="relative group rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 cursor-pointer shadow-xs"
                                                 >
-                                                    <img src={selectedReq.panCard} alt="PAN Card" className="w-full h-36 object-cover" />
+                                                    <img src={selectedReq.selfieWithIdCard} alt="Selfie with ID Card" className="w-full h-36 object-cover" />
                                                     <div className="absolute inset-0 bg-emerald-900/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white transition-opacity font-bold gap-1.5">
                                                         <ZoomIn className="w-4 h-4" /> Click to Zoom
                                                     </div>
