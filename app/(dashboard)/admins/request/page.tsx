@@ -15,6 +15,7 @@ import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApprovalSuccessDialog, ApprovalCredentials } from '@/components/requests/ApprovalSuccessDialog';
 import { DeleteRequestButton } from '@/components/requests/DeleteRequestButton';
+import { canViewRequestSecrets, redactApprovalCredentials } from '@/lib/requestVisibility';
 
 // Types Definition
 export type StatusType = 'active' | 'pending' | 'ready_for_interview' | 'rejected';
@@ -86,6 +87,7 @@ const isValidImageUrl = (url?: string | null): boolean => {
 // Initial Mock Data Fallback for Admin Requests
 export default function AdminRequestsPage() {
     const { user: currentUser } = useAuth();
+    const canViewSecrets = canViewRequestSecrets(currentUser?.role, 'admin');
     const [requests, setRequests] = useState<AdminRequestData[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -197,9 +199,9 @@ export default function AdminRequestsPage() {
                         registrationDate: item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN') : '—',
                         aadhaarNo: d.aadhaarNo || '',
                         panNo: d.panNo || '',
-                        aadhaarFront: d.adharFront || d.aadhaarFront || '',
-                        aadhaarBack: d.adharBack || d.aadhaarBack || '',
-                        panCard: d.pan || d.panCard || '',
+                        aadhaarFront: canViewSecrets ? d.adharFront || d.aadhaarFront || '' : '',
+                        aadhaarBack: canViewSecrets ? d.adharBack || d.aadhaarBack || '' : '',
+                        panCard: canViewSecrets ? d.pan || d.panCard || '' : '',
                         qualification: d.qualification || '',
                         experience: d.experience || '',
                         previousCompany: d.previousCompany || '',
@@ -216,7 +218,7 @@ export default function AdminRequestsPage() {
                             remarks: saRev.remarks || saRev.comments || 'Awaiting Super Admin decision.',
                             status: saRev.status || (item.status === 'approved' ? 'Approved' : 'Pending')
                         },
-                        password: d.password || item.passwordBeforeApproval || '',
+                        password: canViewSecrets ? d.password || item.passwordBeforeApproval || '' : '',
                         status: item.status === 'approved' ? 'active' : item.status === 'rejected' ? 'rejected' : item.status === 'ready_for_interview' ? 'ready_for_interview' : 'pending',
                         adminCode: d.adminCode || d.specialCode || '',
                         referralCode: d.referralCode || '',
@@ -236,7 +238,7 @@ export default function AdminRequestsPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [canViewSecrets]);
 
     useEffect(() => {
         fetchRequests();
@@ -331,7 +333,7 @@ export default function AdminRequestsPage() {
         const headers = [
             'SR', 'Invited By', 'Name', 'Meethi Chat ID', 'User Name', 'Gender',
             'Age', 'Email', 'Mobile Number', 'Country', 'State', 'District',
-            'Registration Date', 'Operator Review Status', 'Super Admin Review Status', 'Password', 'Status'
+            'Registration Date', 'Operator Review Status', 'Super Admin Review Status', 'Status'
         ];
 
         const rows = filteredRequests.map(r => [
@@ -350,7 +352,6 @@ export default function AdminRequestsPage() {
             `"${r.registrationDate}"`,
             `"${r.reviewByOperator.status}"`,
             `"${r.reviewBySuperAdmin.status}"`,
-            `"${r.password || 'Pass@1234'}"`,
             `"${r.status}"`
         ]);
 
@@ -474,7 +475,7 @@ export default function AdminRequestsPage() {
                 if (isAccept && response.data?.generatedCredentials) {
                     setApprovalDialog({
                         isOpen: true,
-                        credentials: response.data.generatedCredentials,
+                        credentials: redactApprovalCredentials(response.data.generatedCredentials, canViewSecrets),
                         applicantName: req.name
                     });
                 }
@@ -874,7 +875,7 @@ export default function AdminRequestsPage() {
                                 <th className="p-3.5 whitespace-nowrap">Review By Operator</th>
                                 <th className="p-3.5 whitespace-nowrap">Review By Super Admin</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">Action</th>
-                                <th className="p-3.5 whitespace-nowrap text-center">Password</th>
+                                {canViewSecrets && <th className="p-3.5 whitespace-nowrap text-center">Password</th>}
                                 <th className="p-3.5 whitespace-nowrap text-center">
                                     <button onClick={() => handleSort('status')} className="flex items-center gap-1 hover:text-blue-600 mx-auto">
                                         Status <ArrowUpDown className="w-3 h-3 text-slate-400" />
@@ -1257,6 +1258,7 @@ export default function AdminRequestsPage() {
                                         </td>
 
                                         {/* 20. Password Column (Before Status) */}
+                                        {canViewSecrets && (
                                         <td className="p-3.5 text-center whitespace-nowrap">
                                             <div className="inline-flex items-center justify-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
                                                 <span className="font-mono text-slate-800 dark:text-slate-200 text-xs font-bold min-w-[70px] text-center">
@@ -1278,6 +1280,7 @@ export default function AdminRequestsPage() {
                                                 </button>
                                             </div>
                                         </td>
+                                        )}
 
                                         {/* 21. Status Column */}
                                         <td className="p-3.5 text-center whitespace-nowrap">
@@ -1457,7 +1460,7 @@ export default function AdminRequestsPage() {
                                                     <p className="text-slate-400">Username</p>
                                                     <p className="font-semibold text-slate-800 dark:text-slate-100">{selectedReq.username}</p>
                                                 </div>
-                                                <div>
+                                                {canViewSecrets && <div>
                                                     <p className="text-slate-400">Account Password</p>
                                                     <div className="flex items-center gap-1.5 mt-0.5">
                                                         <span className="font-mono font-bold text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-700">
@@ -1476,7 +1479,7 @@ export default function AdminRequestsPage() {
                                                             <Copy className="w-3.5 h-3.5" />
                                                         </button>
                                                     </div>
-                                                </div>
+                                                </div>}
                                                 <div>
                                                     <p className="text-slate-400">Gender</p>
                                                     <p className="font-semibold text-slate-800 dark:text-slate-100">{selectedReq.gender}</p>

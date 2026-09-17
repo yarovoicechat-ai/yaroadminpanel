@@ -286,7 +286,7 @@ export default function UsersPage() {
             const response = await apiClient.post(API_ENDPOINTS.ADMIN.CREATE_EMPLOYEE, {
                 name: newUserName,
                 email: newUserEmail,
-                password: 'Mithi@12345',
+                password: 'VoiceCallClub@12345',
                 targetRole: 'user'
             });
 
@@ -405,11 +405,16 @@ export default function UsersPage() {
 
     // Client-side search and dropdown filtering
     const filteredUsers = users.filter(user => {
-        const matchesSearch = 
-            user.name?.toLowerCase().includes(search.toLowerCase()) ||
-            user.email?.toLowerCase().includes(search.toLowerCase()) ||
-            user.userId?.toString().includes(search) ||
-            user.userName?.toLowerCase().includes(search.toLowerCase());
+        const query = search.trim().toLowerCase();
+        const matchesSearch = !query || 
+            user.name?.toLowerCase().includes(query) ||
+            user.email?.toLowerCase().includes(query) ||
+            user.userId?.toString().includes(query) ||
+            (user as any).meethiId?.toString().includes(query) ||
+            user.phoneNumber?.includes(query) ||
+            user.userName?.toLowerCase().includes(query) ||
+            (user as any).employeeCode?.toLowerCase().includes(query) ||
+            (user as any).specialCode?.toLowerCase().includes(query);
 
         const matchesGender = filterGender === 'all' || user.gender === filterGender;
 

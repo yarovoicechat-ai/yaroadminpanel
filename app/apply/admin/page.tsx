@@ -151,7 +151,7 @@ function AdminFormContent() {
         <RoleCreateLayout
             roleKey="admin"
             roleTitle="Admin Application Portal"
-            roleSubtitle="Apply for Platform Administrator & Governance clearance on MithiChat."
+            roleSubtitle="Apply for Platform Administrator & Governance clearance on Voice Call Club."
             badgeText="Platform Administrator Application"
             themeGradient="from-slate-950 via-blue-950 to-indigo-950"
             accentColor="blue"

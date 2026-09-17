@@ -160,7 +160,8 @@ export default function UserDetailPage() {
                 </div>
                 <div className="text-center sm:text-left">
                     <h1 className="text-3xl font-bold text-white tracking-tight">{user.name}</h1>
-                    <div className="flex items-center justify-center sm:justify-start gap-2 mt-1">
+                    <p className="text-sm font-mono text-cyan-400 font-bold mt-1">ID: #{user.userId}</p>
+                    <div className="flex items-center justify-center sm:justify-start gap-2 mt-2">
                         <Badge variant="secondary" className="bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20 capitalize font-bold text-xs">{user.role}</Badge>
                         <Badge variant={!isBlocked ? 'success' : 'destructive'} className="font-bold text-xs">
                             {!isBlocked ? 'Active' : 'Suspended'}
@@ -170,7 +171,7 @@ export default function UserDetailPage() {
             </div>
 
             <div className="grid gap-6 lg:grid-cols-5">
-                {/* Left Panel: Profile Info Display (Matches Screenshot) */}
+                {/* Left Panel: Profile Info Display */}
                 <div className="lg:col-span-2 space-y-6">
                     <Card className="border-slate-800 bg-[#161520] shadow-xl">
                         <CardHeader className="pb-3">
@@ -186,8 +187,12 @@ export default function UserDetailPage() {
                             {/* Global Unique Identity System Badges */}
                             <div className="space-y-3 pt-2 border-t border-slate-800/60">
                                 <div className="flex items-center justify-between">
+                                    <span className="text-slate-400 font-semibold">10-Digit User ID :-</span>
+                                    <span className="text-cyan-400 font-bold font-mono text-sm bg-cyan-950/40 px-2.5 py-0.5 rounded border border-cyan-500/30">#{user.userId}</span>
+                                </div>
+                                <div className="flex items-center justify-between">
                                     <span className="text-slate-400 font-semibold">Mongo ObjectId :-</span>
-                                    <span className="text-slate-300 font-mono text-xs select-all bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{user._id}</span>
+                                    <span className="text-slate-400 font-mono text-xs select-all bg-slate-900 px-2 py-0.5 rounded border border-slate-800">{user._id}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-slate-400 font-semibold">Employee Code :-</span>

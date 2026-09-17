@@ -14,7 +14,7 @@ import { getAdminAvatar } from '@/lib/avatar';
 
 type Kind = 'face' | 'kyc';
 const statuses = ['ALL', 'PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'RESUBMISSION_REQUIRED'];
-const apiBase = () => typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname) ? (process.env.NEXT_PUBLIC_LOCAL_API_BASE_URL || 'http://localhost:3001') : (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.mithichat.live');
+const apiBase = () => typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname) ? (process.env.NEXT_PUBLIC_LOCAL_API_BASE_URL || 'http://localhost:3001') : (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001');
 
 function PrivateImage({ path, label }: { path?: string; label: string }) {
   const [src, setSrc] = useState<string>();

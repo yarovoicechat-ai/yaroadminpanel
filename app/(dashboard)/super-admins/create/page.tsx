@@ -67,7 +67,7 @@ export default function CreateSuperAdminPage() {
 
     const invitationLink = typeof window !== 'undefined'
         ? `${window.location.origin}/register?token=${invitationToken}`
-        : `https://admin.mithichat.live/register?token=${invitationToken}`;
+        : `https://admin.voicecallclub.com/register?token=${invitationToken}`;
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(invitationLink);

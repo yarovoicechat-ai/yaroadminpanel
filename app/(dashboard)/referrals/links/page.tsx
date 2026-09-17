@@ -17,7 +17,7 @@ export default function ReferralLinks() {
     }
   }, []);
 
-  const adminFormBaseUrl = localOrigin || 'https://admin.mithichat.live';
+  const adminFormBaseUrl = localOrigin || 'https://admin.voicecallclub.com';
 
   const referralCode = (user as any)?.referralCode || (user as any)?.employeeCode || (user as any)?.specialCode || (user as any)?.mithiId || user?.meethiId || (user?.role === 'owner' ? 'OS000001' : '');
 
@@ -39,21 +39,21 @@ export default function ReferralLinks() {
     {
       role: 'Operator',
       desc: 'Link operators directly to your organization.',
-      url: `${localOrigin ? `${localOrigin}/apply/operator` : 'https://operator.mithichat.live/'}?referrer=${referralCode}&role=operator`,
+      url: `${localOrigin ? `${localOrigin}/apply/operator` : 'https://operator.voicecallclub.com/'}?referrer=${referralCode}&role=operator`,
       icon: Key,
       color: 'text-purple-400 border-purple-500/20 bg-purple-500/5'
     },
     {
       role: 'Agency',
       desc: 'Recruit sub-agencies. They inherit you as their parent node.',
-      url: `${localOrigin ? `${localOrigin}/apply/agency` : 'https://agency.mithichat.live/'}?referrer=${referralCode}&role=agency`,
+      url: `${localOrigin ? `${localOrigin}/apply/agency` : 'https://agency.voicecallclub.com/'}?referrer=${referralCode}&role=agency`,
       icon: Briefcase,
       color: 'text-amber-400 border-amber-500/20 bg-amber-500/5'
     },
     {
       role: 'Host',
       desc: 'Sign up new hosts under your agency hierarchy automatically.',
-      url: `${localOrigin ? `${localOrigin}/apply/host` : 'https://host.mithichat.live/'}?referrer=${referralCode}&role=host`,
+      url: `${localOrigin ? `${localOrigin}/apply/host` : 'https://host.voicecallclub.com/'}?referrer=${referralCode}&role=host`,
       icon: Video,
       color: 'text-lime-400 border-lime-500/20 bg-lime-500/5'
     },

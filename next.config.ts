@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'api.mithichat.live',
+        hostname: 'api.voicecallclub.com',
       },
       {
         protocol: 'https',

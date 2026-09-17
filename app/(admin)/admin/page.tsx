@@ -1,8 +1,8 @@
 'use client';
 
-import { MeethiChatStyleDashboard } from '@/components/dashboard/MeethiChatStyleDashboard';
+import { RoleManagementDashboard } from '@/components/dashboard/RoleManagementDashboard';
 
 export default function AdminDashboardPage() {
-    return <MeethiChatStyleDashboard />;
+    return <RoleManagementDashboard />;
 }
 

@@ -165,7 +165,7 @@ function AgencyFormContent() {
         <RoleCreateLayout
             roleKey="agency"
             roleTitle="Agency Application Portal"
-            roleSubtitle="Register your agency to onboard and manage live streaming talent on MithiChat."
+            roleSubtitle="Register your agency to onboard and manage live streaming talent on Voice Call Club."
             badgeText="Official Agency Partner Onboarding"
             themeGradient="from-slate-950 via-purple-950 to-indigo-950"
             accentColor="purple"
@@ -333,7 +333,7 @@ function AgencyFormContent() {
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">Existing MithiChat ID (If available)</label>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">Existing Voice Call Club ID (If available)</label>
                         <input
                             type="text"
                             value={formData.meethiLiveId}
@@ -479,7 +479,7 @@ function AgencyFormContent() {
                                 className="w-5 h-5 mt-0.5 accent-purple-500 rounded"
                             />
                             <span className="text-xs text-white/80 leading-relaxed">
-                                I confirm that all information provided above is accurate. I agree to comply with MithiChat Agency Partner guidelines, host management policies, and revenue settlement rules.
+                                I confirm that all information provided above is accurate. I agree to comply with Voice Call Club Agency Partner guidelines, host management policies, and revenue settlement rules.
                             </span>
                         </label>
                     </div>

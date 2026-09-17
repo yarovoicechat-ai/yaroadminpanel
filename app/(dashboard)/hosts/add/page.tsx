@@ -140,7 +140,7 @@ export default function AddHostPage() {
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label className={labelClass}>Email Address *</label>
-                            <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="host@mithichat.live" className={inputClass} />
+                            <input type="email" required value={email} onChange={e => setEmail(e.target.value)} placeholder="host@voicecallclub.com" className={inputClass} />
                         </div>
                         <div>
                             <label className={labelClass}>Mobile Number *</label>

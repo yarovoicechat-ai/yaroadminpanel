@@ -16,6 +16,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { ApprovalSuccessDialog, ApprovalCredentials } from '@/components/requests/ApprovalSuccessDialog';
 import { DeleteRequestButton } from '@/components/requests/DeleteRequestButton';
 import CreateAgencyPage from '../add/page';
+import { canViewRequestSecrets, redactApprovalCredentials } from '@/lib/requestVisibility';
 
 // Types Definition
 export type StatusType = 'active' | 'pending' | 'ready_for_interview' | 'rejected';
@@ -81,6 +82,7 @@ export interface AgencyRequestData {
 // Initial Mock Data Fallback for Agency Requests
 export default function AgencyRequestsPage() {
     const { user: currentUser } = useAuth();
+    const canViewSecrets = canViewRequestSecrets(currentUser?.role, 'agency');
     const [requests, setRequests] = useState<AgencyRequestData[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -187,9 +189,9 @@ export default function AgencyRequestsPage() {
                         registrationDate: item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN') : '—',
                         aadhaarNo: d.aadhaarNo || '',
                         panNo: d.panNo || '',
-                        aadhaarFront: d.adharFront || d.aadhaarFront || d.aadharFront || '',
-                        aadhaarBack: d.adharBack || d.aadhaarBack || d.aadharBack || '',
-                        panCard: d.pan || d.panCard || '',
+                        aadhaarFront: canViewSecrets ? d.adharFront || d.aadhaarFront || d.aadharFront || '' : '',
+                        aadhaarBack: canViewSecrets ? d.adharBack || d.aadhaarBack || d.aadharBack || '' : '',
+                        panCard: canViewSecrets ? d.pan || d.panCard || '' : '',
                         qualification: d.qualification || '',
                         experience: d.experience || '',
                         previousCompany: d.previousCompany || '',
@@ -206,7 +208,7 @@ export default function AgencyRequestsPage() {
                             remarks: saRev.remarks || saRev.comments || 'Awaiting Super Admin review.',
                             status: saRev.status || (item.status === 'approved' ? 'Approved' : 'Pending')
                         },
-                        password: d.password || item.passwordBeforeApproval || '',
+                        password: canViewSecrets ? d.password || item.passwordBeforeApproval || '' : '',
                         status: item.status === 'approved' ? 'active' : item.status === 'rejected' ? 'rejected' : item.status === 'ready_for_interview' ? 'ready_for_interview' : 'pending',
                         agencyCode: d.agencyCode || d.specialCode || '',
                         referralCode: d.referralCode || '',
@@ -226,7 +228,7 @@ export default function AgencyRequestsPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [canViewSecrets]);
 
     useEffect(() => {
         fetchRequests();
@@ -322,7 +324,7 @@ export default function AgencyRequestsPage() {
         const headers = [
             'SR', 'Invited By', 'Name', 'Agency Name', 'Meethi Chat ID', 'User Name', 'Gender',
             'Age', 'Email', 'Mobile Number', 'Country', 'State', 'District',
-            'Registration Date', 'Operator Review Status', 'Super Admin Review Status', 'Password', 'Status'
+            'Registration Date', 'Operator Review Status', 'Super Admin Review Status', 'Status'
         ];
 
         const rows = filteredRequests.map(r => [
@@ -342,7 +344,6 @@ export default function AgencyRequestsPage() {
             `"${r.registrationDate}"`,
             `"${r.reviewByOperator.status}"`,
             `"${r.reviewBySuperAdmin.status}"`,
-            `"${r.password || 'Pass@1234'}"`,
             `"${r.status}"`
         ]);
 
@@ -466,7 +467,7 @@ export default function AgencyRequestsPage() {
                 if (isAccept && response.data?.generatedCredentials) {
                     setApprovalDialog({
                         isOpen: true,
-                        credentials: response.data.generatedCredentials,
+                        credentials: redactApprovalCredentials(response.data.generatedCredentials, canViewSecrets),
                         applicantName: req.agencyName || req.name
                     });
                 }
@@ -882,7 +883,7 @@ export default function AgencyRequestsPage() {
                                 <th className="p-3.5 whitespace-nowrap text-center">Resume / CV</th>
                                 <th className="p-3.5 whitespace-nowrap">Review By Operator</th>
                                 <th className="p-3.5 whitespace-nowrap">Review By Super Admin</th>
-                                <th className="p-3.5 whitespace-nowrap text-center">Password</th>
+                                {canViewSecrets && <th className="p-3.5 whitespace-nowrap text-center">Password</th>}
                                 <th className="p-3.5 whitespace-nowrap text-center">Action</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">
                                     <button onClick={() => handleSort('status')} className="flex items-center gap-1 hover:text-blue-600 mx-auto">
@@ -1199,6 +1200,7 @@ export default function AgencyRequestsPage() {
                                         </td>
 
                                         {/* 19. Password Column (Masked by default with Show/Hide toggle and Copy button) */}
+                                        {canViewSecrets && (
                                         <td className="p-3.5 text-center whitespace-nowrap">
                                             <div className="inline-flex items-center justify-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
                                                 <span className="font-mono text-slate-800 dark:text-slate-200 text-xs font-bold min-w-[70px] text-center">
@@ -1220,6 +1222,7 @@ export default function AgencyRequestsPage() {
                                                 </button>
                                             </div>
                                         </td>
+                                        )}
 
                                         {/* 20. Action Column */}
                                         <td className="p-3.5 whitespace-nowrap text-center">
@@ -1552,13 +1555,13 @@ export default function AgencyRequestsPage() {
                                                     </div>
                                                 </div>
 
-                                                <button
+                                                {canViewSecrets && <button
                                                     onClick={() => copyCredentials(selectedReq)}
                                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-all"
                                                 >
                                                     <Copy className="w-3.5 h-3.5" />
                                                     Copy Credentials
-                                                </button>
+                                                </button>}
                                             </div>
 
                                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
@@ -1567,7 +1570,7 @@ export default function AgencyRequestsPage() {
                                                     <p className="font-mono font-bold text-slate-900 dark:text-white">{selectedReq.username}</p>
                                                 </div>
 
-                                                <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
+                                                {canViewSecrets && <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
                                                     <p className="text-slate-400 mb-1">Password</p>
                                                     <div className="flex items-center justify-between">
                                                         <span className="font-mono font-bold text-slate-900 dark:text-white">
@@ -1580,7 +1583,7 @@ export default function AgencyRequestsPage() {
                                                             {showPasswords[selectedReq.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                                         </button>
                                                     </div>
-                                                </div>
+                                                </div>}
 
                                                 <div className="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800">
                                                     <p className="text-slate-400 mb-1">Agency Code</p>

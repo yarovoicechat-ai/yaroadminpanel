@@ -15,6 +15,7 @@ import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApprovalSuccessDialog, ApprovalCredentials } from '@/components/requests/ApprovalSuccessDialog';
 import { DeleteRequestButton } from '@/components/requests/DeleteRequestButton';
+import { canViewRequestSecrets, redactApprovalCredentials } from '@/lib/requestVisibility';
 
 // Types Definition
 export type HostStatusType = 'active' | 'inactive';
@@ -155,6 +156,7 @@ function HostAudioPlayer({ audioUrl, duration, waveform, title }: { audioUrl: st
 
 export default function HostRequestsPage() {
     const { user: currentUser } = useAuth();
+    const canViewSecrets = canViewRequestSecrets(currentUser?.role, 'host');
     const [requests, setRequests] = useState<HostRequestData[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -247,9 +249,9 @@ export default function HostRequestsPage() {
                         registrationDate: item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN') : '—',
                         aadhaarNo: d.aadhaarNo || '',
                         panNo: d.panNo || '',
-                        aadhaarFront: d.adharFront || d.aadhaarFront || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('front') || doc.documentType === 'GovtID')?.url : '') || '',
-                        aadhaarBack: d.adharBack || d.aadhaarBack || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('back'))?.url : '') || '',
-                        selfieWithIdCard: d.selfieWithIdCard || d.pan || d.panCard || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('selfie') || doc.name?.toLowerCase().includes('pan') || doc.documentType === 'SelfieWithID' || doc.documentType === 'Certificate')?.url : '') || '',
+                        aadhaarFront: canViewSecrets ? d.adharFront || d.aadhaarFront || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('front') || doc.documentType === 'GovtID')?.url : '') || '' : '',
+                        aadhaarBack: canViewSecrets ? d.adharBack || d.aadhaarBack || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('back'))?.url : '') || '' : '',
+                        selfieWithIdCard: canViewSecrets ? d.selfieWithIdCard || d.pan || d.panCard || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('selfie') || doc.name?.toLowerCase().includes('pan') || doc.documentType === 'SelfieWithID' || doc.documentType === 'Certificate')?.url : '') || '' : '',
                         voiceAudioUrl: d.voiceAudioUrl || d.audio || d.audioUrl || d.voiceUrl || d.voice || d.portfolio || d.introAudio || d.audioURL || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.documentType === 'Voice' || doc.documentType === 'Audio' || doc.documentType === 'Portfolio' || doc.name?.toLowerCase().includes('voice') || doc.name?.toLowerCase().includes('portfolio') || doc.name?.toLowerCase().includes('audition'))?.url : '') || '',
                         voiceDuration: d.voiceDuration || '0:30',
                         voiceWaveform: [30, 50, 70, 90, 60, 40, 80, 95, 75, 45, 85, 65, 90, 50, 35, 75, 85, 60, 40, 25],
@@ -275,7 +277,7 @@ export default function HostRequestsPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [canViewSecrets]);
 
     useEffect(() => {
         fetchRequests();
@@ -510,7 +512,7 @@ export default function HostRequestsPage() {
                 if (isAccept && response.data?.generatedCredentials) {
                     setApprovalDialog({
                         isOpen: true,
-                        credentials: response.data.generatedCredentials,
+                        credentials: redactApprovalCredentials(response.data.generatedCredentials, canViewSecrets),
                         applicantName: req.name
                     });
                 }

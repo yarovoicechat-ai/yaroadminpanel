@@ -29,7 +29,7 @@ interface FieldDraft {
 export default function FormBuilderPage() {
     const [roleKey, setRoleKey] = useState('hr');
     const [title, setTitle] = useState('HR Recruitment Portal');
-    const [subtitle, setSubtitle] = useState('Apply for HR & Talent Acquisition Lead on MithiChat.');
+    const [subtitle, setSubtitle] = useState('Apply for HR & Talent Acquisition Lead on Voice Call Club.');
     const [badgeText, setBadgeText] = useState('Official HR Recruitment');
 
     const [steps, setSteps] = useState<FormStepDraft[]>([
@@ -88,7 +88,7 @@ export default function FormBuilderPage() {
 
             const payload = {
                 role: roleKey.toLowerCase().trim(),
-                hostname: `${roleKey.toLowerCase().trim()}.mithichat.live`,
+                hostname: `${roleKey.toLowerCase().trim()}.voicecallclub.com`,
                 title,
                 subtitle,
                 badgeText,

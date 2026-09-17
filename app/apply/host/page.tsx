@@ -160,10 +160,10 @@ function HostFormContent() {
                 {/* Form Header */}
                 <div className="mb-6">
                     <h1 className="text-2xl font-extrabold tracking-wide text-white uppercase">
-                        HOST FORM - MITHICHAT
+                        HOST FORM - Voice Call Club
                     </h1>
                     <p className="text-xs font-semibold text-white/70 mt-1">
-                        MithiChat Host Recruitment & Clearances
+                        Voice Call Club Host Recruitment & Clearances
                     </p>
                 </div>
 

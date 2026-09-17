@@ -15,6 +15,7 @@ import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApprovalSuccessDialog, ApprovalCredentials } from '@/components/requests/ApprovalSuccessDialog';
 import { DeleteRequestButton } from '@/components/requests/DeleteRequestButton';
+import { canViewRequestSecrets, redactApprovalCredentials } from '@/lib/requestVisibility';
 
 // CS Request Status Definition
 export type CSStatusType = 'approved' | 'pending' | 'rejected';
@@ -164,6 +165,7 @@ const MOCK_CS_REQUESTS: CSRequestData[] = [
 
 export default function CustomerSupportRequestsPage() {
     const { user: currentUser } = useAuth();
+    const canViewSecrets = canViewRequestSecrets(currentUser?.role, 'customerSupport');
     const [requests, setRequests] = useState<CSRequestData[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -266,13 +268,13 @@ export default function CustomerSupportRequestsPage() {
                         registrationDate: item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN') : new Date().toLocaleString('en-IN'),
                         aadhaarNo: d.aadhaarNo || '',
                         panNo: d.panNo || '',
-                        aadhaarFront: d.adharFront || d.aadhaarFront || '',
-                        aadhaarBack: d.adharBack || d.aadhaarBack || '',
-                        panCard: d.pan || d.panCard || '',
-                        resumeUrl: d.resumeUrl || '',
+                        aadhaarFront: canViewSecrets ? d.adharFront || d.aadhaarFront || '' : '',
+                        aadhaarBack: canViewSecrets ? d.adharBack || d.aadhaarBack || '' : '',
+                        panCard: canViewSecrets ? d.pan || d.panCard || '' : '',
+                        resumeUrl: canViewSecrets ? d.resumeUrl || '' : '',
                         reviewByOperator: d.reviewByOperator || { status: 'pending' },
                         reviewBySuperAdmin: d.reviewBySuperAdmin || { status: item.status === 'approved' ? 'approved' : 'pending' },
-                        password: d.password || item.passwordBeforeApproval || '',
+                        password: canViewSecrets ? d.password || item.passwordBeforeApproval || '' : '',
                         status: (item.status === 'approved' || item.status === 'active') ? 'approved' : item.status === 'rejected' ? 'rejected' : 'pending',
                         shiftTiming: d.shiftTiming || d.shift || '',
                         timeline: item.timeline || [
@@ -291,7 +293,7 @@ export default function CustomerSupportRequestsPage() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [canViewSecrets]);
 
     useEffect(() => {
         fetchRequests();
@@ -499,7 +501,7 @@ export default function CustomerSupportRequestsPage() {
                 if (isAccept && response.data?.generatedCredentials) {
                     setApprovalDialog({
                         isOpen: true,
-                        credentials: response.data.generatedCredentials,
+                        credentials: redactApprovalCredentials(response.data.generatedCredentials, canViewSecrets),
                         applicantName: req.name
                     });
                 }
@@ -844,7 +846,7 @@ export default function CustomerSupportRequestsPage() {
                                 <th className="p-3.5 whitespace-nowrap text-center">Resume / CV</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">Review By Operator</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">Review By Super Admin</th>
-                                <th className="p-3.5 whitespace-nowrap text-center">Password</th>
+                                {canViewSecrets && <th className="p-3.5 whitespace-nowrap text-center">Password</th>}
                                 <th className="p-3.5 whitespace-nowrap text-center">Action</th>
                                 <th className="p-3.5 whitespace-nowrap text-center">Status</th>
                             </tr>
@@ -1059,6 +1061,7 @@ export default function CustomerSupportRequestsPage() {
                                         </td>
 
                                         {/* Password Masked */}
+                                        {canViewSecrets && (
                                         <td className="p-3.5 text-center whitespace-nowrap font-mono">
                                             <div className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-700">
                                                 <span>{visiblePasswords[req.id] ? req.password : '••••••••'}</span>
@@ -1067,6 +1070,7 @@ export default function CustomerSupportRequestsPage() {
                                                 </button>
                                             </div>
                                         </td>
+                                        )}
 
                                         {/* Action Column */}
                                         <td className="p-3.5 whitespace-nowrap text-center">
@@ -1260,10 +1264,10 @@ export default function CustomerSupportRequestsPage() {
                                                     <p className="text-slate-400">Invited By</p>
                                                     <p className="font-semibold text-slate-800 dark:text-slate-100">{selectedReq.invitedBy}</p>
                                                 </div>
-                                                <div>
+                                                {canViewSecrets && <div>
                                                     <p className="text-slate-400">Account Password</p>
                                                     <p className="font-mono font-bold text-slate-800 dark:text-slate-100">{visiblePasswords[selectedReq.id] ? selectedReq.password : '••••••••'}</p>
-                                                </div>
+                                                </div>}
                                             </div>
                                         </div>
 

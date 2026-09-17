@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircle2, Copy, Eye, EyeOff, X, Key, Mail, Shield } from 'lucide-react';
+import { CheckCircle2, Copy, X, Key, Mail, Shield } from 'lucide-react';
 import { toast } from 'sonner';
 
 export interface ApprovalCredentials {
     email: string;
-    password: string;
+    password?: string;
     specialCode?: string;
 }
 
@@ -26,8 +26,6 @@ export function ApprovalSuccessDialog({
     roleName,
     applicantName,
 }: ApprovalSuccessDialogProps) {
-    const [showPassword, setShowPassword] = useState(false);
-
     const copyText = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
         toast.success(`${label} copied to clipboard!`);
@@ -35,7 +33,7 @@ export function ApprovalSuccessDialog({
 
     const copyAll = () => {
         if (!credentials) return;
-        const text = `${roleName} Account Credentials\nName: ${applicantName}\nEmail: ${credentials.email}\nPassword: ${credentials.password}${credentials.specialCode ? `\nEmployee Code: ${credentials.specialCode}` : ''}`;
+        const text = `${roleName} Account Details\nName: ${applicantName}\nEmail: ${credentials.email}${credentials.specialCode ? `\nEmployee Code: ${credentials.specialCode}` : ''}`;
         navigator.clipboard.writeText(text);
         toast.success('All credentials copied!');
     };
@@ -69,7 +67,7 @@ export function ApprovalSuccessDialog({
                     <div className="space-y-3 mb-6">
                         <p className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2">
                             <Key className="w-3.5 h-3.5" />
-                            Generated Login Credentials
+                            Account Details
                         </p>
 
                         {/* Email */}
@@ -86,33 +84,6 @@ export function ApprovalSuccessDialog({
                             >
                                 <Copy className="w-3.5 h-3.5 text-slate-500" />
                             </button>
-                        </div>
-
-                        {/* Password */}
-                        <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl px-4 py-3 border border-emerald-200 dark:border-emerald-700/40">
-                            <Shield className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                            <div className="flex-1 min-w-0">
-                                <p className="text-xs text-emerald-600 dark:text-emerald-400">Password (One-Time Display)</p>
-                                <p className="text-sm font-mono font-bold text-emerald-800 dark:text-emerald-200 truncate">
-                                    {showPassword ? credentials.password : '•'.repeat(Math.min(credentials.password.length, 16))}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-1 shrink-0">
-                                <button
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="p-1.5 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-800/30 transition-colors"
-                                    title={showPassword ? 'Hide' : 'Show'}
-                                >
-                                    {showPassword ? <EyeOff className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> : <Eye className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />}
-                                </button>
-                                <button
-                                    onClick={() => copyText(credentials.password, 'Password')}
-                                    className="p-1.5 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-800/30 transition-colors"
-                                    title="Copy Password"
-                                >
-                                    <Copy className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                                </button>
-                            </div>
                         </div>
 
                         {/* Special Code */}
@@ -133,9 +104,6 @@ export function ApprovalSuccessDialog({
                             </div>
                         )}
 
-                        <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 rounded-lg px-3 py-2 border border-amber-200 dark:border-amber-700/40">
-                            ⚠️ Save this password now. It will not be shown again after closing this dialog.
-                        </p>
                     </div>
 
                     {/* Actions */}
