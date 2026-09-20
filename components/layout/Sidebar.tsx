@@ -528,27 +528,27 @@ export default function Sidebar() {
             {/* Sidebar Container */}
             <aside
                 className={cn(
-                    "fixed inset-y-0 left-0 z-40 w-64 glass-panel flex flex-col pt-20 md:pt-8 transition-transform duration-300 md:translate-x-0 md:relative h-screen bg-slate-900 border-r border-slate-800",
+                    "app-sidebar fixed inset-y-0 left-0 z-40 flex h-screen w-64 flex-col border-r pt-20 transition-transform duration-300 md:relative md:translate-x-0 md:pt-8",
                     !isOpen && isMobile ? "-translate-x-full" : "translate-x-0"
                 )}
             >
-                <div className="px-6 mb-6 mt-4 md:mt-0 flex items-center justify-between">
+                <div className="panel-brand mb-6 mt-4 flex items-center justify-between px-6 md:mt-0">
                     <div className="flex items-center gap-3">
                         <img
                             src="/meethi-chat-logo.png"
                             alt="Meethi Chat Logo"
-                            className="w-9 h-9 rounded-xl object-cover shadow-lg shadow-pink-500/20 ring-2 ring-pink-400/30"
+                            className="h-10 w-10 rounded-2xl object-cover ring-2 ring-primary/20"
                         />
                         <div>
-                            <h1 className="text-base font-black bg-gradient-to-r from-pink-400 via-rose-300 to-amber-300 bg-clip-text text-transparent tracking-tight leading-none" suppressHydrationWarning>
+                            <h1 className="text-base font-black leading-none tracking-tight text-foreground" suppressHydrationWarning>
                                 Meethi Chat
                             </h1>
-                            <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase mt-0.5">EMS Enterprise</p>
+                            <p className="mt-1 text-[9px] font-bold uppercase tracking-[.18em] text-primary">Admin Console</p>
                         </div>
                     </div>
                 </div>
 
-                <nav className="flex-1 px-4 space-y-4 overflow-y-auto pb-6">
+                <nav className="panel-nav flex-1 space-y-4 overflow-y-auto px-4 pb-6">
                     {displayedSections.map((section, idx) => (
                         <div key={idx} className="space-y-1">
                             <h3 className="px-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
@@ -654,7 +654,7 @@ export default function Sidebar() {
                         <span>Sign Out</span>
                     </button>
 
-                    <div className={cn("rounded-xl p-3 border flex items-center gap-3 justify-between shadow-inner transition-colors", currentRole.bg, currentRole.border)}>
+                    <div className={cn("panel-profile flex items-center justify-between gap-3 rounded-xl border p-3 transition-colors", currentRole.bg, currentRole.border)}>
                         <div className="flex items-center gap-3 overflow-hidden">
                             <div className={cn("h-8 w-8 rounded-full border flex items-center justify-center text-xs font-bold shrink-0", currentRole.color, currentRole.border, "bg-slate-900/50")}>
                                 <RoleIcon size={16} />

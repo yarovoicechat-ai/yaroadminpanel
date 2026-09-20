@@ -9,14 +9,13 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <div className="flex flex-col h-screen overflow-hidden bg-slate-950">
+        <div className="app-shell flex h-screen flex-col overflow-hidden">
             <IAMManager />
             <div className="flex flex-1 overflow-hidden">
                 <Sidebar />
                 <div className="flex-1 flex flex-col overflow-hidden">
                     <TopHeader />
-                    <main className="flex-1 overflow-y-auto w-full p-4 md:p-8 relative">
-                        <div className="fixed inset-0 pointer-events-none bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-dosti-900/20 via-slate-950/0 to-slate-950/0 z-[-1]" />
+                    <main className="app-main relative w-full flex-1 overflow-y-auto p-4 md:p-8">
                         <ProtectedRoute>
                             {children}
                         </ProtectedRoute>

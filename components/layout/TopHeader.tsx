@@ -32,7 +32,7 @@ export default function TopHeader() {
   const userAvatar = (user as any)?.profilePhoto || (user as any)?.avatar;
 
   return (
-    <header className="w-full bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 md:px-6 py-2.5 flex items-center justify-between sticky top-0 z-30 shadow-md">
+    <header className="app-topbar sticky top-0 z-30 flex w-full items-center justify-between border-b px-4 py-2.5 backdrop-blur-xl md:px-6">
       {/* Left Section: Menu & Search */}
       <div className="flex items-center gap-3 md:gap-4 flex-1">
         <img
