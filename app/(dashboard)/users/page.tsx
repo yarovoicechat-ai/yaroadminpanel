@@ -286,7 +286,7 @@ export default function UsersPage() {
             const response = await apiClient.post(API_ENDPOINTS.ADMIN.CREATE_EMPLOYEE, {
                 name: newUserName,
                 email: newUserEmail,
-                password: 'VoiceCallClub@12345',
+                password: 'YaroApp@12345',
                 targetRole: 'user'
             });
 

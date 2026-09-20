@@ -25,7 +25,7 @@ export default function VerificationReportsPage() {
   const chart = dates.map(date => ({ date, face: trends.face.find((row: any) => row._id === date)?.count || 0, kyc: trends.kyc.find((row: any) => row._id === date)?.count || 0 }));
   const download = async (type: 'face' | 'kyc') => {
     try {
-      const base = ['localhost', '127.0.0.1'].includes(window.location.hostname) ? (process.env.NEXT_PUBLIC_LOCAL_API_BASE_URL || 'http://localhost:3001') : (process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001');
+      const base = ['localhost', '127.0.0.1'].includes(window.location.hostname) ? (process.env.NEXT_PUBLIC_LOCAL_API_BASE_URL || 'http://localhost:3101') : (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.yaroapp.in');
       const response = await fetch(`${base}/api/v1/admin/verifications/reports/export?type=${type}`, { headers: { Authorization: `Bearer ${localStorage.getItem('admin_token') || ''}` } });
       if (!response.ok) throw new Error('Export permission denied');
       const url = URL.createObjectURL(await response.blob());

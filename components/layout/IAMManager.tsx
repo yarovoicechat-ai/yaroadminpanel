@@ -20,7 +20,7 @@ export default function IAMManager() {
   useEffect(() => {
     if (!user) return;
 
-    const socketUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3001';
+    const socketUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.yaroapp.in';
     const socket = io(socketUrl, {
       auth: {
         token: localStorage.getItem('admin_token')

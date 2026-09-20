@@ -79,7 +79,7 @@ function HostFormContent() {
             !(form.adharBack || form.addressProof) ||
             !form.pan
         ) {
-            toast.error('Please fill in all required fields including Meethi Chat ID and Documents');
+            toast.error('Please fill in all required fields including Yaro User ID and Documents');
             return;
         }
 
@@ -129,7 +129,6 @@ function HostFormContent() {
         }
     };
 
-
     if (success) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-[#701a75] via-[#86198f] to-[#a21caf] flex items-center justify-center p-4">
@@ -160,10 +159,10 @@ function HostFormContent() {
                 {/* Form Header */}
                 <div className="mb-6">
                     <h1 className="text-2xl font-extrabold tracking-wide text-white uppercase">
-                        HOST FORM - Voice Call Club
+                        HOST FORM - Yaro
                     </h1>
                     <p className="text-xs font-semibold text-white/70 mt-1">
-                        Voice Call Club Host Recruitment & Clearances
+                        Yaro Host Recruitment & Clearances
                     </p>
                 </div>
 
@@ -258,15 +257,15 @@ function HostFormContent() {
                         />
                     </div>
 
-                    {/* Meethi Chat ID */}
+                    {/* Yaro User ID */}
                     <div>
                         <label className="text-xs font-semibold text-white/90 mb-1.5 block">
-                            Meethi Chat ID *
+                            Yaro User ID *
                         </label>
                         <input
                             type="text"
                             required
-                            placeholder="e.g. MC100852 or 50021"
+                            placeholder="e.g. YR100852 or 50021"
                             value={form.meethiChatId}
                             onChange={e => setForm({ ...form, meethiChatId: e.target.value })}
                             className="w-full bg-white/20 border border-white/30 text-white placeholder-white/50 rounded-full px-5 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400"

@@ -165,7 +165,7 @@ function AgencyFormContent() {
         <RoleCreateLayout
             roleKey="agency"
             roleTitle="Agency Application Portal"
-            roleSubtitle="Register your agency to onboard and manage live streaming talent on Voice Call Club."
+            roleSubtitle="Register your agency to onboard and manage live streaming talent on Yaro."
             badgeText="Official Agency Partner Onboarding"
             themeGradient="from-slate-950 via-purple-950 to-indigo-950"
             accentColor="purple"
@@ -333,12 +333,12 @@ function AgencyFormContent() {
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">Existing Voice Call Club ID (If available)</label>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">Existing Yaro ID (If available)</label>
                         <input
                             type="text"
                             value={formData.meethiLiveId}
                             onChange={e => updateField('meethiLiveId', e.target.value)}
-                            placeholder="e.g. MITHI_AGY_99"
+                            placeholder="e.g. YR_AGY_99"
                             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
                         />
                     </div>
@@ -479,7 +479,7 @@ function AgencyFormContent() {
                                 className="w-5 h-5 mt-0.5 accent-purple-500 rounded"
                             />
                             <span className="text-xs text-white/80 leading-relaxed">
-                                I confirm that all information provided above is accurate. I agree to comply with Voice Call Club Agency Partner guidelines, host management policies, and revenue settlement rules.
+                                I confirm that all information provided above is accurate. I agree to comply with Yaro Agency Partner guidelines, host management policies, and revenue settlement rules.
                             </span>
                         </label>
                     </div>

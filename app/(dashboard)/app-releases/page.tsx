@@ -166,7 +166,7 @@ export default function AppReleasesPage() {
   };
 
   const getDirectDownloadUrl = () => {
-    return 'https://api.voicecallclub.com/api/v1/app-releases/download';
+    return 'https://api.yaroapp.in/api/v1/app-releases/download';
   };
 
   return (
@@ -179,7 +179,7 @@ export default function AppReleasesPage() {
             App Release & Build Manager (APK/AAB)
           </h1>
           <p className="text-slate-400 text-sm mt-1">
-            Upload APK or AAB builds here. Uploaded files will automatically serve as the active download on the website (<code className="text-indigo-300">voicecallclub.com</code>).
+            Upload APK or AAB builds here. Uploaded files will automatically serve as the active download on the website (<code className="text-indigo-300">yaroapp.in</code>).
           </p>
         </div>
         <button

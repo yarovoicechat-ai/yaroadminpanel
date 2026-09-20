@@ -440,7 +440,7 @@ function CustomerServiceFormContent() {
                                 className="w-5 h-5 mt-0.5 accent-cyan-500 rounded"
                             />
                             <span className="text-xs text-white/80 leading-relaxed">
-                                I commit to providing professional, respectful, and prompt support to Voice Call Club users. I agree to adhere to standard SLAs and customer service guidelines.
+                                I commit to providing professional, respectful, and prompt support to Yaro users. I agree to adhere to standard SLAs and customer service guidelines.
                             </span>
                         </label>
                     </div>

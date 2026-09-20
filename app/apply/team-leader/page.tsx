@@ -116,7 +116,7 @@ function TeamLeaderApplicationContent() {
                     </div>
                     <h2 className="text-3xl font-black tracking-wide">Application Submitted Successfully</h2>
                     <p className="text-white/80 text-sm">
-                        Thank you for applying to Voice Call Club. Our Team Leader recruitment division will contact you shortly.
+                        Thank you for applying to Yaro. Our Team Leader recruitment division will contact you shortly.
                     </p>
                     <div className="pt-4 flex items-center justify-center gap-2 text-xs font-semibold text-white/60">
                         <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
@@ -141,7 +141,7 @@ function TeamLeaderApplicationContent() {
                 {/* Header Section */}
                 <div className="text-center space-y-3 border-b border-white/10 pb-6">
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-xs font-bold tracking-wider uppercase">
-                        <Sparkles size={14} className="text-amber-300" /> Voice Call Club Hiring Portal
+                        <Sparkles size={14} className="text-amber-300" /> Yaro Hiring Portal
                     </div>
                     <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-gradient-to-r from-white via-white/90 to-amber-200 bg-clip-text text-transparent uppercase">
                         TEAM LEADER APPLICATION FORM
@@ -461,7 +461,7 @@ function TeamLeaderApplicationContent() {
                             value={formData.whyJoinUs}
                             onChange={(e) => handleTextChange('whyJoinUs', e.target.value)}
                             error={errors.whyJoinUs}
-                            placeholder="Tell us what motivates you to join Voice Call Club..."
+                            placeholder="Tell us what motivates you to join Yaro..."
                         />
 
                         <FormInput

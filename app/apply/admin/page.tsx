@@ -151,7 +151,7 @@ function AdminFormContent() {
         <RoleCreateLayout
             roleKey="admin"
             roleTitle="Admin Application Portal"
-            roleSubtitle="Apply for Platform Administrator & Governance clearance on Voice Call Club."
+            roleSubtitle="Apply for Platform Administrator & Governance clearance on Yaro."
             badgeText="Platform Administrator Application"
             themeGradient="from-slate-950 via-blue-950 to-indigo-950"
             accentColor="blue"

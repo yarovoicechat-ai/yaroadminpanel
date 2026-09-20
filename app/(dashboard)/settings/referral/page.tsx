@@ -6,7 +6,7 @@ import { apiClient } from '@/lib/apiClient';
 
 export default function ReferralSettingsPage() {
     const [enabled, setEnabled] = useState<boolean>(true);
-    const [landingDomain, setLandingDomain] = useState<string>('https://apply.voicecallclub.com');
+    const [landingDomain, setLandingDomain] = useState<string>('https://apply.yaroapp.in');
     const [expiryDays, setExpiryDays] = useState<number>(30);
     const [limitPerUser, setLimitPerUser] = useState<number>(100);
     const [qrEnabled, setQrEnabled] = useState<boolean>(true);
@@ -24,7 +24,7 @@ export default function ReferralSettingsPage() {
                 const res = await apiClient.get<any>('/referrals/settings');
                 if (res && res.data) {
                     setEnabled(res.data.referralEnabled ?? true);
-                    setLandingDomain(res.data.landingDomain || 'https://apply.voicecallclub.com');
+                    setLandingDomain(res.data.landingDomain || 'https://apply.yaroapp.in');
                     setExpiryDays(res.data.referralExpiryDays || 30);
                     setLimitPerUser(res.data.referralLimitPerUser || 100);
                     setQrEnabled(res.data.qrEnabled ?? true);

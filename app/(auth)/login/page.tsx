@@ -46,7 +46,7 @@ export default function LoginPage() {
 
                 <div className="text-center space-y-2">
                     <h1 className="text-4xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent uppercase tracking-wider">
-                        MithiChat Enterprise Admin Platform
+                        Yaro Enterprise Admin Platform
                     </h1>
                     <p className="text-slate-400 text-sm">
                         Select your specialized role login portal or enter administrative credentials below.

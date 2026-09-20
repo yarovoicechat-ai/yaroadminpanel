@@ -69,7 +69,7 @@ export default function AddAdminPage() {
                             <label className="text-sm font-semibold text-slate-300">Email Address (Username)</label>
                             <Input
                                 type="email"
-                                placeholder="vikram@mithichat.com"
+                                placeholder="vikram@yaroapp.in"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required

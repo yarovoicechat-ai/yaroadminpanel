@@ -34,7 +34,7 @@ export default function AddUserPage() {
         }
         setLoading(true);
         try {
-            const autoPassword = password || 'VoiceCallClub@12345';
+            const autoPassword = password || 'YaroApp@12345';
             const payload = {
                 name,
                 email,
@@ -124,7 +124,7 @@ export default function AddUserPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-300">Password (Default: VoiceCallClub@12345)</label>
+                            <label className="text-sm font-semibold text-slate-300">Password (Default: YaroApp@12345)</label>
                             <div className="relative">
                                 <Input
                                     type="password"
