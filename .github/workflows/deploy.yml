@@ -1,61 +1,56 @@
-name: 🚀 Deploy Admin Panel
+name: YaroAdminPanel Production Deploy
 
 on:
   push:
     branches:
       - main
 
+concurrency:
+  group: yaro-admin-production
+  cancel-in-progress: false
+
 jobs:
   deploy:
+    name: Build & Deploy YaroAdminPanel
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to Server
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Contabo
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.PORT }}
-
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 22
+          script_stop: true
           script: |
-            set -e
-            cd ${{ secrets.PROJECT_PATH }}
+            set -euo pipefail
 
-            if ! git diff --quiet || ! git diff --cached --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then
-              BACKUP_TAG="pre-deploy-${{ github.sha }}-$(date +%Y%m%d%H%M%S)"
-              echo "Backing up server-local changes to Git stash: $BACKUP_TAG"
-              git status --short
-              git stash push --include-untracked -m "$BACKUP_TAG"
-            fi
+            echo "========================================"
+            echo "    YARO ADMIN PANEL PRODUCTION DEPLOY"
+            echo "========================================"
+            echo "GitHub Commit: ${{ github.sha }}"
+            echo "GitHub Branch: ${{ github.ref_name }}"
+            echo "Deployment started: $(date)"
 
-            echo "Pulling latest code..."
-            git pull --ff-only origin main
-            test "$(git rev-parse HEAD)" = "${{ github.sha }}"
+            /root/deployments/yaro-admin/deploy-yaro-admin.sh
 
-            echo "Installing dependencies..."
-            npm install
-
-            echo "Building..."
-            npm run build
-
-            echo "Restarting PM2..."
-            pm2 reload ${{ secrets.PM2_APP_NAME }} --update-env
-
-            echo "Checking Admin panel upstream..."
-            HEALTHY=0
-            for attempt in 1 2 3 4 5 6 7 8 9 10; do
-              if curl --fail --silent --show-error --max-time 10 http://127.0.0.1:3000/login >/dev/null; then
-                HEALTHY=1
-                break
-              fi
-              sleep 2
-            done
-
-            if [ "$HEALTHY" -ne 1 ]; then
-              pm2 status
-              pm2 logs ${{ secrets.PM2_APP_NAME }} --lines 120 --nostream
-              exit 1
-            fi
-
-            echo "Admin Panel Deployment Finished and health check passed"
+            echo "========================================"
+            echo "       DEPLOYMENT COMPLETED"
+            echo "========================================"
+            echo "Deployment finished: $(date)"
