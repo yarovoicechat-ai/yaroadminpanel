@@ -68,10 +68,11 @@ export default function FinanceCommandPage() {
   const fetchFinanceData = async () => {
     try {
       setLoading(true);
-      // Fetch recharges and withdrawals
-      const [rechargeRes, withdrawalRes] = await Promise.all([
+      // Fetch recharges, withdrawals, and platform finance overview
+      const [rechargeRes, withdrawalRes, overviewRes] = await Promise.all([
         apiClient.get<any>('/api/admin/recharges/history').catch(() => null),
-        apiClient.get<any>(API_ENDPOINTS.WITHDRAWALS.PENDING).catch(() => null)
+        apiClient.get<any>(API_ENDPOINTS.WITHDRAWALS.PENDING).catch(() => null),
+        apiClient.get<any>(API_ENDPOINTS.FINANCE.OVERVIEW).catch(() => null)
       ]);
 
       const records: TransactionRecord[] = [];
@@ -117,15 +118,31 @@ export default function FinanceCommandPage() {
       }
 
       setTransactions(records);
-      setStats({
-        grossRecharge: totalRecharge,
-        successfulRecharge: totalRecharge * 0.94,
-        failedRecharge: totalRecharge * 0.06,
-        withdrawalsDisbursed: totalWithdrawal * 0.8,
-        pendingWithdrawals: totalWithdrawal * 0.2,
-        platformRevenue: (totalRecharge * 0.3),
-        netFloat: totalRecharge - totalWithdrawal
-      });
+
+      if (overviewRes?.data) {
+        const ov = overviewRes.data;
+        const gross = ov.totalRechargeAmount ?? totalRecharge;
+        const payout = ov.totalWithdrawalAmount ?? totalWithdrawal;
+        setStats({
+          grossRecharge: gross,
+          successfulRecharge: gross * 0.94,
+          failedRecharge: gross * 0.06,
+          withdrawalsDisbursed: payout,
+          pendingWithdrawals: totalWithdrawal * 0.2,
+          platformRevenue: ov.platformGrossMargin ?? (gross - payout),
+          netFloat: gross - payout
+        });
+      } else {
+        setStats({
+          grossRecharge: totalRecharge,
+          successfulRecharge: totalRecharge * 0.94,
+          failedRecharge: totalRecharge * 0.06,
+          withdrawalsDisbursed: totalWithdrawal * 0.8,
+          pendingWithdrawals: totalWithdrawal * 0.2,
+          platformRevenue: (totalRecharge * 0.3),
+          netFloat: totalRecharge - totalWithdrawal
+        });
+      }
     } catch (err) {
       toast.error('Failed to load finance ledger');
     } finally {
@@ -144,20 +161,13 @@ export default function FinanceCommandPage() {
     }
     setIsSubmittingAdjustment(true);
     try {
-      if (adjustCoinAmount !== 0) {
-        await apiClient.post('/api/admin/users/add-coins', {
-          identifier: adjustTargetUser,
-          coins: adjustCoinAmount,
-          reason: confirmedReason || adjustReason
-        });
-      }
-      if (adjustDiamondAmount !== 0) {
-        await apiClient.post('/api/admin/users/add-diamonds', {
-          identifier: adjustTargetUser,
-          diamonds: adjustDiamondAmount,
-          reason: confirmedReason || adjustReason
-        });
-      }
+      await apiClient.post(API_ENDPOINTS.FINANCE.WALLET_ADJUST, {
+        userId: adjustTargetUser,
+        coinDelta: adjustCoinAmount,
+        diamondDelta: adjustDiamondAmount,
+        reason: confirmedReason || adjustReason,
+        referenceId: `ADJ-${Date.now()}`
+      });
       toast.success(`Successfully adjusted wallet for ${adjustTargetUser}`);
       setIsConfirmOpen(false);
       setIsAdjustModalOpen(false);

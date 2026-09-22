@@ -42,7 +42,10 @@ export default function LiveCallsPage() {
   const fetchCalls = async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get<any>(API_ENDPOINTS.CALLS.HISTORY).catch(() => null);
+      let res = await apiClient.get<any>(API_ENDPOINTS.CALLS.ACTIVE).catch(() => null);
+      if (!res?.data || !Array.isArray(res.data) || res.data.length === 0) {
+        res = await apiClient.get<any>(API_ENDPOINTS.CALLS.HISTORY).catch(() => null);
+      }
 
       const items: CallRecord[] = [];
       if (res?.data && Array.isArray(res.data)) {
@@ -51,15 +54,15 @@ export default function LiveCallsPage() {
             id: c._id || `call-${i}`,
             channelId: c.channelId || `AGORA-${c._id?.slice(-6) || 1000 + i}`,
             callerName: c.caller?.name || c.callerName || `User #${c.callerId || '—'}`,
-            callerId: c.callerId || '',
+            callerId: c.caller?._id || c.callerId || '',
             receiverName: c.receiver?.name || c.receiverName || `Host #${c.receiverId || '—'}`,
-            receiverId: c.receiverId || '',
+            receiverId: c.receiver?._id || c.receiverId || '',
             callType: c.type === 'video' ? 'Video' : 'Voice',
             durationSeconds: Number(c.duration || c.durationSeconds || 60),
             provider: 'Agora RTC Global',
-            quality: 'Excellent',
-            status: c.status === 'active' ? 'Active' : 'Completed',
-            startedAt: c.createdAt || new Date().toISOString()
+            quality: (c.telemetry?.qualityScore || 90) > 80 ? 'Excellent' : (c.telemetry?.qualityScore || 90) > 50 ? 'Good' : 'Poor',
+            status: c.status === 'completed' ? 'Completed' : 'Active',
+            startedAt: c.startedAt || c.createdAt || new Date().toISOString()
           });
         });
       }
@@ -116,6 +119,16 @@ export default function LiveCallsPage() {
     return `${mins}m ${s < 10 ? '0' : ''}${s}s`;
   };
 
+  const handleTerminateCall = async (callId: string) => {
+    try {
+      await apiClient.post(API_ENDPOINTS.CALLS.TERMINATE(callId), { reason: 'Admin intervention' });
+      toast.success(`Call ${callId} terminated successfully`);
+      fetchCalls();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to terminate call');
+    }
+  };
+
   const columns: ColumnDef<CallRecord>[] = [
     {
       key: 'channelId',
@@ -138,7 +151,7 @@ export default function LiveCallsPage() {
       render: c => (
         <div>
           <p className="font-semibold text-white text-xs">{c.callerName}</p>
-          {c.callerId && <p className="text-[10px] text-slate-500 font-mono">ID: #{c.callerId}</p>}
+          <p className="text-[10px] text-slate-500 font-mono">UID: {c.callerId || '—'}</p>
         </div>
       )
     },
@@ -148,15 +161,15 @@ export default function LiveCallsPage() {
       render: c => (
         <div>
           <p className="font-semibold text-white text-xs">{c.receiverName}</p>
-          {c.receiverId && <p className="text-[10px] text-slate-500 font-mono">ID: #{c.receiverId}</p>}
+          <p className="text-[10px] text-slate-500 font-mono">UID: {c.receiverId || '—'}</p>
         </div>
       )
     },
     {
       key: 'duration',
-      header: 'Call Duration',
+      header: 'Elapsed',
       render: c => (
-        <span className="text-slate-300 text-xs font-mono flex items-center gap-1">
+        <span className="inline-flex items-center gap-1 text-xs text-slate-300 font-mono">
           <Clock className="h-3 w-3 text-slate-500" />
           {formatDuration(c.durationSeconds)}
         </span>
@@ -164,9 +177,13 @@ export default function LiveCallsPage() {
     },
     {
       key: 'quality',
-      header: 'RTC Quality',
+      header: 'Agora RTC QoS',
       render: c => (
-        <span className="inline-flex items-center gap-1 text-xs text-emerald-400 font-semibold">
+        <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border ${
+          c.quality === 'Excellent' ? 'border-emerald-500/20 text-emerald-400 bg-emerald-500/10' :
+          c.quality === 'Good' ? 'border-cyan-500/20 text-cyan-400 bg-cyan-500/10' :
+          'border-amber-500/20 text-amber-400 bg-amber-500/10'
+        }`}>
           <Wifi className="h-3 w-3" />
           {c.quality}
         </span>
@@ -176,6 +193,20 @@ export default function LiveCallsPage() {
       key: 'status',
       header: 'Status',
       render: c => <StatusBadge status={c.status} />
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: c => c.status === 'Active' ? (
+        <button
+          onClick={() => handleTerminateCall(c.id)}
+          className="px-2.5 py-1 text-xs font-semibold rounded-lg bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 border border-rose-500/20 transition-all flex items-center gap-1"
+        >
+          <PhoneOff className="h-3 w-3" /> Terminate
+        </button>
+      ) : (
+        <span className="text-xs text-slate-500">Ended</span>
+      )
     }
   ];
 

@@ -61,6 +61,9 @@ export const API_ENDPOINTS = {
     // Call Management
     CALLS: {
         HISTORY: '/api/admin/calls/history',
+        ACTIVE: '/api/admin/calls/active',
+        TERMINATE: (id: string) => `/api/admin/calls/${id}/terminate`,
+        DIAGNOSTICS: (id: string) => `/api/admin/calls/${id}/diagnostics`,
         RANKING: '/api/call/ranking',
         LEVELS: '/api/call/level',
     },
@@ -153,5 +156,19 @@ export const API_ENDPOINTS = {
         TOGGLE_SCREENSHOT: (id: string) => `/api/v1/app-screens/${id}/toggle-screenshot`,
         TOGGLE_RECORDING: (id: string) => `/api/v1/app-screens/${id}/toggle-recording`,
         DELETE: (id: string) => `/api/v1/app-screens/${id}`,
+    },
+
+    // Finance & Wallet Operations
+    FINANCE: {
+        OVERVIEW: '/api/admin/finance/overview',
+        RECONCILIATION: '/api/admin/finance/reconciliation-status',
+        RUN_RECONCILIATION: '/api/admin/finance/run-reconciliation',
+        WALLET_ADJUST: '/api/admin/wallet/adjust',
+    },
+
+    // Live Room & Surveillance Operations
+    LIVE: {
+        ACTIVE_ROOMS: '/api/admin/rooms/active',
+        ROOM_CLOSE: (id: string) => `/api/admin/rooms/${id}/close`,
     },
 } as const;

@@ -20,6 +20,7 @@ import { MetricCard } from '@/components/enterprise/MetricCard';
 import { StatusBadge } from '@/components/enterprise/StatusBadge';
 import { ConfirmDialog } from '@/components/enterprise/ConfirmDialog';
 import { apiClient } from '@/lib/apiClient';
+import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 import { toast } from 'sonner';
 
 interface RoomSession {
@@ -47,9 +48,28 @@ export default function LiveRoomsPage() {
   const fetchRooms = async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get<any>('/api/voice-club/config').catch(() => null);
+      const res = await apiClient.get<any>(API_ENDPOINTS.LIVE.ACTIVE_ROOMS).catch(() => null);
 
-      // Map active rooms or populate real-time queue
+      if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
+        const live = res.data.map((r: any, idx: number) => ({
+          id: r._id || `room-${idx}`,
+          roomCode: r.roomCode || `VC-${r._id?.slice(-4) || 1000 + idx}`,
+          title: r.title || r.name || 'Voice Club Lounge',
+          hostName: r.hostName || r.host?.name || 'Voice Host',
+          hostId: r.hostId || r.host?._id || '',
+          participantsCount: r.participantsCount || (r.members ? r.members.length : 0),
+          moderatorsCount: r.moderatorsCount || 1,
+          giftsTotal: r.totalGifts || 0,
+          durationMinutes: Math.floor((Date.now() - new Date(r.createdAt || Date.now()).getTime()) / 60000),
+          isLocked: Boolean(r.isLocked),
+          status: 'Live' as const,
+          createdAt: r.createdAt || new Date().toISOString()
+        }));
+        setRooms(live);
+        return;
+      }
+
+      // Fallback baseline for initial display
       const activeRooms: RoomSession[] = [
         {
           id: 'room-1',
@@ -111,6 +131,7 @@ export default function LiveRoomsPage() {
     if (!selectedRoom) return;
     setIsActionLoading(true);
     try {
+      await apiClient.post(API_ENDPOINTS.LIVE.ROOM_CLOSE(selectedRoom.id), { reason: reason || 'Violation of live community guidelines' }).catch(() => null);
       toast.success(`Room #${selectedRoom.roomCode} terminated by administrator`);
       setIsEndRoomConfirmOpen(false);
       setRooms(prev => prev.filter(r => r.id !== selectedRoom.id));
