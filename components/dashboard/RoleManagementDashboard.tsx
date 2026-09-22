@@ -15,6 +15,9 @@ import {
   ShieldCheck,
   UserRound,
   Users,
+  Sparkles,
+  TrendingUp,
+  ArrowUpRight
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/apiClient';
@@ -66,7 +69,8 @@ type Metric = {
   label: string;
   value: number | string;
   hint: string;
-  color: string;
+  gradient: string;
+  glow: string;
   icon: typeof Users;
 };
 
@@ -149,7 +153,7 @@ export function RoleManagementDashboard() {
   const phone = profile.whatsappNumber || profile.phoneNumber || profile.phone || 'Not provided';
   const code = profile.employeeCode || profile.referralCode || profile.specialCode || profile.meethiId || user?.employeeCode || user?.referralCode || user?.specialCode || user?.meethiId || 'Not assigned';
   const avatar = profile.image || profile.profilePhoto;
-  const initials = displayName.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'MC';
+  const initials = displayName.split(' ').filter(Boolean).slice(0, 2).map((part) => part[0]?.toUpperCase()).join('') || 'YA';
 
   const earnings = useMemo(
     () => [...earningsData].sort((a, b) => String(a.date).localeCompare(String(b.date))),
@@ -167,32 +171,32 @@ export function RoleManagementDashboard() {
 
   const metrics = useMemo<Metric[]>(() => {
     const base: Metric[] = [
-      { label: 'Diamond Balance', value: formatNumber(diamondBalance), hint: 'Current account balance', color: 'bg-amber-400 text-slate-950', icon: Gem },
-      { label: 'Weekly Host Earnings', value: formatNumber(weeklyEarnings), hint: 'Latest 7 days', color: 'bg-cyan-600 text-white', icon: Activity },
-      { label: 'Previous Week Earnings', value: formatNumber(previousWeekEarnings), hint: 'Prior 7-day period', color: 'bg-fuchsia-600 text-white', icon: CalendarDays },
-      { label: 'Monthly Host Earnings', value: formatNumber(monthlyEarnings), hint: 'Latest 30 days', color: 'bg-orange-500 text-white', icon: Activity },
-      { label: 'Previous Month Earnings', value: formatNumber(previousMonthEarnings), hint: 'Previous 30 days', color: 'bg-emerald-500 text-slate-950', icon: CalendarDays },
-      { label: 'New Hosts', value: numberValue(stats.hostRegistrations?.monthly), hint: 'Registered in 30 days', color: 'bg-rose-500 text-white', icon: UserRound },
-      { label: 'Total Hosts', value: numberValue(stats.roles?.host), hint: 'In your hierarchy', color: 'bg-sky-600 text-white', icon: Users },
+      { label: 'Diamond Balance', value: formatNumber(diamondBalance), hint: 'Current account balance', gradient: 'from-amber-500/20 to-orange-500/5', glow: 'text-amber-400 border-amber-500/30', icon: Gem },
+      { label: 'Weekly Host Earnings', value: formatNumber(weeklyEarnings), hint: 'Latest 7 days', gradient: 'from-cyan-500/20 to-blue-500/5', glow: 'text-cyan-400 border-cyan-500/30', icon: Activity },
+      { label: 'Previous Week Earnings', value: formatNumber(previousWeekEarnings), hint: 'Prior 7-day period', gradient: 'from-violet-500/20 to-indigo-500/5', glow: 'text-violet-400 border-violet-500/30', icon: CalendarDays },
+      { label: 'Monthly Host Earnings', value: formatNumber(monthlyEarnings), hint: 'Latest 30 days', gradient: 'from-emerald-500/20 to-teal-500/5', glow: 'text-emerald-400 border-emerald-500/30', icon: TrendingUp },
+      { label: 'Previous Month Earnings', value: formatNumber(previousMonthEarnings), hint: 'Previous 30 days', gradient: 'from-teal-500/20 to-cyan-500/5', glow: 'text-teal-400 border-teal-500/30', icon: CalendarDays },
+      { label: 'New Hosts', value: numberValue(stats.hostRegistrations?.monthly), hint: 'Registered in 30 days', gradient: 'from-pink-500/20 to-rose-500/5', glow: 'text-pink-400 border-pink-500/30', icon: UserRound },
+      { label: 'Total Hosts', value: numberValue(stats.roles?.host), hint: 'In your hierarchy', gradient: 'from-sky-500/20 to-indigo-500/5', glow: 'text-sky-400 border-sky-500/30', icon: Users },
     ];
 
     if (normalizedRole === 'superAdmin' || normalizedRole === 'owner' || normalizedRole === 'operator') {
       base.push(
-        { label: 'Total Admins', value: numberValue(stats.roles?.admin), hint: 'In your branch', color: 'bg-indigo-600 text-white', icon: ShieldCheck },
-        { label: 'Total Agencies', value: numberValue(stats.roles?.agency), hint: 'Managed agencies', color: 'bg-teal-500 text-slate-950', icon: Building2 },
-        { label: 'Customer Support', value: numberValue(stats.roles?.customerSupport), hint: 'Support team members', color: 'bg-pink-600 text-white', icon: Headphones },
+        { label: 'Total Admins', value: numberValue(stats.roles?.admin), hint: 'In your branch', gradient: 'from-indigo-500/20 to-violet-500/5', glow: 'text-indigo-400 border-indigo-500/30', icon: ShieldCheck },
+        { label: 'Total Agencies', value: numberValue(stats.roles?.agency), hint: 'Managed agencies', gradient: 'from-teal-500/20 to-emerald-500/5', glow: 'text-teal-400 border-teal-500/30', icon: Building2 },
+        { label: 'Customer Support', value: numberValue(stats.roles?.customerSupport), hint: 'Support team members', gradient: 'from-pink-500/20 to-purple-500/5', glow: 'text-pink-400 border-pink-500/30', icon: Headphones },
       );
     } else if (normalizedRole === 'admin') {
       base.push(
-        { label: 'Total Agencies', value: numberValue(stats.roles?.agency), hint: 'In your team', color: 'bg-indigo-600 text-white', icon: Building2 },
-        { label: 'Customer Support', value: numberValue(stats.roles?.customerSupport), hint: 'In your team', color: 'bg-teal-500 text-slate-950', icon: Headphones },
-        { label: 'Pending Requests', value: numberValue(stats.requests?.pending), hint: 'Awaiting workflow action', color: 'bg-pink-600 text-white', icon: Clock3 },
+        { label: 'Total Agencies', value: numberValue(stats.roles?.agency), hint: 'In your team', gradient: 'from-indigo-500/20 to-violet-500/5', glow: 'text-indigo-400 border-indigo-500/30', icon: Building2 },
+        { label: 'Customer Support', value: numberValue(stats.roles?.customerSupport), hint: 'In your team', gradient: 'from-teal-500/20 to-emerald-500/5', glow: 'text-teal-400 border-teal-500/30', icon: Headphones },
+        { label: 'Pending Requests', value: numberValue(stats.requests?.pending), hint: 'Awaiting workflow action', gradient: 'from-amber-500/20 to-rose-500/5', glow: 'text-amber-400 border-amber-500/30', icon: Clock3 },
       );
     } else if (normalizedRole === 'agency') {
       base.push(
-        { label: 'Active Hosts', value: numberValue(stats.activeHosts), hint: 'Approved hosts', color: 'bg-indigo-600 text-white', icon: BadgeCheck },
-        { label: 'Hosts Active Today', value: numberValue(stats.stats?.uniqueHostsActiveToday), hint: 'Call activity today', color: 'bg-teal-500 text-slate-950', icon: Activity },
-        { label: 'Calls Today', value: numberValue(stats.stats?.callsToday), hint: `${formatNumber(numberValue(stats.stats?.minutesToday))} total minutes`, color: 'bg-pink-600 text-white', icon: Phone },
+        { label: 'Active Hosts', value: numberValue(stats.activeHosts), hint: 'Approved hosts', gradient: 'from-indigo-500/20 to-violet-500/5', glow: 'text-indigo-400 border-indigo-500/30', icon: BadgeCheck },
+        { label: 'Hosts Active Today', value: numberValue(stats.stats?.uniqueHostsActiveToday), hint: 'Call activity today', gradient: 'from-teal-500/20 to-emerald-500/5', glow: 'text-teal-400 border-teal-500/30', icon: Activity },
+        { label: 'Calls Today', value: numberValue(stats.stats?.callsToday), hint: `${formatNumber(numberValue(stats.stats?.minutesToday))} total minutes`, gradient: 'from-pink-500/20 to-rose-500/5', glow: 'text-pink-400 border-pink-500/30', icon: Phone },
       );
     }
 
@@ -201,71 +205,101 @@ export function RoleManagementDashboard() {
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-7xl space-y-4 animate-pulse">
-        <div className="h-56 rounded-lg bg-slate-900" />
+      <div className="mx-auto max-w-7xl space-y-6 animate-pulse">
+        <div className="h-56 rounded-3xl bg-slate-900/60 border border-white/10" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, index) => <div key={index} className="h-28 rounded-lg bg-slate-900" />)}
+          {Array.from({ length: 8 }).map((_, index) => (
+            <div key={index} className="h-32 rounded-2xl bg-slate-900/60 border border-white/10" />
+          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 text-slate-100">
-      <section className="overflow-hidden rounded-lg border border-slate-800 bg-slate-900 shadow-xl">
-        <div className="flex flex-col gap-5 border-b border-slate-800 px-5 py-6 sm:flex-row sm:items-center sm:px-7">
-          <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-slate-700 bg-slate-800 text-2xl font-black text-cyan-300">
-            {avatar ? <img src={avatar} alt={displayName} className="h-full w-full object-cover" /> : initials}
+    <div className="mx-auto max-w-7xl space-y-8 text-slate-100 pb-12">
+      {/* Hero Profile Card */}
+      <section className="relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900/80 via-[#0d1222]/90 to-[#070a13]/95 backdrop-blur-2xl shadow-2xl shadow-black/60">
+        <div className="flex flex-col gap-6 border-b border-white/10 p-6 sm:flex-row sm:items-center sm:p-8">
+          <div className="relative">
+            <div className="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-3xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-400 p-[2px] shadow-2xl shadow-indigo-500/30">
+              <div className="h-full w-full rounded-[22px] bg-slate-950 flex items-center justify-center font-black text-2xl text-cyan-300">
+                {avatar ? <img src={avatar} alt={displayName} className="h-full w-full object-cover" /> : initials}
+              </div>
+            </div>
+            <span className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-emerald-500 border-3 border-[#070a13] shadow-md animate-pulse" />
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-cyan-500/10 px-2.5 py-1 text-xs font-bold text-cyan-300 ring-1 ring-cyan-500/30">
+
+          <div className="min-w-0 flex-1 space-y-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1 text-xs font-bold text-cyan-300 shadow-sm shadow-cyan-500/10">
                 <BadgeCheck className="h-3.5 w-3.5" /> {config.title}
               </span>
-              <span className="text-xs text-slate-500">Live hierarchy dashboard</span>
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-slate-400">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                Live Operational Network
+              </span>
             </div>
-            <h1 className="text-2xl font-bold text-white sm:text-3xl">{displayName}</h1>
-            <p className="mt-1 max-w-2xl text-sm text-slate-400">{config.scope}</p>
+            <h1 className="text-2xl font-black text-white sm:text-3xl tracking-tight">{displayName}</h1>
+            <p className="max-w-2xl text-xs sm:text-sm text-slate-400">{config.scope}</p>
           </div>
+
           <button
             type="button"
             onClick={() => void loadDashboard(true)}
             disabled={refreshing}
             title="Refresh dashboard"
-            className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-slate-700 bg-slate-800 text-slate-300 transition hover:border-cyan-500 hover:text-cyan-300 disabled:opacity-50"
+            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-slate-300 transition-all hover:border-cyan-500/50 hover:bg-cyan-500/10 hover:text-cyan-300 disabled:opacity-50 shadow-md"
           >
             <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
-        <div className="grid grid-cols-1 divide-y divide-slate-800 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4">
+        {/* Profile Field Strip */}
+        <div className="grid grid-cols-1 divide-y divide-white/5 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4 bg-black/20">
           <ProfileField icon={UserRound} label="Account Name" value={displayName} />
           <ProfileField icon={ShieldCheck} label={config.codeLabel} value={code} />
-          <ProfileField icon={Phone} label="WhatsApp Number" value={phone} />
+          <ProfileField icon={Phone} label="WhatsApp Contact" value={phone} />
           <ProfileField icon={Mail} label="Email Address" value={email} />
         </div>
       </section>
 
-      <div className="flex items-end justify-between gap-4">
+      {/* Performance Overview Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-white">Performance overview</h2>
-          <p className="text-xs text-slate-500">Metrics are limited to your assigned hierarchy.</p>
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-violet-400" />
+            <h2 className="text-xl font-black text-white tracking-tight">Performance Metrics</h2>
+          </div>
+          <p className="text-xs text-slate-400 mt-0.5">Real-time metrics scoped to your administrative clearance.</p>
         </div>
-        {lastUpdated && <p className="text-[11px] text-slate-500">Updated {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>}
+        {lastUpdated && (
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full border border-white/10 bg-white/[0.03] text-[11px] text-slate-400">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            <span>Updated {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+        )}
       </div>
 
+      {/* Metric Cards Grid */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {metrics.map((metric) => {
           const Icon = metric.icon;
           return (
-            <article key={metric.label} className={`${metric.color} min-h-28 rounded-lg p-5 shadow-lg`}>
+            <article
+              key={metric.label}
+              className={`relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br ${metric.gradient} bg-slate-900/60 p-5 backdrop-blur-xl shadow-xl shadow-black/40 hover:border-white/20 hover:scale-[1.01] transition-all duration-300`}
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                  <p className="text-sm font-bold leading-tight">{metric.label}</p>
-                  <p className="mt-2 text-3xl font-black leading-none">{metric.value}</p>
-                  <p className="mt-2 text-xs font-semibold opacity-75">{metric.hint}</p>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">{metric.label}</p>
+                  <p className="mt-2 text-3xl font-black text-white tracking-tight leading-none">{metric.value}</p>
+                  <p className="mt-2 text-xs font-medium text-slate-400 flex items-center gap-1">
+                    <ArrowUpRight className="h-3 w-3 text-cyan-400" />
+                    <span>{metric.hint}</span>
+                  </p>
                 </div>
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-black/10">
+                <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border ${metric.glow} bg-slate-950/70 shadow-inner`}>
                   <Icon className="h-5 w-5" />
                 </div>
               </div>
@@ -274,18 +308,28 @@ export function RoleManagementDashboard() {
         })}
       </section>
 
-      <section className="grid grid-cols-2 gap-3 rounded-lg border border-slate-800 bg-slate-900 p-4 sm:grid-cols-4">
-        <CompactStat label="Active users" value={stats.activeUsers} />
-        <CompactStat label="New registrations" value={stats.registrations?.today} />
-        <CompactStat label="Approved requests" value={stats.requests?.approved} />
-        <CompactStat label="Pending requests" value={stats.requests?.pending} />
+      {/* Quick Summary Pill Bar */}
+      <section className="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-2xl border border-white/10 bg-slate-900/40 p-4 backdrop-blur-xl shadow-xl shadow-black/20">
+        <CompactStat label="Active Users" value={stats.activeUsers} glow="text-cyan-400" />
+        <CompactStat label="New Registrations" value={stats.registrations?.today} glow="text-emerald-400" />
+        <CompactStat label="Approved Requests" value={stats.requests?.approved} glow="text-violet-400" />
+        <CompactStat label="Pending Requests" value={stats.requests?.pending} glow="text-amber-400" />
       </section>
 
-      <section className="grid grid-cols-1 gap-5 xl:grid-cols-2">
-        <ChartPanel title="Revenue trend" subtitle="Last 7 days"><RevenueChart data={revenueData} /></ChartPanel>
-        <ChartPanel title="Host earnings" subtitle="Last 60 days"><EarningsChart data={earningsData} /></ChartPanel>
-        <ChartPanel title="Call activity" subtitle="Last 7 days"><CallChart data={callData} /></ChartPanel>
-        <ChartPanel title="Coin distribution" subtitle="Current hierarchy"><DistributionChart data={distributionData} /></ChartPanel>
+      {/* Visual Analytics Charts */}
+      <section className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <ChartPanel title="Revenue Trend" subtitle="Net financial volume over the past 7 days">
+          <RevenueChart data={revenueData} />
+        </ChartPanel>
+        <ChartPanel title="Host Earnings Velocity" subtitle="Disbursed earnings recorded across the last 60 days">
+          <EarningsChart data={earningsData} />
+        </ChartPanel>
+        <ChartPanel title="Call Traffic & Duration" subtitle="Live voice call frequency and aggregate minutes">
+          <CallChart data={callData} />
+        </ChartPanel>
+        <ChartPanel title="In-App Currency Distribution" subtitle="Active coin distribution across the hierarchy">
+          <DistributionChart data={distributionData} />
+        </ChartPanel>
       </section>
     </div>
   );
@@ -293,31 +337,35 @@ export function RoleManagementDashboard() {
 
 function ProfileField({ icon: Icon, label, value }: { icon: typeof Users; label: string; value: string }) {
   return (
-    <div className="flex min-w-0 items-center gap-3 px-5 py-4">
-      <Icon className="h-4 w-4 shrink-0 text-cyan-400" />
+    <div className="flex min-w-0 items-center gap-3.5 px-6 py-4.5">
+      <div className="h-9 w-9 rounded-xl border border-cyan-500/20 bg-cyan-500/10 flex items-center justify-center text-cyan-400 shrink-0">
+        <Icon className="h-4 w-4" />
+      </div>
       <div className="min-w-0">
-        <p className="text-[11px] font-semibold uppercase text-slate-500">{label}</p>
-        <p className="truncate text-sm font-semibold text-slate-200">{value}</p>
+        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
+        <p className="truncate text-xs sm:text-sm font-semibold text-slate-200 mt-0.5">{value}</p>
       </div>
     </div>
   );
 }
 
-function CompactStat({ label, value }: { label: string; value?: number }) {
+function CompactStat({ label, value, glow }: { label: string; value?: number; glow: string }) {
   return (
-    <div className="px-2 py-1">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className="mt-1 text-xl font-bold text-white">{numberValue(value).toLocaleString('en-IN')}</p>
+    <div className="px-3 py-2">
+      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">{label}</p>
+      <p className={`mt-1 text-2xl font-black ${glow} tracking-tight`}>
+        {numberValue(value).toLocaleString('en-IN')}
+      </p>
     </div>
   );
 }
 
 function ChartPanel({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
-    <article className="rounded-lg border border-slate-800 bg-slate-900 p-5 shadow-lg">
-      <div className="mb-4">
-        <h3 className="text-sm font-bold text-white">{title}</h3>
-        <p className="text-xs text-slate-500">{subtitle}</p>
+    <article className="rounded-3xl border border-white/10 bg-slate-900/60 p-6 backdrop-blur-xl shadow-2xl shadow-black/40">
+      <div className="mb-5 flex flex-col gap-1">
+        <h3 className="text-base font-bold text-white tracking-tight">{title}</h3>
+        <p className="text-xs text-slate-400">{subtitle}</p>
       </div>
       <div className="h-64">{children}</div>
     </article>

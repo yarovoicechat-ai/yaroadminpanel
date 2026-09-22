@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Search, MessageSquare, Share2, CheckSquare, User, LogOut, Settings, ChevronDown, Menu } from 'lucide-react';
+import { Search, MessageSquare, Share2, CheckSquare, User, LogOut, Settings, Sparkles, Command } from 'lucide-react';
 import Link from 'next/link';
 
 export default function TopHeader() {
@@ -27,45 +27,50 @@ export default function TopHeader() {
     }
   };
 
-  const userName = user?.name || 'Shivansh Bajpeyi';
-  const userRole = user?.role || 'admin';
+  const userName = user?.name || 'Administrator';
+  const userRole = user?.role || 'owner';
   const userAvatar = (user as any)?.profilePhoto || (user as any)?.avatar;
 
   return (
-    <header className="app-topbar sticky top-0 z-30 flex w-full items-center justify-between border-b px-4 py-2.5 backdrop-blur-xl md:px-6">
-      {/* Left Section: Menu & Search */}
-      <div className="flex items-center gap-3 md:gap-4 flex-1">
-        <img
-          src="/meethi-chat-logo.png"
-          alt="Meethi Chat Logo"
-          className="w-7 h-7 rounded-lg object-cover shadow-sm ring-1 ring-pink-500/30 md:hidden"
-        />
-        <form onSubmit={handleSearchSubmit} className="relative max-w-md w-full">
-          <div className="relative flex items-center">
+    <header className="sticky top-0 z-30 flex h-16 w-full items-center justify-between border-b border-white/10 bg-[#070a13]/85 px-4 md:px-6 backdrop-blur-2xl">
+      {/* Left Section: Brand on Mobile & Global Search */}
+      <div className="flex items-center gap-3 md:gap-5 flex-1 max-w-xl">
+        <div className="flex items-center gap-2 md:hidden">
+          <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-violet-600 to-cyan-400 p-[1px]">
+            <div className="h-full w-full rounded-[11px] bg-slate-950 flex items-center justify-center">
+              <Sparkles className="h-4 w-4 text-violet-400" />
+            </div>
+          </div>
+        </div>
+
+        <form onSubmit={handleSearchSubmit} className="relative w-full">
+          <div className="relative flex items-center group">
+            <Search className="absolute left-3.5 h-4 w-4 text-slate-500 group-focus-within:text-violet-400 transition-colors" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search..."
-              className="w-full bg-slate-800/80 border border-slate-700/60 text-slate-200 placeholder-slate-500 rounded-xl pl-3.5 pr-9 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 transition-all"
+              placeholder="Search users, IDs, agents..."
+              className="w-full rounded-xl border border-white/10 bg-slate-900/60 pl-10 pr-16 py-2 text-xs text-slate-200 placeholder-slate-500 backdrop-blur-md shadow-inner transition-all focus:border-violet-500/50 focus:bg-slate-900/90 focus:outline-none focus:ring-2 focus:ring-violet-500/20"
             />
-            <button type="submit" className="absolute right-2.5 text-slate-400 hover:text-white transition-colors">
-              <Search className="w-3.5 h-3.5" />
-            </button>
+            <div className="absolute right-2.5 hidden sm:flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/5 border border-white/10 text-[10px] text-slate-400">
+              <Command className="h-2.5 w-2.5" />
+              <span>K</span>
+            </div>
           </div>
         </form>
       </div>
 
       {/* Right Section: Actions & User Avatar */}
-      <div className="flex items-center gap-2 md:gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         {/* Chat Notification Icon */}
         <Link
           href="/messages/system"
-          className="relative p-2 rounded-xl bg-slate-800/80 hover:bg-emerald-600/20 text-emerald-400 hover:text-emerald-300 border border-slate-700/60 hover:border-emerald-500/40 transition-all group"
-          title="System Chat & Notifications"
+          className="relative p-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-slate-400 hover:text-emerald-400 hover:border-emerald-500/30 hover:bg-emerald-500/10 transition-all duration-200"
+          title="System Messages & Broadcasts"
         >
           <MessageSquare className="w-4 h-4" />
-          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 text-[9px] font-black text-slate-950 flex items-center justify-center border-2 border-slate-900">
+          <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-gradient-to-r from-emerald-500 to-teal-400 px-1 text-[9px] font-black text-slate-950 shadow-md">
             2
           </span>
         </Link>
@@ -73,8 +78,8 @@ export default function TopHeader() {
         {/* Share Button */}
         <button
           onClick={handleShareLink}
-          className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 transition-all"
-          title="Share Portal Link"
+          className="p-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-slate-400 hover:text-white hover:border-white/20 hover:bg-white/[0.07] transition-all duration-200"
+          title="Copy Link to Clipboard"
         >
           <Share2 className="w-4 h-4" />
         </button>
@@ -82,60 +87,74 @@ export default function TopHeader() {
         {/* Tasks Button */}
         <Link
           href="/tasks"
-          className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/60 transition-all"
+          className="p-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-slate-400 hover:text-white hover:border-white/20 hover:bg-white/[0.07] transition-all duration-200"
           title="Task Management"
         >
           <CheckSquare className="w-4 h-4" />
         </Link>
 
+        {/* Divider */}
+        <div className="h-6 w-[1px] bg-white/10 mx-1 hidden sm:block" />
+
         {/* User Profile Avatar Dropdown */}
-        <div className="relative ml-1">
+        <div className="relative">
           <button
             onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="flex items-center gap-2 p-1 rounded-full bg-slate-800/80 border border-slate-700 hover:border-indigo-500/50 transition-all focus:outline-none"
+            className="flex items-center gap-2.5 p-1 sm:px-2 sm:py-1 rounded-xl border border-white/10 bg-white/[0.03] hover:border-violet-500/40 hover:bg-white/[0.06] transition-all focus:outline-none"
           >
-            <div className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center overflow-hidden">
+            <div className="h-8 w-8 rounded-lg bg-gradient-to-tr from-violet-600 to-indigo-500 p-[1px] flex items-center justify-center overflow-hidden shrink-0 shadow-md shadow-violet-950/50">
               {userAvatar ? (
-                <img src={userAvatar} alt={userName} className="w-full h-full object-cover" />
+                <img src={userAvatar} alt={userName} className="h-full w-full object-cover rounded-[7px]" />
               ) : (
-                <User className="w-4 h-4 text-slate-300" />
+                <div className="h-full w-full bg-slate-900 rounded-[7px] flex items-center justify-center font-bold text-xs text-white">
+                  {userName.charAt(0).toUpperCase()}
+                </div>
               )}
+            </div>
+            <div className="hidden md:block text-left pr-1">
+              <p className="text-xs font-semibold text-white leading-none truncate max-w-[110px]">{userName}</p>
+              <p className="text-[10px] font-bold text-violet-400 uppercase tracking-wider mt-1">{userRole}</p>
             </div>
           </button>
 
           {/* Profile Dropdown Menu */}
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 text-xs space-y-1">
-              <div className="px-3 py-2 border-b border-slate-800">
+            <div className="absolute right-0 mt-2 w-60 rounded-2xl border border-white/10 bg-[#0c101d]/95 backdrop-blur-2xl p-2 shadow-2xl shadow-black/90 z-50 text-xs space-y-1 animate-in fade-in-0 zoom-in-95">
+              <div className="px-3 py-2.5 border-b border-white/10 mb-1">
                 <p className="font-bold text-white truncate">{userName}</p>
-                <p className="text-[10px] font-semibold text-indigo-400 uppercase tracking-wider mt-0.5">{userRole}</p>
+                <div className="flex items-center gap-1.5 mt-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                  <span className="text-[10px] font-semibold text-violet-300 uppercase tracking-wider">{userRole} Active</span>
+                </div>
               </div>
 
               <Link
                 href="/profile"
                 onClick={() => setIsProfileOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-300 hover:bg-white/[0.06] hover:text-white transition-colors"
               >
-                <User className="w-3.5 h-3.5 text-indigo-400" />
+                <User className="w-4 h-4 text-violet-400" />
                 <span>My Profile</span>
               </Link>
 
               <Link
                 href="/settings"
                 onClick={() => setIsProfileOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 rounded-xl text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-slate-300 hover:bg-white/[0.06] hover:text-white transition-colors"
               >
-                <Settings className="w-3.5 h-3.5 text-indigo-400" />
+                <Settings className="w-4 h-4 text-cyan-400" />
                 <span>Settings</span>
               </Link>
 
-              <button
-                onClick={() => { setIsProfileOpen(false); logout(); }}
-                className="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-rose-400 hover:bg-rose-500/10 transition-colors text-left"
-              >
-                <LogOut className="w-3.5 h-3.5 text-rose-400" />
-                <span>Sign Out</span>
-              </button>
+              <div className="pt-1 mt-1 border-t border-white/10">
+                <button
+                  onClick={() => { setIsProfileOpen(false); logout(); }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-rose-300 hover:bg-rose-500/15 hover:text-rose-200 transition-colors text-left"
+                >
+                  <LogOut className="w-4 h-4 text-rose-400" />
+                  <span>Sign Out</span>
+                </button>
+              </div>
             </div>
           )}
         </div>

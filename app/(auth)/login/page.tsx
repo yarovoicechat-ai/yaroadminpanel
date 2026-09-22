@@ -5,23 +5,23 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
 import {
-    Lock, Loader2, Crown, ShieldCheck, ShieldAlert, UserCheck, HelpCircle, Briefcase
+    Lock, Loader2, Crown, ShieldCheck, ShieldAlert, UserCheck, HelpCircle, Briefcase, Sparkles, Mail, KeyRound, ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 const rolePortals = [
-    { name: 'Owner Portal', href: '/login/owner', role: 'owner', color: 'from-pink-600 to-purple-600', icon: Crown },
-    { name: 'Super Admin', href: '/login/super-admin', role: 'super-admin', color: 'from-purple-600 to-indigo-600', icon: ShieldCheck },
-    { name: 'Admin Console', href: '/login/admin', role: 'admin', color: 'from-indigo-600 to-blue-600', icon: ShieldAlert },
-    { name: 'Operator Hub', href: '/login/operator', role: 'operator', color: 'from-teal-600 to-emerald-600', icon: UserCheck },
-    { name: 'Customer Support', href: '/login/customer-service', role: 'customer-service', color: 'from-cyan-600 to-sky-600', icon: HelpCircle },
-    { name: 'Agency Partner', href: '/login/agency', role: 'agency', color: 'from-amber-600 to-orange-600', icon: Briefcase },
+    { name: 'Owner Portal', href: '/login/owner', role: 'owner', gradient: 'from-amber-500/20 to-orange-500/10 border-amber-500/30 text-amber-400', icon: Crown },
+    { name: 'Super Admin', href: '/login/super-admin', role: 'super-admin', gradient: 'from-violet-500/20 to-indigo-500/10 border-violet-500/30 text-violet-400', icon: ShieldCheck },
+    { name: 'Admin Console', href: '/login/admin', role: 'admin', gradient: 'from-emerald-500/20 to-teal-500/10 border-emerald-500/30 text-emerald-400', icon: ShieldAlert },
+    { name: 'Operator Hub', href: '/login/operator', role: 'operator', gradient: 'from-cyan-500/20 to-blue-500/10 border-cyan-500/30 text-cyan-400', icon: UserCheck },
+    { name: 'Customer Support', href: '/login/customer-service', role: 'customer-service', gradient: 'from-teal-500/20 to-emerald-500/10 border-teal-500/30 text-teal-400', icon: HelpCircle },
+    { name: 'Agency Partner', href: '/login/agency', role: 'agency', gradient: 'from-pink-500/20 to-rose-500/10 border-pink-500/30 text-pink-400', icon: Briefcase },
 ];
 
 export default function LoginPage() {
-    const [username, setUsername] = useState('');
+    const [username, setUsername] = useState('yaroapp@gmail.com');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const { login } = useAuth();
@@ -35,21 +35,35 @@ export default function LoginPage() {
             await login(username, password);
             toast.success('Logged in successfully');
         } catch (err: any) {
-            setError(err.message || 'Invalid credentials');
+            setError(err?.message || 'Invalid credentials');
             setIsSigningIn(false);
         }
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black p-4 text-white">
-            <div className="w-full max-w-4xl space-y-8">
+        <div className="relative min-h-screen flex items-center justify-center bg-[#070a13] p-4 text-white overflow-hidden">
+            {/* Ambient Aurora Glow Background */}
+            <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
+                <div className="absolute -top-[20%] left-[20%] h-[600px] w-[600px] rounded-full bg-violet-600/15 blur-[160px]" />
+                <div className="absolute top-[40%] -right-[10%] h-[550px] w-[550px] rounded-full bg-cyan-500/15 blur-[150px]" />
+                <div className="absolute -bottom-[20%] left-[30%] h-[500px] w-[500px] rounded-full bg-indigo-600/15 blur-[160px]" />
+            </div>
 
-                <div className="text-center space-y-2">
-                    <h1 className="text-4xl font-black bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent uppercase tracking-wider">
-                        Yaro Enterprise Admin Platform
+            <div className="relative z-10 w-full max-w-4xl space-y-8 my-8">
+                {/* Brand Header */}
+                <div className="text-center space-y-3">
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 backdrop-blur-md shadow-lg shadow-violet-500/10">
+                        <Sparkles className="h-4 w-4 text-violet-400 animate-pulse" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-violet-300">
+                            Enterprise Access Portal
+                        </span>
+                    </div>
+
+                    <h1 className="text-3xl sm:text-5xl font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
+                        YARO Admin Platform
                     </h1>
-                    <p className="text-slate-400 text-sm">
-                        Select your specialized role login portal or enter administrative credentials below.
+                    <p className="text-slate-400 text-xs sm:text-sm max-w-lg mx-auto">
+                        High-throughput administrative operations, real-time moderation, multi-tier RBAC, and financial ledger control.
                     </p>
                 </div>
 
@@ -61,67 +75,91 @@ export default function LoginPage() {
                             <Link
                                 key={p.role}
                                 href={p.href}
-                                className={`p-4 rounded-2xl bg-gradient-to-b ${p.color} hover:scale-105 transition-all text-center flex flex-col items-center justify-center gap-2 shadow-xl border border-white/20 group`}
+                                className={`p-4 rounded-2xl bg-slate-900/60 backdrop-blur-xl border ${p.gradient} hover:scale-[1.03] active:scale-[0.98] transition-all duration-200 text-center flex flex-col items-center justify-center gap-2.5 shadow-xl shadow-black/40 group`}
                             >
-                                <Icon className="w-6 h-6 text-white group-hover:animate-bounce" />
-                                <span className="text-xs font-bold text-white uppercase tracking-wider">{p.name}</span>
+                                <div className="h-10 w-10 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                    <Icon className="w-5 h-5 transition-transform group-hover:rotate-6" />
+                                </div>
+                                <span className="text-xs font-bold uppercase tracking-wider">{p.name}</span>
                             </Link>
                         );
                     })}
                 </div>
 
                 {/* Direct Login Card */}
-                <Card className="max-w-md mx-auto bg-slate-900/80 border-slate-800 backdrop-blur-xl shadow-2xl rounded-3xl">
-                    <CardHeader className="space-y-1">
-                        <CardTitle className="text-xl text-center font-black text-white uppercase">Direct Universal Sign In</CardTitle>
+                <Card className="max-w-md mx-auto bg-[#0d1222]/85 border-white/10 backdrop-blur-2xl shadow-2xl shadow-black/80 rounded-3xl overflow-hidden">
+                    <CardHeader className="text-center pb-2 pt-6">
+                        <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-tr from-violet-600 to-cyan-500 p-[1px] shadow-lg shadow-indigo-500/25">
+                            <div className="flex h-full w-full items-center justify-center rounded-[15px] bg-[#070a13]">
+                                <KeyRound className="h-5 w-5 text-cyan-400" />
+                            </div>
+                        </div>
+                        <CardTitle className="text-xl font-bold text-white tracking-tight">
+                            Universal Sign In
+                        </CardTitle>
+                        <CardDescription className="text-xs text-slate-400">
+                            Enter your administrative credentials to authenticate
+                        </CardDescription>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-6 pt-2">
                         <form onSubmit={handleSubmit} className="space-y-4">
                             <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-slate-300">Username / Email</label>
+                                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                                    <Mail className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>Username / Email</span>
+                                </label>
                                 <Input
                                     value={username}
                                     onChange={(e) => setUsername(e.target.value)}
                                     placeholder="Enter username or email"
                                     disabled={isSigningIn}
-                                    className="bg-slate-950 border-slate-800 text-white text-xs rounded-xl"
+                                    required
+                                    className="bg-slate-950/70 border-white/10 text-white placeholder-slate-500 text-xs rounded-xl h-11"
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-xs font-medium text-slate-300">Password</label>
+                                <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                                    <Lock className="w-3.5 h-3.5 text-slate-400" />
+                                    <span>Password</span>
+                                </label>
                                 <Input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••••••"
                                     disabled={isSigningIn}
-                                    className="bg-slate-950 border-slate-800 text-white text-xs rounded-xl"
+                                    required
+                                    className="bg-slate-950/70 border-white/10 text-white placeholder-slate-500 text-xs rounded-xl h-11"
                                 />
                             </div>
 
                             {error && (
-                                <div className="text-xs text-red-400 text-center bg-red-500/10 p-2.5 rounded-xl border border-red-500/20">
+                                <div className="text-xs text-rose-300 text-center bg-rose-500/15 p-3 rounded-xl border border-rose-500/30">
                                     {error}
                                 </div>
                             )}
 
-                            <Button className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl py-2.5" disabled={isSigningIn}>
+                            <Button
+                                type="submit"
+                                className="w-full bg-gradient-to-r from-violet-600 via-indigo-600 to-cyan-500 hover:brightness-110 text-white font-bold text-xs rounded-xl h-11 shadow-lg shadow-indigo-500/25 transition-all mt-2"
+                                disabled={isSigningIn}
+                            >
                                 {isSigningIn ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        Signing In...
+                                        Authenticating Session...
                                     </>
                                 ) : (
                                     <>
                                         <Lock className="mr-2 h-4 w-4" />
-                                        Authenticate & Continue
+                                        Authenticate & Enter Console
+                                        <ArrowRight className="ml-2 h-4 w-4" />
                                     </>
                                 )}
                             </Button>
                         </form>
                     </CardContent>
                 </Card>
-
             </div>
         </div>
     );
