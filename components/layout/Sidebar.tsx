@@ -344,7 +344,8 @@ const adminSidebarSections: SidebarSection[] = [
         category: 'Developer',
         items: [
             { name: 'System Logs', href: '/logs', icon: Terminal, category: 'Developer' },
-            { name: 'Audit Logs', href: '/security/logs', icon: ShieldCheck, category: 'Developer' },
+            { name: 'Audit Center', href: '/security/audit-center', icon: ShieldCheck, category: 'Developer' },
+            { name: 'Audit Logs', href: '/security/logs', icon: FileText, category: 'Developer' },
             { name: 'API Center', href: '/api-center', icon: Terminal, category: 'Developer' }
         ]
     }
