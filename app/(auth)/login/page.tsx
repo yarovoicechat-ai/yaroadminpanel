@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card';
+import Image from 'next/image';
 import {
     Lock, Loader2, Crown, ShieldCheck, ShieldAlert, UserCheck, HelpCircle, Briefcase, Sparkles, Mail, KeyRound, ArrowRight
 } from 'lucide-react';
@@ -42,19 +43,24 @@ export default function LoginPage() {
 
     return (
         <div className="relative min-h-screen flex items-center justify-center bg-[#070a13] p-4 text-white overflow-hidden">
-            {/* Ambient Aurora Glow Background */}
+            {/* Ambient Aurora Glow Background - Yaro Pink & Violet */}
             <div className="pointer-events-none fixed inset-0 z-0 overflow-hidden">
-                <div className="absolute -top-[20%] left-[20%] h-[600px] w-[600px] rounded-full bg-violet-600/15 blur-[160px]" />
-                <div className="absolute top-[40%] -right-[10%] h-[550px] w-[550px] rounded-full bg-cyan-500/15 blur-[150px]" />
+                <div className="absolute -top-[20%] left-[20%] h-[600px] w-[600px] rounded-full bg-pink-500/15 blur-[160px]" />
+                <div className="absolute top-[40%] -right-[10%] h-[550px] w-[550px] rounded-full bg-purple-600/15 blur-[150px]" />
                 <div className="absolute -bottom-[20%] left-[30%] h-[500px] w-[500px] rounded-full bg-indigo-600/15 blur-[160px]" />
             </div>
 
             <div className="relative z-10 w-full max-w-4xl space-y-8 my-8">
                 {/* Brand Header */}
                 <div className="text-center space-y-3">
-                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 backdrop-blur-md shadow-lg shadow-violet-500/10">
-                        <Sparkles className="h-4 w-4 text-violet-400 animate-pulse" />
-                        <span className="text-xs font-bold uppercase tracking-widest text-violet-300">
+                    <div className="flex justify-center mb-1">
+                        <div className="relative h-20 w-20 overflow-hidden rounded-2xl border-2 border-pink-500/40 bg-slate-950 shadow-[0_0_28px_rgba(236,72,153,0.35)] p-0.5">
+                            <Image src="/logo.png" alt="Yaro Logo" width={80} height={80} className="rounded-[14px] object-cover" priority />
+                        </div>
+                    </div>
+                    <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-pink-500/30 bg-pink-500/10 backdrop-blur-md shadow-lg shadow-pink-500/10">
+                        <Sparkles className="h-4 w-4 text-pink-400 animate-pulse" />
+                        <span className="text-xs font-bold uppercase tracking-widest text-pink-300">
                             Enterprise Access Portal
                         </span>
                     </div>

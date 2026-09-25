@@ -171,4 +171,15 @@ export const API_ENDPOINTS = {
         ACTIVE_ROOMS: '/api/admin/rooms/active',
         ROOM_CLOSE: (id: string) => `/api/admin/rooms/${id}/close`,
     },
+
+    // Store Management
+    STORE: {
+        ITEMS: '/api/store/items',
+        ITEM: (id: string) => `/api/store/items/${id}`,
+        CREATE: '/api/store/items',
+        UPDATE: (id: string) => `/api/store/items/${id}`,
+        DELETE: (id: string) => `/api/store/items/${id}`,
+        TOGGLE: (id: string) => `/api/store/items/${id}/toggle`,
+        RESET: '/api/store/reset-catalog',
+    },
 } as const;

@@ -8,6 +8,7 @@ import {
     Crown, ShieldCheck, UserCheck, Briefcase, HelpCircle, ShieldAlert, Lock, User as UserIcon, ArrowRight, ArrowLeft, Loader2
 } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface RoleLoginConfig {
     title: string;
@@ -140,8 +141,13 @@ export default function RoleLoginPage({ params }: { params: Promise<{ role: stri
 
             <div className="relative z-10 max-w-md w-full bg-[#0d1222]/85 backdrop-blur-2xl border border-white/10 p-8 rounded-3xl shadow-2xl shadow-black/80 space-y-6">
                 <div className="text-center space-y-3">
-                    <div className={`w-16 h-16 rounded-2xl ${config.accentBg} border ${config.accentBorder} flex items-center justify-center mx-auto shadow-xl`}>
-                        <RoleIcon className={`w-8 h-8 ${config.accentText}`} />
+                    <div className="flex justify-center mb-1">
+                        <div className="relative h-16 w-16 overflow-hidden rounded-2xl border-2 border-pink-500/40 bg-slate-950 shadow-[0_0_20px_rgba(236,72,153,0.35)] p-0.5">
+                            <Image src="/logo.png" alt="Yaro Logo" width={64} height={64} className="rounded-[14px] object-cover" priority />
+                        </div>
+                    </div>
+                    <div className={`w-14 h-14 rounded-2xl ${config.accentBg} border ${config.accentBorder} flex items-center justify-center mx-auto shadow-xl`}>
+                        <RoleIcon className={`w-7 h-7 ${config.accentText}`} />
                     </div>
                     <span className={`inline-block text-[10px] uppercase tracking-widest font-bold ${config.accentBg} ${config.accentText} px-3 py-1 rounded-full border ${config.accentBorder}`}>
                         {config.badge}

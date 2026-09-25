@@ -9,7 +9,7 @@ import {
     Ban, AlertOctagon, Calendar, MessageSquare, Bell, Share2,
     CheckSquare, FileCheck, DollarSign, Coins, Gem, ChevronDown, ChevronRight,
     Crown, Briefcase, Terminal, ShieldCheck, Settings, Headphones, Globe,
-    FileText, Layers, Radio, Sliders, Image as ImageIcon, Download, Sparkles
+    FileText, Layers, Radio, Sliders, Image as ImageIcon, Download, Sparkles, ShoppingBag
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -84,6 +84,7 @@ const managementSidebarSections: SidebarSection[] = [
         category: 'Dashboard',
         items: [
             { name: 'CMS Editor', href: '/cms', icon: FileText, category: 'Dashboard' },
+            { name: 'Store Management', href: '/store', icon: ShoppingBag, category: 'Dashboard' },
             { name: 'Banners', href: '/banners', icon: Layers, category: 'Dashboard' },
             { name: 'Ads', href: '/ads', icon: Radio, category: 'Dashboard' },
             { name: 'VIP Program', href: '/vip', icon: Crown, category: 'Dashboard' },
@@ -530,34 +531,30 @@ export default function Sidebar() {
                 )}
             >
                 {/* Brand Header */}
-                <div className="p-5 border-b border-white/10">
+                <div className="p-4 border-b border-pink-500/20 bg-gradient-to-r from-pink-500/10 via-purple-500/5 to-transparent">
                     <div className="flex items-center gap-3.5">
                         <div className="relative">
-                            <div className="h-11 w-11 rounded-2xl bg-gradient-to-tr from-violet-600 via-indigo-600 to-cyan-400 p-[1.5px] shadow-lg shadow-indigo-500/25">
+                            <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-pink-500 via-purple-500 to-cyan-400 p-[1.5px] shadow-lg shadow-pink-500/30">
                                 <div className="h-full w-full rounded-[14px] bg-[#0c101d] flex items-center justify-center overflow-hidden">
                                     <img
-                                        src="/meethi-chat-logo.png"
+                                        src="/logo.png"
                                         alt="YARO"
                                         className="h-full w-full object-cover"
-                                        onError={(e) => {
-                                            (e.currentTarget as HTMLElement).style.display = 'none';
-                                        }}
                                     />
-                                    <Sparkles className="h-5 w-5 text-violet-400" />
                                 </div>
                             </div>
-                            <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-[#070a13] shadow-sm animate-pulse" />
+                            <span className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-emerald-500 border-2 border-[#070a13] shadow-sm animate-pulse" />
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                                <h1 className="text-base font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-400 bg-clip-text text-transparent">
-                                    YARO Admin
+                                <h1 className="text-lg font-black tracking-tight bg-gradient-to-r from-pink-400 via-purple-300 to-white bg-clip-text text-transparent">
+                                    Yaro Command
                                 </h1>
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">
-                                <span className="h-1.5 w-1.5 rounded-full bg-cyan-400" />
-                                <p className="text-[10px] font-bold tracking-[0.16em] uppercase text-cyan-400/90">
-                                    Enterprise Suite
+                                <span className="h-1.5 w-1.5 rounded-full bg-pink-400 animate-ping" />
+                                <p className="text-[10px] font-black tracking-[0.16em] uppercase text-pink-400">
+                                    Super Admin Suite
                                 </p>
                             </div>
                         </div>

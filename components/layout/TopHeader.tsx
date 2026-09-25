@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Search, MessageSquare, Share2, CheckSquare, User, LogOut, Settings, Sparkles, Command } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { CommandPalette } from '@/components/enterprise/CommandPalette';
 
 export default function TopHeader() {
@@ -52,10 +53,8 @@ export default function TopHeader() {
         {/* Left Section: Brand on Mobile & Global Search */}
         <div className="flex items-center gap-3 md:gap-5 flex-1 max-w-xl">
           <div className="flex items-center gap-2 md:hidden">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-tr from-violet-600 to-cyan-400 p-[1px]">
-              <div className="h-full w-full rounded-[11px] bg-slate-950 flex items-center justify-center">
-                <Sparkles className="h-4 w-4 text-violet-400" />
-              </div>
+            <div className="relative h-9 w-9 overflow-hidden rounded-xl border border-pink-500/30 bg-slate-950 shadow-[0_0_12px_rgba(236,72,153,0.3)]">
+              <Image src="/logo.png" alt="Yaro" fill className="object-cover" />
             </div>
           </div>
 
