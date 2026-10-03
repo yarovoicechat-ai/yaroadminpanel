@@ -12,7 +12,11 @@ import {
   Gift,
   Clock,
   Sparkles,
-  AlertTriangle
+  AlertTriangle,
+  Pin,
+  PinOff,
+  Check,
+  X
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { DataTable, ColumnDef } from '@/components/enterprise/DataTable';
@@ -36,6 +40,9 @@ interface RoomSession {
   isLocked: boolean;
   status: 'Live' | 'Scheduled' | 'Ended';
   createdAt: string;
+  isPinned: boolean;
+  pinnedOrder: number;
+  isActive: boolean;
 }
 
 export default function LiveRoomsPage() {
@@ -45,6 +52,11 @@ export default function LiveRoomsPage() {
   const [isEndRoomConfirmOpen, setIsEndRoomConfirmOpen] = useState(false);
   const [isActionLoading, setIsActionLoading] = useState(false);
 
+  // Pin Dialog State
+  const [pinTargetRoom, setPinTargetRoom] = useState<RoomSession | null>(null);
+  const [pinOrderInput, setPinOrderInput] = useState<number>(1);
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+
   const fetchRooms = async () => {
     try {
       setLoading(true);
@@ -52,18 +64,21 @@ export default function LiveRoomsPage() {
 
       if (res?.data && Array.isArray(res.data) && res.data.length > 0) {
         const live = res.data.map((r: any, idx: number) => ({
-          id: r._id || `room-${idx}`,
-          roomCode: r.roomCode || `VC-${r._id?.slice(-4) || 1000 + idx}`,
+          id: String(r.id || r._id || `room-${idx}`),
+          roomCode: r.roomCode || `VC-${r.channelName || r._id?.slice(-4) || 1000 + idx}`,
           title: r.title || r.name || 'Voice Club Lounge',
           hostName: r.hostName || r.host?.name || 'Voice Host',
-          hostId: r.hostId || r.host?._id || '',
+          hostId: r.hostId || r.host?.userId || r.host?._id || '',
           participantsCount: r.participantsCount || (r.members ? r.members.length : 0),
           moderatorsCount: r.moderatorsCount || 1,
           giftsTotal: r.totalGifts || 0,
           durationMinutes: Math.floor((Date.now() - new Date(r.createdAt || Date.now()).getTime()) / 60000),
           isLocked: Boolean(r.isLocked),
-          status: 'Live' as const,
-          createdAt: r.createdAt || new Date().toISOString()
+          status: (r.status === 'LIVE' || r.isActive) ? ('Live' as const) : ('Ended' as const),
+          createdAt: r.createdAt || new Date().toISOString(),
+          isPinned: Boolean(r.isPinned),
+          pinnedOrder: Number(r.pinnedOrder || 0),
+          isActive: Boolean(r.isActive !== false && r.status !== 'ENDED'),
         }));
         setRooms(live);
         return;
@@ -83,7 +98,10 @@ export default function LiveRoomsPage() {
           durationMinutes: 48,
           isLocked: false,
           status: 'Live',
-          createdAt: new Date(Date.now() - 48 * 60 * 1000).toISOString()
+          createdAt: new Date(Date.now() - 48 * 60 * 1000).toISOString(),
+          isPinned: true,
+          pinnedOrder: 1,
+          isActive: true,
         },
         {
           id: 'room-2',
@@ -97,7 +115,10 @@ export default function LiveRoomsPage() {
           durationMinutes: 112,
           isLocked: false,
           status: 'Live',
-          createdAt: new Date(Date.now() - 112 * 60 * 1000).toISOString()
+          createdAt: new Date(Date.now() - 112 * 60 * 1000).toISOString(),
+          isPinned: false,
+          pinnedOrder: 0,
+          isActive: true,
         },
         {
           id: 'room-3',
@@ -111,7 +132,10 @@ export default function LiveRoomsPage() {
           durationMinutes: 24,
           isLocked: false,
           status: 'Live',
-          createdAt: new Date(Date.now() - 24 * 60 * 1000).toISOString()
+          createdAt: new Date(Date.now() - 24 * 60 * 1000).toISOString(),
+          isPinned: false,
+          pinnedOrder: 0,
+          isActive: true,
         }
       ];
 
@@ -143,11 +167,66 @@ export default function LiveRoomsPage() {
     }
   };
 
+  // Pin / Unpin Action Handler
+  const handleTogglePin = async (room: RoomSession, isPinned: boolean, order?: number) => {
+    // Constraint: Room must be active to be pinned ("lekin room pin tabhi ho payega jab koe room active hoga")
+    if (isPinned && !room.isActive) {
+      toast.error('Only active live voice rooms can be pinned. Room must be live.');
+      return;
+    }
+
+    try {
+      setIsActionLoading(true);
+      await apiClient.post(API_ENDPOINTS.LIVE.ROOM_PIN(room.id), {
+        isPinned,
+        pinnedOrder: order || 1,
+      });
+
+      toast.success(
+        isPinned
+          ? `Room #${room.roomCode} pinned successfully as Priority #${order || 1}`
+          : `Room #${room.roomCode} unpinned successfully`
+      );
+
+      setRooms(prev =>
+        prev.map(r => (r.id === room.id ? { ...r, isPinned, pinnedOrder: isPinned ? (order || 1) : 0 } : r))
+      );
+      setIsPinModalOpen(false);
+      setPinTargetRoom(null);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update pin status');
+    } finally {
+      setIsActionLoading(false);
+    }
+  };
+
+  const openPinModal = (room: RoomSession) => {
+    if (!room.isActive) {
+      toast.error('Only active live voice rooms can be pinned. This room is not active.');
+      return;
+    }
+    setPinTargetRoom(room);
+    setPinOrderInput(room.pinnedOrder > 0 ? room.pinnedOrder : 1);
+    setIsPinModalOpen(true);
+  };
+
   const columns: ColumnDef<RoomSession>[] = [
     {
       key: 'roomCode',
       header: 'Room Code',
-      render: r => <span className="font-mono text-cyan-400 font-bold">{r.roomCode}</span>
+      render: r => (
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono text-cyan-400 font-bold">{r.roomCode}</span>
+          {r.isPinned && (
+            <span
+              className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 shadow-sm"
+              title={`Pinned room with priority order #${r.pinnedOrder}`}
+            >
+              📌 #{r.pinnedOrder}
+            </span>
+          )}
+        </div>
+      )
     },
     {
       key: 'title',
@@ -197,12 +276,65 @@ export default function LiveRoomsPage() {
       render: r => <StatusBadge status={r.status} />
     },
     {
+      key: 'isPinned',
+      header: 'Pin Status',
+      render: r => (
+        <div>
+          {r.isPinned ? (
+            <div className="flex items-center gap-1">
+              <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-[11px] font-semibold flex items-center gap-1">
+                <Pin className="h-3 w-3 text-amber-400" />
+                Priority #{r.pinnedOrder}
+              </span>
+              <button
+                onClick={() => openPinModal(r)}
+                className="text-[10px] text-slate-400 hover:text-cyan-400 underline underline-offset-2 ml-1"
+                title="Change priority number"
+              >
+                Edit
+              </button>
+            </div>
+          ) : (
+            <span className="text-slate-500 text-xs">—</span>
+          )}
+        </div>
+      )
+    },
+    {
       key: 'actions',
       header: 'Controls',
       sortable: false,
       align: 'right',
       render: r => (
         <div className="flex items-center justify-end gap-1.5">
+          {/* Pin / Unpin Button */}
+          {r.isPinned ? (
+            <button
+              onClick={() => handleTogglePin(r, false)}
+              disabled={isActionLoading}
+              className="px-2.5 py-1 rounded-lg border border-amber-500/30 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 text-xs font-semibold transition-all flex items-center gap-1"
+              title="Unpin this room"
+            >
+              <PinOff className="h-3 w-3 text-amber-400" />
+              <span>Unpin</span>
+            </button>
+          ) : (
+            <button
+              onClick={() => openPinModal(r)}
+              disabled={isActionLoading || !r.isActive}
+              className={`px-2.5 py-1 rounded-lg border text-xs font-semibold transition-all flex items-center gap-1 ${
+                r.isActive
+                  ? 'border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20'
+                  : 'border-slate-700 bg-slate-800/40 text-slate-500 cursor-not-allowed'
+              }`}
+              title={r.isActive ? 'Pin this active room to top' : 'Only active rooms can be pinned'}
+            >
+              <Pin className="h-3 w-3" />
+              <span>Pin Room</span>
+            </button>
+          )}
+
+          {/* Emergency Terminate Button */}
           <button
             onClick={() => {
               setSelectedRoom(r);
@@ -229,7 +361,7 @@ export default function LiveRoomsPage() {
             </h1>
           </div>
           <p className="text-xs sm:text-sm text-slate-400 mt-1">
-            Real-time audio room telemetry, participant moderation, audio muting, and emergency termination controls.
+            Real-time audio room telemetry, participant moderation, room pin priority ordering, and emergency termination controls.
           </p>
         </div>
 
@@ -253,6 +385,13 @@ export default function LiveRoomsPage() {
           color="text-rose-400"
         />
         <MetricCard
+          label="Pinned Rooms"
+          value={rooms.filter(r => r.isPinned).length}
+          hint="Featured at top of explore"
+          icon={Pin}
+          color="text-amber-400"
+        />
+        <MetricCard
           label="Total Audience in Rooms"
           value={rooms.reduce((acc, r) => acc + r.participantsCount, 0)}
           hint="Concurrent active listeners"
@@ -266,13 +405,6 @@ export default function LiveRoomsPage() {
           icon={Gift}
           color="text-amber-400"
         />
-        <MetricCard
-          label="Audio Channel Latency"
-          value="48ms"
-          hint="Agora RTC audio health: Normal"
-          icon={Sparkles}
-          color="text-emerald-400"
-        />
       </div>
 
       {/* Rooms DataTable */}
@@ -284,6 +416,73 @@ export default function LiveRoomsPage() {
         onRefresh={fetchRooms}
         exportFilename="yaro_active_rooms.csv"
       />
+
+      {/* Pin Room Priority Modal */}
+      {isPinModalOpen && pinTargetRoom && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-md rounded-2xl border border-cyan-500/30 bg-slate-900 p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                  <Pin className="h-5 w-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base">
+                    {pinTargetRoom.isPinned ? 'Update Pin Priority' : 'Pin Voice Room to Top'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Room: #{pinTargetRoom.roomCode} — {pinTargetRoom.title}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsPinModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/10"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2 pt-2">
+              <label className="text-xs font-semibold text-slate-300">
+                Priority Number / Order (1 = Topmost, 2 = Second, 3...):
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={999}
+                value={pinOrderInput}
+                onChange={e => setPinOrderInput(Math.max(1, parseInt(e.target.value) || 1))}
+                className="w-full px-3 py-2 rounded-xl border border-slate-700 bg-slate-800 text-white font-mono font-bold text-sm focus:outline-none focus:border-cyan-400"
+              />
+              <p className="text-[11px] text-slate-400">
+                Pinned rooms stay visible at the top of the user app party list even when empty. Only active rooms can be pinned.
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-800">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsPinModalOpen(false)}
+                disabled={isActionLoading}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="default"
+                size="sm"
+                onClick={() => handleTogglePin(pinTargetRoom, true, pinOrderInput)}
+                disabled={isActionLoading}
+                className="bg-amber-600 hover:bg-amber-500 text-white font-semibold"
+              >
+                <Check className="h-4 w-4 mr-1" />
+                Save Pin (Priority #{pinOrderInput})
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Terminate Confirmation Guard */}
       <ConfirmDialog

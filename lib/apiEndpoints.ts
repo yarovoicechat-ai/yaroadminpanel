@@ -170,6 +170,8 @@ export const API_ENDPOINTS = {
     LIVE: {
         ACTIVE_ROOMS: '/api/admin/rooms/active',
         ROOM_CLOSE: (id: string) => `/api/admin/rooms/${id}/close`,
+        ROOM_PIN: (id: string) => `/api/admin/rooms/${id}/pin`,
+        ROOM_PINNED_ORDER: '/api/admin/rooms/pinned-order',
     },
 
     // Store Management
@@ -181,5 +183,45 @@ export const API_ENDPOINTS = {
         DELETE: (id: string) => `/api/store/items/${id}`,
         TOGGLE: (id: string) => `/api/store/items/${id}/toggle`,
         RESET: '/api/store/reset-catalog',
+    },
+
+    // Entry Effects Management
+    ENTRY_EFFECTS: {
+        LIST: '/api/entry-effects/admin/all',
+        PUBLIC_LIST: '/api/entry-effects',
+        CREATE: '/api/entry-effects',
+        UPDATE: (id: string) => `/api/entry-effects/${id}`,
+        DELETE: (id: string) => `/api/entry-effects/${id}`,
+        TOGGLE: (id: string) => `/api/entry-effects/${id}/toggle`,
+    },
+
+    // Media & Direct File Uploads
+    UPLOAD: {
+        FILE: '/api/upload/file',
+        SIGNATURE: '/api/upload/signature',
+    },
+
+    // Family System
+    FAMILY: {
+        LIST: '/api/family',
+        ADMIN_ALL: '/api/family/admin/all',
+        CREATE: '/api/family/create',
+        UPDATE: (id: string) => `/api/family/admin/${id}`,
+        DELETE: (id: string) => `/api/family/admin/${id}`,
+    },
+
+    // Couple (CP) System
+    CP: {
+        LIST: '/api/couple',
+        ADMIN_ALL: '/api/couple/admin/all',
+        UPDATE: (id: string) => `/api/couple/admin/${id}`,
+        DELETE: (id: string) => `/api/couple/admin/${id}`,
+    },
+
+    // System Config & Feature Flags
+    SYSTEM_CONFIG: {
+        GET: '/api/system-config',
+        TOGGLE: '/api/system-config/toggle',
+        UPDATE: '/api/system-config/update',
     },
 } as const;

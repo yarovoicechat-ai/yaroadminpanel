@@ -44,7 +44,7 @@ export default function AvatarRequestsPage() {
       const data = (res as any)?.data?.requests || (res as any)?.data || (res as any)?.requests || [];
       setRequests(data);
     } catch (error: any) {
-      toast.error(error?.message || 'Failed to load avatar verification requests');
+      toast.error(error?.message || 'Failed to load avatar requests');
     } finally {
       setLoading(false);
     }
@@ -81,9 +81,9 @@ export default function AvatarRequestsPage() {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-purple-400 to-pink-600 bg-clip-text text-transparent">
-            Avatar Verification Requests
+            Avatar Audit & Change Requests
           </h2>
-          <p className="text-slate-400 mt-1">Review and approve custom avatar uploads from verified hosts.</p>
+          <p className="text-slate-400 mt-1">Monitor and review avatar updates across users and hosts.</p>
         </div>
         <Button variant="outline" onClick={() => void loadRequests()}>
           <RefreshCw className="h-4 w-4 mr-2" /> Refresh
