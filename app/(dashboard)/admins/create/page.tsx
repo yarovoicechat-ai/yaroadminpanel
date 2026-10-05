@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -68,7 +68,7 @@ export default function CreateAdminPage() {
 
     const invitationLink = typeof window !== 'undefined'
         ? `${window.location.origin}/register?token=${invitationToken}`
-        : `https://admin.yaroapp.in/register?token=${invitationToken}`;
+        : `https://admin.darkmoon.app/register?token=${invitationToken}`;
 
     const handleCopyLink = () => {
         navigator.clipboard.writeText(invitationLink);

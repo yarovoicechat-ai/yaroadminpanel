@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useCallback, useEffect, useState } from 'react';
 import { CheckCircle, Eye, KeyRound, Loader2, RefreshCw, Search, ShieldCheck, StickyNote, UserCheck, X, XCircle } from 'lucide-react';
@@ -14,7 +14,7 @@ import { getAdminAvatar } from '@/lib/avatar';
 
 type Kind = 'face' | 'kyc';
 const statuses = ['ALL', 'PENDING', 'UNDER_REVIEW', 'APPROVED', 'REJECTED', 'RESUBMISSION_REQUIRED'];
-const apiBase = () => typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname) ? (process.env.NEXT_PUBLIC_LOCAL_API_BASE_URL || 'http://localhost:3101') : (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.yaroapp.in');
+const apiBase = () => typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname) ? (process.env.NEXT_PUBLIC_LOCAL_API_BASE_URL || 'http://localhost:3101') : (process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.darkmoon.app');
 
 function PrivateImage({ path, label }: { path?: string; label: string }) {
   const [src, setSrc] = useState<string>();

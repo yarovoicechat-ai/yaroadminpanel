@@ -4,8 +4,8 @@ import { Providers } from "@/components/Providers";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Dosti Admin Panel",
-  description: "Admin dashboard for Dosti App",
+  title: "Dark Moon Admin Panel",
+  description: "Admin Command Center for Dark Moon Platform",
 };
 
 export default function RootLayout({

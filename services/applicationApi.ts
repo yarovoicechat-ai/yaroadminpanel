@@ -1,6 +1,6 @@
-import { ApplicationFormData, ApplicationApiResponse } from '../types/application';
+﻿import { ApplicationFormData, ApplicationApiResponse } from '../types/application';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.yaroapp.in';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.darkmoon.app';
 
 export async function submitTeamLeaderApplication(formData: ApplicationFormData): Promise<ApplicationApiResponse> {
     try {

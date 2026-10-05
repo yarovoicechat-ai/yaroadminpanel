@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useEffect, useState } from 'react';
 import { io } from 'socket.io-client';
@@ -20,7 +20,7 @@ export default function IAMManager() {
   useEffect(() => {
     if (!user) return;
 
-    const socketUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.yaroapp.in';
+    const socketUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.darkmoon.app';
     const socket = io(socketUrl, {
       auth: {
         token: localStorage.getItem('admin_token')

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
@@ -69,7 +69,7 @@ export default function AddAdminPage() {
                             <label className="text-sm font-semibold text-slate-300">Email Address (Username)</label>
                             <Input
                                 type="email"
-                                placeholder="vikram@yaroapp.in"
+                                placeholder="vikram@darkmoon.app"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required

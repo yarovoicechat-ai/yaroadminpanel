@@ -11,10 +11,18 @@ import {
 } from "@/components/ui/Table";
 import {
     Award, Plus, Trash2, Edit2, Check, X, Loader2,
-    RefreshCw, Coins, PhoneCall, Clock, TrendingUp
+    RefreshCw, Coins, PhoneCall, Clock, TrendingUp, UploadCloud, Gift
 } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
+
+interface LevelReward {
+    type: 'frame' | 'entry';
+    name: string;
+    imageUrl?: string;
+    animationUrl?: string;
+    durationDays: number;
+}
 
 interface HostLevelConfig {
     _id: string;
@@ -23,6 +31,7 @@ interface HostLevelConfig {
     minCalls: number;
     minMinutes: number;
     coinPerMinute: number;
+    rewards?: LevelReward[];
 }
 
 const LEVEL_PALETTE: Record<number, { bg: string; text: string; border: string; glow: string }> = {
@@ -37,12 +46,13 @@ const LEVEL_PALETTE: Record<number, { bg: string; text: string; border: string; 
 };
 const getLvl = (n: number) => LEVEL_PALETTE[n] || LEVEL_PALETTE[1];
 
-const emptyForm = { level: '', name: '', minCalls: '', minMinutes: '', coinPerMinute: '' };
+const emptyForm = { level: '', name: '', minCalls: '', minMinutes: '', coinPerMinute: '', rewards: [] as LevelReward[] };
 
 export default function HostLevelsPage() {
     const [levels, setLevels] = useState<HostLevelConfig[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [uploadingReward, setUploadingReward] = useState<string | null>(null);
 
     // Inline edit state
     const [editId, setEditId] = useState<string | null>(null);
@@ -72,7 +82,13 @@ export default function HostLevelsPage() {
 
     const startEdit = (lvl: HostLevelConfig) => {
         setEditId(lvl._id);
-        setEditForm({ name: lvl.name, minCalls: lvl.minCalls, minMinutes: lvl.minMinutes, coinPerMinute: lvl.coinPerMinute });
+        setEditForm({
+            name: lvl.name,
+            minCalls: lvl.minCalls,
+            minMinutes: lvl.minMinutes,
+            coinPerMinute: lvl.coinPerMinute,
+            rewards: (lvl.rewards || []).map(reward => ({ ...reward })),
+        });
     };
 
     const cancelEdit = () => { setEditId(null); setEditForm({}); };
@@ -85,6 +101,7 @@ export default function HostLevelsPage() {
                 minCalls: Number(editForm.minCalls),
                 minMinutes: Number(editForm.minMinutes),
                 coinPerMinute: Number(editForm.coinPerMinute),
+                rewards: editForm.rewards || [],
             });
             if (res.success) {
                 toast.success(`✅ Level ${lvl.level} updated`);
@@ -128,6 +145,7 @@ export default function HostLevelsPage() {
                 minCalls: Number(addForm.minCalls || 0),
                 minMinutes: Number(addForm.minMinutes || 0),
                 coinPerMinute: Number(addForm.coinPerMinute),
+                rewards: addForm.rewards,
             });
             if (res.success) {
                 toast.success(`✅ Level ${addForm.level} created`);
@@ -142,6 +160,42 @@ export default function HostLevelsPage() {
         } finally {
             setSaving(false);
         }
+    };
+
+    const uploadRewardFile = async (file: File | undefined, uploadKey: string, onUploaded: (url: string) => void) => {
+        if (!file) return;
+        if (!/\.(svga|gif|webp|png|jpe?g)$/i.test(file.name)) {
+            toast.error('Reward asset must be an image, GIF, WebP, or SVGA file');
+            return;
+        }
+        try {
+            setUploadingReward(uploadKey);
+            const body = new FormData();
+            body.append('file', file);
+            const response = await apiClient.uploadFile<{ url: string }>('/api/upload/file', body);
+            const url = response.data?.url;
+            if (!url) throw new Error('Upload URL was not returned');
+            onUploaded(url);
+            toast.success('Reward asset uploaded');
+        } catch (error: any) {
+            toast.error(error?.message || 'Reward upload failed');
+        } finally {
+            setUploadingReward(null);
+        }
+    };
+
+    const addReward = (type: LevelReward['type']) => {
+        setAddForm(form => ({
+            ...form,
+            rewards: [...form.rewards, { type, name: '', imageUrl: '', animationUrl: '', durationDays: 30 }],
+        }));
+    };
+
+    const updateAddReward = (index: number, patch: Partial<LevelReward>) => {
+        setAddForm(form => ({
+            ...form,
+            rewards: form.rewards.map((reward, rewardIndex) => rewardIndex === index ? { ...reward, ...patch } : reward),
+        }));
     };
 
     const totalCoins = levels.reduce((s, l) => s + l.coinPerMinute, 0);
@@ -247,6 +301,67 @@ export default function HostLevelsPage() {
                                     className="h-9" />
                             </div>
                         </div>
+                        <div className="mt-5 rounded-xl border border-violet-500/20 bg-violet-500/5 p-4">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <p className="flex items-center gap-2 text-sm font-bold text-violet-200">
+                                        <Gift className="h-4 w-4" /> Level unlock rewards
+                                    </p>
+                                    <p className="mt-1 text-xs text-slate-500">Frame and entry are optional. Duration 0 means permanent.</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button type="button" size="sm" variant="outline" onClick={() => addReward('frame')}>+ Frame</Button>
+                                    <Button type="button" size="sm" variant="outline" onClick={() => addReward('entry')}>+ Entry</Button>
+                                </div>
+                            </div>
+
+                            {addForm.rewards.length === 0 ? (
+                                <p className="mt-4 rounded-lg border border-dashed border-slate-700 p-4 text-center text-xs text-slate-500">No reward attached to this level.</p>
+                            ) : (
+                                <div className="mt-4 space-y-3">
+                                    {addForm.rewards.map((reward, index) => (
+                                        <div key={`${reward.type}-${index}`} className="grid gap-3 rounded-xl border border-slate-700 bg-slate-900/70 p-3 md:grid-cols-6">
+                                            <div>
+                                                <label className="mb-1 block text-[11px] text-slate-400">Type</label>
+                                                <Badge variant="outline" className="capitalize">{reward.type}</Badge>
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <label className="mb-1 block text-[11px] text-slate-400">Reward name*</label>
+                                                <Input value={reward.name} onChange={event => updateAddReward(index, { name: event.target.value })} placeholder={reward.type === 'frame' ? 'Royal frame' : 'Dragon entry'} className="h-9" />
+                                            </div>
+                                            <div>
+                                                <label className="mb-1 block text-[11px] text-slate-400">Duration days</label>
+                                                <Input type="number" min="0" value={reward.durationDays} onChange={event => updateAddReward(index, { durationDays: Number(event.target.value) })} className="h-9" />
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <label className="mb-1 block text-[11px] text-slate-400">Image URL</label>
+                                                <Input value={reward.imageUrl || ''} onChange={event => updateAddReward(index, { imageUrl: event.target.value })} placeholder="Uploaded image URL" className="h-9" />
+                                            </div>
+                                            <div className="md:col-span-4">
+                                                <label className="mb-1 block text-[11px] text-slate-400">SVGA / animation URL</label>
+                                                <Input value={reward.animationUrl || ''} onChange={event => updateAddReward(index, { animationUrl: event.target.value })} placeholder="Uploaded .svga URL" className="h-9" />
+                                            </div>
+                                            <div className="flex items-end md:col-span-2">
+                                                <label className="flex h-9 flex-1 cursor-pointer items-center justify-center gap-2 rounded-md border border-dashed border-violet-500/40 text-xs text-violet-200 hover:bg-violet-500/10">
+                                                    <UploadCloud className="h-4 w-4" />
+                                                    {uploadingReward === `add-${index}` ? 'Uploading...' : 'Upload asset'}
+                                                    <input
+                                                        type="file"
+                                                        accept=".svga,image/png,image/jpeg,image/gif,image/webp"
+                                                        className="hidden"
+                                                        disabled={uploadingReward !== null}
+                                                        onChange={event => uploadRewardFile(event.target.files?.[0], `add-${index}`, url => updateAddReward(index, /\.svga$/i.test(url) ? { animationUrl: url } : { imageUrl: url }))}
+                                                    />
+                                                </label>
+                                                <Button type="button" variant="outline" className="ml-2 h-9 text-red-400" onClick={() => setAddForm(form => ({ ...form, rewards: form.rewards.filter((_, rewardIndex) => rewardIndex !== index) }))}>
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                         <div className="flex gap-3 mt-4">
                             <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white gap-2" onClick={addLevel} disabled={saving}>
                                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
@@ -287,6 +402,7 @@ export default function HostLevelsPage() {
                                             Min Minutes
                                         </div>
                                     </TableHead>
+                                    <TableHead className="text-slate-300 font-bold">Unlock Rewards</TableHead>
                                     <TableHead className="text-slate-300 font-bold">Earning Preview</TableHead>
                                     <TableHead className="text-slate-300 font-bold text-center">Actions</TableHead>
                                 </TableRow>
@@ -294,7 +410,7 @@ export default function HostLevelsPage() {
                             <TableBody>
                                 {loading ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-16">
+                                        <TableCell colSpan={8} className="text-center py-16">
                                             <div className="flex flex-col items-center gap-3 text-slate-500">
                                                 <Loader2 className="h-7 w-7 animate-spin text-amber-400" />
                                                 <span>Loading level configurations...</span>
@@ -303,7 +419,7 @@ export default function HostLevelsPage() {
                                     </TableRow>
                                 ) : levels.length === 0 ? (
                                     <TableRow>
-                                        <TableCell colSpan={7} className="text-center py-16">
+                                        <TableCell colSpan={8} className="text-center py-16">
                                             <div className="flex flex-col items-center gap-3 text-slate-500">
                                                 <Award className="h-8 w-8 text-slate-600" />
                                                 <p>No levels configured yet.</p>
@@ -386,6 +502,20 @@ export default function HostLevelsPage() {
                                                     />
                                                 ) : (
                                                     <span className="text-slate-300">{lvl.minMinutes.toLocaleString()} min</span>
+                                                )}
+                                            </TableCell>
+
+                                            <TableCell>
+                                                {(lvl.rewards || []).length > 0 ? (
+                                                    <div className="flex min-w-[170px] flex-wrap gap-1.5">
+                                                        {(lvl.rewards || []).map((reward, rewardIndex) => (
+                                                            <Badge key={`${reward.type}-${rewardIndex}`} variant="outline" className={reward.type === 'frame' ? 'border-pink-500/30 text-pink-300' : 'border-orange-500/30 text-orange-300'}>
+                                                                {reward.type === 'frame' ? 'Frame' : 'Entry'}: {reward.name} · {reward.durationDays === 0 ? 'Permanent' : `${reward.durationDays}d`}
+                                                            </Badge>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-slate-600">No reward</span>
                                                 )}
                                             </TableCell>
 

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -88,7 +88,7 @@ export default function FormBuilderPage() {
 
             const payload = {
                 role: roleKey.toLowerCase().trim(),
-                hostname: `${roleKey.toLowerCase().trim()}.yaroapp.in`,
+                hostname: `${roleKey.toLowerCase().trim()}.darkmoon.app`,
                 title,
                 subtitle,
                 badgeText,
