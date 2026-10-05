@@ -39,7 +39,7 @@ export function AvatarRequestsWidget() {
       const data = (res as any)?.data?.requests || (res as any)?.data || (res as any)?.requests || [];
       setRequests(data);
     } catch (error: any) {
-      toast.error('Failed to load avatar verification requests');
+      toast.error('Failed to load avatar update requests');
     } finally {
       setLoading(false);
     }
@@ -89,7 +89,7 @@ export function AvatarRequestsWidget() {
         {loading ? (
           <div className="py-6 text-center text-sm text-slate-400">Loading avatar requests...</div>
         ) : requests.length === 0 ? (
-          <div className="py-6 text-center text-sm text-slate-400">No pending host avatar verification requests.</div>
+          <div className="py-6 text-center text-sm text-slate-400">No pending host avatar update requests.</div>
         ) : (
           <div className="space-y-4">
             {requests.map((req) => (

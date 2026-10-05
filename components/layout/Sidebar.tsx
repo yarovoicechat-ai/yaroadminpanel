@@ -9,7 +9,8 @@ import {
     Ban, AlertOctagon, Calendar, MessageSquare, Bell, Share2,
     CheckSquare, FileCheck, DollarSign, Coins, Gem, ChevronDown, ChevronRight,
     Crown, Briefcase, Terminal, ShieldCheck, Settings, Headphones, Globe,
-    FileText, Layers, Radio, Sliders, Image as ImageIcon, Download, Sparkles, ShoppingBag
+    FileText, Layers, Radio, Sliders, Image as ImageIcon, Download, Sparkles, ShoppingBag,
+    Heart, Flame
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -51,6 +52,27 @@ export const roleConfig: Record<string, { label: string; color: string; bg: stri
 
 const defaultRoleConfig = { label: 'Staff', color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/25', icon: User };
 
+const storeSubmenu: SubmenuItem[] = [
+    { name: 'Store Overview', href: '/store' },
+    { name: 'Unique ID', href: '/store/unique-ids' },
+    { name: 'Frames', href: '/store/frames' },
+    { name: 'Chat Bubbles', href: '/store/chat-bubbles' },
+    { name: 'Themes', href: '/store/themes' },
+    { name: 'Tassels', href: '/store/tassels' },
+    { name: 'Entry', href: '/store/entry' },
+    { name: 'Entrance Effects', href: '/store/entries' },
+    { name: 'Mic Waves', href: '/store/mic-waves' },
+    { name: 'Profile Cards', href: '/store/profile-cards' },
+    { name: 'Room Cards', href: '/store/room-cards' },
+    { name: 'Profile Entries', href: '/store/profile-entries' },
+];
+
+const levelSubmenu: SubmenuItem[] = [
+    { name: 'Wealth Level (Gifter)', href: '/levels/wealth' },
+    { name: 'Charm Level (Host)', href: '/levels/charm' },
+    { name: 'Host Level Setup', href: '/host-levels' },
+];
+
 const managementSidebarSections: SidebarSection[] = [
     {
         title: 'CORE CONSOLE',
@@ -84,14 +106,26 @@ const managementSidebarSections: SidebarSection[] = [
         category: 'Dashboard',
         items: [
             { name: 'CMS Editor', href: '/cms', icon: FileText, category: 'Dashboard' },
-            { name: 'Store Management', href: '/store', icon: ShoppingBag, category: 'Dashboard' },
+            {
+                name: 'Store Management',
+                icon: ShoppingBag,
+                category: 'Dashboard',
+                submenu: storeSubmenu,
+            },
+            { name: 'VIP Program', href: '/vip', icon: Crown, category: 'Dashboard' },
+            { name: 'King of Kings', href: '/king-of-kings', icon: Flame, category: 'Dashboard' },
+            {
+                name: 'Levels',
+                icon: Award,
+                category: 'Dashboard',
+                submenu: levelSubmenu,
+            },
+            { name: 'Family System', href: '/family', icon: Users, category: 'Dashboard' },
+            { name: 'CP (Couple) System', href: '/cp', icon: Heart, category: 'Dashboard' },
+            { name: 'Gifts', href: '/gifts', icon: Gift, category: 'Dashboard' },
+            { name: 'Avatars', href: '/avatars', icon: ImageIcon, category: 'Dashboard' },
             { name: 'Banners', href: '/banners', icon: Layers, category: 'Dashboard' },
             { name: 'Ads', href: '/ads', icon: Radio, category: 'Dashboard' },
-            { name: 'VIP Program', href: '/vip', icon: Crown, category: 'Dashboard' },
-            { name: 'Levels', href: '/host-levels', icon: Award, category: 'Dashboard' },
-            { name: 'Gifts', href: '/gifts', icon: Gift, category: 'Dashboard' },
-            { name: 'Frames', href: '/frames', icon: Sliders, category: 'Dashboard' },
-            { name: 'Avatars', href: '/avatars', icon: ImageIcon, category: 'Dashboard' },
             { name: 'Content Moderation', href: '/moderation/violations', icon: ShieldAlert, category: 'Dashboard' }
         ]
     },
@@ -112,6 +146,29 @@ const adminSidebarSections: SidebarSection[] = [
         category: 'Dashboard',
         items: [
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' }
+        ]
+    },
+    {
+        title: 'Store & Economy',
+        category: 'Dashboard',
+        items: [
+            {
+                name: 'Store Management',
+                icon: ShoppingBag,
+                category: 'Dashboard',
+                submenu: storeSubmenu,
+            },
+            { name: 'VIP Program', href: '/vip', icon: Crown, category: 'Dashboard' },
+            { name: 'King of Kings', href: '/king-of-kings', icon: Flame, category: 'Dashboard' },
+            {
+                name: 'Levels',
+                icon: Award,
+                category: 'Dashboard',
+                submenu: levelSubmenu,
+            },
+            { name: 'Family System', href: '/family', icon: Users, category: 'Dashboard' },
+            { name: 'CP (Couple) System', href: '/cp', icon: Heart, category: 'Dashboard' },
+            { name: 'Gifts', href: '/gifts', icon: Gift, category: 'Dashboard' },
         ]
     },
     {
