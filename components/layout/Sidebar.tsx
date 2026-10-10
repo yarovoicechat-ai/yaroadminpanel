@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -595,7 +595,7 @@ export default function Sidebar() {
                                 <div className="h-full w-full rounded-[14px] bg-[#0c101d] flex items-center justify-center overflow-hidden">
                                     <img
                                         src="/logo.png"
-                                        alt="Dark Moon"
+                                        alt="YARO"
                                         className="h-full w-full object-cover"
                                     />
                                 </div>
@@ -605,7 +605,7 @@ export default function Sidebar() {
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                                 <h1 className="text-lg font-black tracking-tight bg-gradient-to-r from-pink-400 via-purple-300 to-white bg-clip-text text-transparent">
-                                    Dark Moon Command
+                                    Yaro Command
                                 </h1>
                             </div>
                             <div className="flex items-center gap-1.5 mt-0.5">

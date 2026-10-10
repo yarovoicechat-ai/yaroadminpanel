@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
@@ -17,7 +17,7 @@ export default function ReferralLinks() {
     }
   }, []);
 
-  const adminFormBaseUrl = localOrigin || 'https://admin.darkmoon.app';
+  const adminFormBaseUrl = localOrigin || 'https://admin.yaroapp.in';
 
   const referralCode = (user as any)?.referralCode || (user as any)?.employeeCode || (user as any)?.specialCode || (user as any)?.mithiId || user?.meethiId || (user?.role === 'owner' ? 'OS000001' : '');
 
@@ -39,21 +39,21 @@ export default function ReferralLinks() {
     {
       role: 'Operator',
       desc: 'Link operators directly to your organization.',
-      url: `${localOrigin ? `${localOrigin}/apply/operator` : 'https://operator.darkmoon.app/'}?referrer=${referralCode}&role=operator`,
+      url: `${localOrigin ? `${localOrigin}/apply/operator` : 'https://operator.yaroapp.in/'}?referrer=${referralCode}&role=operator`,
       icon: Key,
       color: 'text-purple-400 border-purple-500/20 bg-purple-500/5'
     },
     {
       role: 'Agency',
       desc: 'Recruit sub-agencies. They inherit you as their parent node.',
-      url: `${localOrigin ? `${localOrigin}/apply/agency` : 'https://agency.darkmoon.app/'}?referrer=${referralCode}&role=agency`,
+      url: `${localOrigin ? `${localOrigin}/apply/agency` : 'https://agency.yaroapp.in/'}?referrer=${referralCode}&role=agency`,
       icon: Briefcase,
       color: 'text-amber-400 border-amber-500/20 bg-amber-500/5'
     },
     {
       role: 'Host',
       desc: 'Sign up new hosts under your agency hierarchy automatically.',
-      url: `${localOrigin ? `${localOrigin}/apply/host` : 'https://host.darkmoon.app/'}?referrer=${referralCode}&role=host`,
+      url: `${localOrigin ? `${localOrigin}/apply/host` : 'https://host.yaroapp.in/'}?referrer=${referralCode}&role=host`,
       icon: Video,
       color: 'text-lime-400 border-lime-500/20 bg-lime-500/5'
     },

@@ -4,8 +4,8 @@ import { Providers } from "@/components/Providers";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {
-  title: "Dark Moon Admin Panel",
-  description: "Admin Command Center for Dark Moon Platform",
+  title: "Yaro Admin Panel",
+  description: "Admin Command Center for Yaro Platform",
 };
 
 export default function RootLayout({

@@ -1,10 +1,10 @@
-﻿// API Client with automatic token injection and error handling
+// API Client with automatic token injection and error handling
 
 const getApiBaseUrl = () => {
     if (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
         return process.env.NEXT_PUBLIC_LOCAL_API_BASE_URL || 'http://localhost:3101';
     }
-    return process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.darkmoon.app';
+    return process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.yaroapp.in';
 };
 
 const API_BASE_URL = getApiBaseUrl();

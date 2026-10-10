@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
@@ -54,7 +54,7 @@ export default function TopHeader() {
         <div className="flex items-center gap-3 md:gap-5 flex-1 max-w-xl">
           <div className="flex items-center gap-2 md:hidden">
             <div className="relative h-9 w-9 overflow-hidden rounded-xl border border-pink-500/30 bg-slate-950 shadow-[0_0_12px_rgba(236,72,153,0.3)]">
-              <Image src="/logo.png" alt="Dark Moon" fill className="object-cover" />
+              <Image src="/logo.png" alt="Yaro" fill className="object-cover" />
             </div>
           </div>
 
