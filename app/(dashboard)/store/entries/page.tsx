@@ -31,7 +31,7 @@ export interface EntryItem {
   name: string;
   slug?: string;
   tagText: string;
-  animationType: 'BANNER' | 'CENTER_AVATAR' | 'PARTICLES' | 'VIP_ENTRANCE' | 'SPECIAL_EVENT';
+  animationType: 'BANNER' | 'CENTER_AVATAR' | 'PARTICLES' | 'VIP_ENTRANCE' | 'SPECIAL_EVENT' | 'FULL_SCREEN';
   image?: string;
   icon?: string;
   animationUrl?: string;
@@ -715,46 +715,77 @@ export default function StoreEntriesPage() {
         </div>
       )}
 
-      {/* Test Live Entrance Modal */}
+      {/* Test Live Entrance Modal (Full-Screen Voice Room Simulation) */}
       {testingItem && (
         <div
           onClick={() => setTestingItem(null)}
-          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex flex-col items-center justify-center p-4 cursor-pointer"
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col items-center justify-between p-6 cursor-pointer overflow-hidden"
         >
-          <div className="text-center mb-6">
+          {/* Top Bar with dismiss hint */}
+          <div className="w-full flex items-center justify-between max-w-2xl z-20">
             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-orange-500/20 text-orange-400 border border-orange-500/30">
-              Live Voice Room Entrance Simulation
+              🎙️ Full-Screen Live Voice Room Entrance Simulation
             </span>
-            <p className="text-xs text-slate-400 mt-1">Click anywhere to close</p>
+            <span className="text-xs text-slate-400 bg-slate-800/80 px-3 py-1 rounded-full border border-slate-700">
+              Click anywhere or press Esc to close
+            </span>
           </div>
 
+          {/* Floating Top Banner (Matches Mobile App RoomEntryEffectEngine) */}
           <div
-            className="w-full max-w-lg p-5 rounded-2xl border border-white/20 shadow-2xl relative overflow-hidden animate-in slide-in-from-left duration-500"
+            className="w-full max-w-lg p-3.5 rounded-2xl border border-white/30 shadow-2xl relative overflow-hidden animate-in slide-in-from-left duration-500 z-20 mt-4"
             style={{
               background: `linear-gradient(135deg, ${testingItem.bannerColors?.[0] || '#F59E0B'}, ${testingItem.bannerColors?.[1] || '#B45309'})`,
             }}
           >
-            <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <div className="text-xs font-black text-amber-200 tracking-wider">
-                  {testingItem.tagText}
-                </div>
-                <div className="text-base font-extrabold text-white">{testingItem.name}</div>
-                <div className="text-[11px] text-white/80">User Shivansh entered the room</div>
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-full border-2 border-white/60 overflow-hidden shadow-lg bg-slate-900 shrink-0">
+                <img
+                  src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120"
+                  alt="User"
+                  className="w-full h-full object-cover"
+                />
               </div>
-
-              <div className="w-20 h-20 shrink-0 flex items-center justify-center">
-                {testingItem.animationUrl || testingItem.image ? (
-                  <img
-                    src={testingItem.animationUrl || testingItem.image}
-                    alt={testingItem.name}
-                    className="w-full h-full object-contain animate-bounce"
-                  />
-                ) : (
-                  <Car size={48} className="text-white drop-shadow-lg" />
-                )}
+              <div className="space-y-0.5 flex-1 min-w-0">
+                <div className="text-[11px] font-black text-amber-200 tracking-wider uppercase flex items-center gap-1">
+                  <span>🔥</span> {testingItem.tagText || '👑 VIP HAS ENTERED'}
+                </div>
+                <div className="text-sm font-extrabold text-white truncate">
+                  Aarav King 👑
+                </div>
+                <div className="text-[10px] text-white/80 font-medium">
+                  {testingItem.name} — Full Screen Edge-to-Edge Ride
+                </div>
               </div>
             </div>
+          </div>
+
+          {/* Full Screen Edge-to-Edge Vehicle / Dragon / Animation Layer */}
+          <div className="relative flex-1 w-full max-w-4xl flex items-center justify-center z-10 my-4">
+            {testingItem.animationUrl || testingItem.image ? (
+              <img
+                src={testingItem.animationUrl || testingItem.image}
+                alt={testingItem.name}
+                className="w-full max-h-[70vh] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.9)] animate-pulse"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center">
+                <Car size={96} className="text-amber-400 drop-shadow-[0_10px_20px_rgba(245,158,11,0.5)] animate-bounce" />
+                <span className="text-xs text-amber-300 font-bold mt-3">Full-Screen SVGA Entrance</span>
+              </div>
+            )}
+          </div>
+
+          {/* Room Ambient Seats Simulation at bottom */}
+          <div className="w-full max-w-md grid grid-cols-4 gap-4 p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 z-20">
+            {Array.from({ length: 4 }).map((_, idx) => (
+              <div key={idx} className="flex flex-col items-center gap-1">
+                <div className="w-10 h-10 rounded-full border border-dashed border-slate-600 bg-slate-950/60 flex items-center justify-center text-slate-500 text-[10px]">
+                  {idx + 1}
+                </div>
+                <span className="text-[9px] text-slate-500">Seat {idx + 1}</span>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -813,6 +844,7 @@ export default function StoreEntriesPage() {
                     }
                     className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-orange-500"
                   >
+                    <option value="FULL_SCREEN">Full Screen SVGA Entrance (Edge-to-Edge Ride)</option>
                     <option value="BANNER">Top Banner Slide (Car / Limousine)</option>
                     <option value="VIP_ENTRANCE">Grand VIP Entrance (Royal Aura)</option>
                     <option value="CENTER_AVATAR">Center Screen Avatar Pop</option>
