@@ -269,8 +269,8 @@ export default function StoreFramesPage() {
       toast.error('Frame name is required');
       return;
     }
-    if (!formData.image && !formData.animationUrl) {
-      toast.error('Please upload at least a preview image or animation file');
+    if (!formData.animationUrl) {
+      toast.error('Please upload the actual frame asset. The Store cover image is preview-only.');
       return;
     }
 
@@ -498,7 +498,7 @@ export default function StoreFramesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredFrames.map(item => {
-            const displayUrl = (item.animationUrl && !item.animationUrl.includes('.svga') ? item.animationUrl : '') || item.imageUrl || item.image || '';
+            const displayUrl = item.imageUrl || item.image || (item.animationUrl && !item.animationUrl.includes('.svga') ? item.animationUrl : '');
             const p30 = item.priceOptions?.find(p => p.days === 30)?.diamonds ?? item.price;
             const p3 = item.priceOptions?.find(p => p.days === 3)?.diamonds ?? Math.round(p30 * 0.15);
 
@@ -525,25 +525,16 @@ export default function StoreFramesPage() {
                     </button>
                   </div>
 
-                  {/* Frame Visual with Avatar Superimposed */}
-                  <div className="relative w-28 h-28 mx-auto my-3 flex items-center justify-center">
-                    {/* Placeholder Avatar */}
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center shadow-inner">
-                      <img
-                        src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop"
-                        alt="Demo Avatar"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    {/* Frame Superimposed */}
+                  {/* Store cover preview; it is not composited over a user's avatar. */}
+                  <div className="w-28 h-28 mx-auto my-3 flex items-center justify-center rounded-2xl bg-slate-950/70 border border-slate-800 p-2">
                     {displayUrl ? (
                       <img
                         src={displayUrl}
-                        alt={item.name}
-                        className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-[0_4px_10px_rgba(244,63,94,0.35)]"
+                        alt={`${item.name} store cover`}
+                        className="w-full h-full object-contain"
                       />
                     ) : (
-                      <div className="absolute inset-0 border-2 border-dashed border-rose-500/30 rounded-full animate-spin" />
+                      <div className="w-16 h-16 border-2 border-dashed border-rose-500/30 rounded-full" />
                     )}
                   </div>
 
@@ -681,10 +672,10 @@ export default function StoreFramesPage() {
                 {/* 1. Preview Image (PNG/WebP with transparent center) */}
                 <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
                   <label className="block text-xs font-semibold text-slate-200 mb-1">
-                    Frame Preview Image (.png, .webp) <span className="text-rose-400">*</span>
+                    Store Cover Image (.png, .webp) <span className="text-rose-400">*</span>
                   </label>
                   <p className="text-[11px] text-slate-500 mb-3">
-                    High-res circular border with transparent center.
+                    Shown on the Store card and preview only. Upload the actual frame asset below to display it around avatars.
                   </p>
 
                   <div className="flex items-center gap-3">
@@ -717,7 +708,7 @@ export default function StoreFramesPage() {
                     Frame Animation File (SVGA / GIF / WebP) *
                   </label>
                   <p className="text-[11px] text-slate-400 mb-3">
-                    Asli frame jo avatar par ghumega & popup me play hoga (.svga, .gif).
+                    Actual avatar overlay (.svga, .gif, .webp, .png). Keep the center transparent so the user's photo stays visible.
                   </p>
 
                   <div className="flex flex-col gap-2">
@@ -780,18 +771,12 @@ export default function StoreFramesPage() {
                     {formData.animationUrl && !formData.animationUrl.includes('.svga') ? (
                       <img
                         src={formData.animationUrl}
-                        alt="Frame preview"
-                        className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-[0_2px_8px_rgba(6,182,212,0.4)]"
-                      />
-                    ) : formData.image ? (
-                      <img
-                        src={formData.image}
-                        alt="Frame preview"
+                        alt="Actual frame asset preview"
                         className="absolute inset-0 w-full h-full object-contain pointer-events-none drop-shadow-[0_2px_8px_rgba(6,182,212,0.4)]"
                       />
                     ) : (
                       <div className="absolute inset-0 rounded-full border border-dashed border-amber-500/60 flex items-center justify-center pointer-events-none">
-                        <span className="text-[9px] font-mono text-amber-300 bg-slate-950/90 px-1 py-0.5 rounded">Preview Only</span>
+                        <span className="text-[9px] font-mono text-amber-300 bg-slate-950/90 px-1 py-0.5 rounded">Actual asset needed</span>
                       </div>
                     )}
                   </div>
@@ -799,8 +784,8 @@ export default function StoreFramesPage() {
                     <h4 className="text-xs font-semibold text-white">Live App Simulation</h4>
                     <p className="text-[11px] text-slate-400 mt-0.5">
                       {formData.animationUrl
-                        ? '✨ Avatar frame animation is active! This file will animate around user avatars.'
-                        : '⚠️ Frame Preview Image is uploaded. Avatar par animation frame lagane ke liye "Frame Animation File" attach karein.'}
+                        ? 'Actual frame asset is active and will render around user avatars.'
+                        : 'The Store cover is preview-only. Upload the actual frame asset to display it around avatars.'}
                     </p>
                   </div>
                 </div>

@@ -25,6 +25,8 @@ interface Banner {
     _id: string;
     title: string;
     imageUrl: string;
+    placements?: Array<'home' | 'oneToOne' | 'party'>;
+    placement?: 'home' | 'oneToOne' | 'party';
     linkUrl: string;
     targetType?: 'none' | 'internal' | 'external';
     targetScreen?: string;
@@ -39,6 +41,7 @@ interface EditFormState {
     _id: string;
     title: string;
     imageUrl: string;
+    placements: Array<'home' | 'oneToOne' | 'party'>;
     linkUrl: string;
     targetType: 'none' | 'internal' | 'external';
     targetScreen: string;
@@ -55,6 +58,10 @@ const APP_PAGE_OPTIONS = [
     ['HostApply', 'Become a Host'], ['Setting', 'App Settings'], ['Profile', 'Profile'],
 ] as const;
 
+const BANNER_PLACEMENTS = [
+    ['home', 'Home'], ['oneToOne', '1-to-1'], ['party', 'Party'],
+] as const;
+
 export default function BannersPage() {
     const [banners, setBanners] = useState<Banner[]>([]);
     const [loading, setLoading] = useState(true);
@@ -65,6 +72,7 @@ export default function BannersPage() {
 
     // Form states for create
     const [title, setTitle] = useState('');
+    const [placements, setPlacements] = useState<Array<'home' | 'oneToOne' | 'party'>>(['home']);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreview, setImagePreview] = useState('');
     const [linkName, setLinkName] = useState('');
@@ -178,6 +186,10 @@ export default function BannersPage() {
             toast.error('Banner image is required');
             return;
         }
+        if (!placements.length) {
+            toast.error('Choose at least one screen for this banner');
+            return;
+        }
         if (startDate && endDate && new Date(endDate) < new Date(startDate)) {
             toast.error('Expiry date cannot be before start date');
             return;
@@ -188,6 +200,8 @@ export default function BannersPage() {
             const response = await apiClient.post('/api/admin/banners', {
                 title,
                 imageUrl: imagePreview,
+                placements,
+                placement: placements[0],
                 linkUrl: targetType === 'external' ? linkName : '',
                 targetType,
                 targetScreen: targetType === 'internal' ? targetScreen : '',
@@ -199,6 +213,7 @@ export default function BannersPage() {
             if (response.success) {
                 toast.success('Banner created successfully');
                 setTitle('');
+                setPlacements(['home']);
                 setImageFile(null);
                 setImagePreview('');
                 setLinkName('');
@@ -223,6 +238,7 @@ export default function BannersPage() {
             _id: banner._id,
             title: banner.title,
             imageUrl: banner.imageUrl,
+            placements: banner.placements?.length ? banner.placements : [banner.placement || 'home'],
             linkUrl: banner.linkUrl || '',
             targetType: banner.targetType || (banner.linkUrl ? 'external' : 'none'),
             targetScreen: banner.targetScreen || '',
@@ -237,6 +253,10 @@ export default function BannersPage() {
     const handleUpdateBanner = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!editingBanner) return;
+        if (!editingBanner.placements.length) {
+            toast.error('Choose at least one screen for this banner');
+            return;
+        }
         if (!editingBanner.title) {
             toast.error('Title is required');
             return;
@@ -251,6 +271,8 @@ export default function BannersPage() {
             const response = await apiClient.patch(`/api/admin/banners/${editingBanner._id}`, {
                 title: editingBanner.title,
                 imageUrl: editImagePreview || editingBanner.imageUrl,
+                placements: editingBanner.placements,
+                placement: editingBanner.placements[0],
                 linkUrl: editingBanner.targetType === 'external' ? editingBanner.linkUrl : '',
                 targetType: editingBanner.targetType,
                 targetScreen: editingBanner.targetType === 'internal' ? editingBanner.targetScreen : '',
@@ -432,6 +454,13 @@ export default function BannersPage() {
                                         <TableCell className="py-3.5">
                                             <div className="space-y-1">
                                                 <p className="font-bold text-slate-100 text-sm">{banner.title}</p>
+                                                <span className="inline-flex rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-300">
+                                                    {(banner.placements?.length ? banner.placements : [banner.placement || 'home']).map((item) => (
+                                                        <span key={item} className="mr-1 inline-flex rounded-md border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-300">
+                                                            {BANNER_PLACEMENTS.find(([value]) => value === item)?.[1] || 'Home'}
+                                                        </span>
+                                                    ))}
+                                                </span>
                                                 {banner.targetType === 'internal' && banner.targetScreen ? (
                                                     <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-md border border-cyan-500/20">
                                                         <Smartphone size={11} /> App: {banner.targetScreen}
@@ -559,6 +588,22 @@ export default function BannersPage() {
                                         required
                                         className="bg-slate-900 border-slate-800 text-slate-100"
                                     />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Show Banner In *</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {BANNER_PLACEMENTS.map(([value, label]) => {
+                                            const selected = placements.includes(value);
+                                            return (
+                                                <button key={value} type="button" onClick={() => setPlacements((current) => selected ? current.filter((item) => item !== value) : [...current, value])}
+                                                    className={`rounded-xl border px-3 py-2 text-xs font-bold transition-colors ${selected ? 'border-pink-400 bg-pink-500/20 text-pink-200' : 'border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-500'}`}>
+                                                    {label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="text-[10px] text-slate-500">Select one or more screens.</p>
                                 </div>
 
                                 {/* Image Upload & Preview */}
@@ -791,6 +836,22 @@ export default function BannersPage() {
                                         required
                                         className="bg-slate-900 border-slate-800 text-slate-100"
                                     />
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Show Banner In *</label>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {BANNER_PLACEMENTS.map(([value, label]) => {
+                                            const selected = editingBanner.placements.includes(value);
+                                            return (
+                                                <button key={value} type="button" onClick={() => setEditingBanner({ ...editingBanner, placements: selected ? editingBanner.placements.filter((item) => item !== value) : [...editingBanner.placements, value] })}
+                                                    className={`rounded-xl border px-3 py-2 text-xs font-bold transition-colors ${selected ? 'border-blue-400 bg-blue-500/20 text-blue-200' : 'border-slate-700 bg-slate-900 text-slate-400 hover:border-slate-500'}`}>
+                                                    {label}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                    <p className="text-[10px] text-slate-500">Select one or more screens.</p>
                                 </div>
 
                                 {/* Image */}

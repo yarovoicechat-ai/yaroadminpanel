@@ -555,7 +555,7 @@ export default function StoreEntriesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredEntries.map(item => {
-            const displayUrl = item.animationUrl || item.image || '';
+            const displayUrl = item.image || item.animationUrl || '';
             const c1 = item.bannerColors?.[0] || '#F59E0B';
             const c2 = item.bannerColors?.[1] || '#B45309';
             const p30 = item.priceOptions?.find(p => p.days === 30)?.diamonds ?? item.price;
@@ -762,16 +762,20 @@ export default function StoreEntriesPage() {
 
           {/* Full Screen Edge-to-Edge Vehicle / Dragon / Animation Layer */}
           <div className="relative flex-1 w-full max-w-4xl flex items-center justify-center z-10 my-4">
-            {testingItem.animationUrl || testingItem.image ? (
+            {testingItem.animationUrl ? (
               <img
-                src={testingItem.animationUrl || testingItem.image}
+                src={testingItem.animationUrl}
                 alt={testingItem.name}
                 className="w-full max-h-[70vh] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.9)] animate-pulse"
               />
             ) : (
               <div className="flex flex-col items-center justify-center">
-                <Car size={96} className="text-amber-400 drop-shadow-[0_10px_20px_rgba(245,158,11,0.5)] animate-bounce" />
-                <span className="text-xs text-amber-300 font-bold mt-3">Full-Screen SVGA Entrance</span>
+                {testingItem.image ? (
+                  <img src={testingItem.image} alt={`${testingItem.name} store cover`} className="w-40 h-40 object-contain opacity-70" />
+                ) : (
+                  <Car size={96} className="text-amber-400 drop-shadow-[0_10px_20px_rgba(245,158,11,0.5)]" />
+                )}
+                <span className="text-xs text-amber-300 font-bold mt-3">Store cover only — no room animation uploaded</span>
               </div>
             )}
           </div>
@@ -891,10 +895,10 @@ export default function StoreEntriesPage() {
                 {/* 1. Vehicle / Entrance Icon */}
                 <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">
                   <label className="block text-xs font-semibold text-slate-200 mb-1">
-                    Vehicle / Icon Image (.png, .webp)
+                    Store Cover Image (.png, .webp)
                   </label>
                   <p className="text-[11px] text-slate-500 mb-3">
-                    Transparent car or creature image.
+                    Shown in the Store and preview only. Upload an animation file below to play an effect when a user enters a room.
                   </p>
 
                   <div className="flex items-center gap-3">
