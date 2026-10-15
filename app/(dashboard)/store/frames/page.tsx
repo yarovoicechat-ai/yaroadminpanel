@@ -27,6 +27,9 @@ import { uploadToCloudinary } from '@/lib/cloudinary';
 export interface FrameItem {
   _id: string;
   name: string;
+  uniqueId?: string;
+  audience?: 'general' | 'employee' | 'vip' | 'event';
+  isStaffOnly?: boolean;
   category?: string;
   price: number;
   priceOptions?: { days: number; diamonds: number }[];
@@ -57,6 +60,9 @@ export default function StoreFramesPage() {
   // Form State
   const [formData, setFormData] = useState({
     name: '',
+    uniqueId: '',
+    audience: 'general' as 'general' | 'employee' | 'vip' | 'event',
+    isStaffOnly: false,
     price: 3500,
     price3Days: 525,
     price7Days: 1050,
@@ -140,6 +146,9 @@ export default function StoreFramesPage() {
     setEditingItem(null);
     setFormData({
       name: '',
+      uniqueId: '',
+      audience: 'general',
+      isStaffOnly: false,
       price: 3500,
       price3Days: 525,
       price7Days: 1050,
@@ -168,6 +177,9 @@ export default function StoreFramesPage() {
 
     setFormData({
       name: item.name || '',
+      uniqueId: item.uniqueId || '',
+      audience: (item.audience as any) || (item.isStaffOnly ? 'employee' : 'general'),
+      isStaffOnly: Boolean(item.isStaffOnly || item.audience === 'employee'),
       price: p30,
       price3Days: p3,
       price7Days: p7,
@@ -278,6 +290,9 @@ export default function StoreFramesPage() {
     const payload = {
       name: formData.name.trim(),
       category: 'Frames',
+      uniqueId: formData.uniqueId.trim() || undefined,
+      audience: formData.audience,
+      isStaffOnly: formData.audience === 'employee' || formData.isStaffOnly,
       price,
       priceOptions: [
         { days: 3, diamonds: Number(formData.price3Days) || Math.round(price * 0.15) },
@@ -510,9 +525,21 @@ export default function StoreFramesPage() {
                 <div>
                   {/* Top bar */}
                   <div className="flex items-center justify-between mb-3">
-                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
-                      {item.badgeText || 'HOT'}
-                    </span>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/10 text-rose-400 border border-rose-500/20">
+                        {item.badgeText || 'HOT'}
+                      </span>
+                      {item.uniqueId && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                          ID: {item.uniqueId}
+                        </span>
+                      )}
+                      {(item.isStaffOnly || item.audience === 'employee') && (
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/40">
+                          👔 Staff Only
+                        </span>
+                      )}
+                    </div>
                     <button
                       onClick={() => handleToggleStatus(item)}
                       className={`px-2 py-0.5 rounded-full text-[10px] font-medium transition ${
@@ -637,6 +664,51 @@ export default function StoreFramesPage() {
             </div>
 
             <form onSubmit={handleSaveFrame} className="p-6 space-y-5">
+              {/* Asset Identity: Unique ID & Audience */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/20">
+                <div>
+                  <label className="block text-xs font-semibold text-amber-300 mb-1">
+                    Unique Asset ID (e.g. 555, 1001)
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Leave blank to auto-generate"
+                    value={formData.uniqueId}
+                    onChange={e => setFormData(prev => ({ ...prev, uniqueId: e.target.value.trim() }))}
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-amber-300 font-mono placeholder-slate-600 focus:outline-none focus:border-amber-500"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    Used to distribute this item directly to staff/users via ID.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-purple-300 mb-1">
+                    Audience & Visibility
+                  </label>
+                  <select
+                    value={formData.audience}
+                    onChange={e => {
+                      const aud = e.target.value as any;
+                      setFormData(prev => ({
+                        ...prev,
+                        audience: aud,
+                        isStaffOnly: aud === 'employee',
+                      }));
+                    }}
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white focus:outline-none focus:border-purple-500"
+                  >
+                    <option value="general">🌍 General Store (Public Catalog)</option>
+                    <option value="employee">👔 Employee / Staff Exclusive (Direct Grants Only)</option>
+                    <option value="vip">👑 VIP Exclusive</option>
+                    <option value="event">🎉 Event / Contest Exclusive</option>
+                  </select>
+                  <p className="text-[10px] text-slate-500 mt-1">
+                    {formData.audience === 'employee' ? '⚠️ Hidden from regular store. For staff distribution only.' : 'Available for purchase in public app store.'}
+                  </p>
+                </div>
+              </div>
+
               {/* Name & Badge */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>

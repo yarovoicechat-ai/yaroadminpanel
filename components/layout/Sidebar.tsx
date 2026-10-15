@@ -54,6 +54,7 @@ const defaultRoleConfig = { label: 'Staff', color: 'text-slate-400', bg: 'bg-sla
 
 const storeSubmenu: SubmenuItem[] = [
     { name: 'Store Overview', href: '/store' },
+    { name: '🎁 Asset Distribution', href: '/store/distribute' },
     { name: 'Unique ID', href: '/store/unique-ids' },
     { name: 'Frames', href: '/store/frames' },
     { name: 'Chat Bubbles', href: '/store/chat-bubbles' },
@@ -79,6 +80,8 @@ const managementSidebarSections: SidebarSection[] = [
         category: 'Dashboard',
         items: [
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
+            { name: 'Live Rooms (Pin)', href: '/rooms', icon: Radio, category: 'Dashboard' },
+            { name: 'Asset Distribution', href: '/store/distribute', icon: Sparkles, category: 'Dashboard' },
             { name: 'App Releases (APK)', href: '/app-releases', icon: Download, category: 'Dashboard' },
             { name: 'Screen Security & Code', href: '/screen-security', icon: ShieldCheck, category: 'Dashboard' },
             { name: 'App Settings', href: '/settings', icon: Settings, category: 'Settings' },
@@ -145,7 +148,9 @@ const adminSidebarSections: SidebarSection[] = [
         title: 'Core Console',
         category: 'Dashboard',
         items: [
-            { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' }
+            { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
+            { name: 'Live Rooms (Pin)', href: '/rooms', icon: Radio, category: 'Dashboard' },
+            { name: 'Asset Distribution', href: '/store/distribute', icon: Sparkles, category: 'Dashboard' },
         ]
     },
     {

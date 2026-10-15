@@ -310,11 +310,22 @@ export default function UsersPage() {
         if (!editingUser) return;
 
         try {
-            const response = await apiClient.patch(API_ENDPOINTS.USERS.UPDATE(editingUser.userId.toString()), {
+            const rawTypes = (editingUser as any).hostTypes;
+            const payload: any = {
                 name: editingUser.name,
                 email: editingUser.email,
                 role: editingUser.role
-            });
+            };
+
+            if (editingUser.role === 'host') {
+                payload.hostTypes = Array.isArray(rawTypes) && rawTypes.length > 0 ? rawTypes : ['voice', 'video', 'room'];
+                payload.canVoiceCall = payload.hostTypes.includes('voice');
+                payload.canVideoCall = payload.hostTypes.includes('video');
+                payload.canRoomHost = payload.hostTypes.includes('room');
+                payload.isActive = true;
+            }
+
+            const response = await apiClient.patch(API_ENDPOINTS.USERS.UPDATE(editingUser.userId.toString()), payload);
 
             if (response.success) {
                 toast.success("User updated successfully");
@@ -825,7 +836,11 @@ export default function UsersPage() {
                                                             size="icon"
                                                             className="h-8 w-8 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
                                                             onClick={() => {
-                                                                setEditingUser(user);
+                                                                const rawTypes = (user as any).hostTypes;
+                                                                setEditingUser({
+                                                                    ...user,
+                                                                    hostTypes: Array.isArray(rawTypes) && rawTypes.length > 0 ? rawTypes : ['voice', 'video', 'room']
+                                                                } as any);
                                                                 setIsEditOpen(true);
                                                             }}
                                                             title="Edit User Name & Details"
@@ -923,7 +938,15 @@ export default function UsersPage() {
                                     id="edit-role"
                                     className="col-span-3 flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                     value={editingUser.role}
-                                    onChange={(e) => setEditingUser({ ...editingUser, role: e.target.value as any })}
+                                    onChange={(e) => {
+                                        const newRole = e.target.value as any;
+                                        const currentTypes = (editingUser as any).hostTypes || ['voice', 'video', 'room'];
+                                        setEditingUser({
+                                            ...editingUser,
+                                            role: newRole,
+                                            hostTypes: newRole === 'host' ? currentTypes : (editingUser as any).hostTypes
+                                        } as any);
+                                    }}
                                 >
                                     <option value="user">User</option>
                                     <option value="host">Host</option>
@@ -932,6 +955,49 @@ export default function UsersPage() {
                                     <option value="superAdmin">Super Admin</option>
                                 </select>
                             </div>
+
+                            {editingUser.role === 'host' && (
+                                <div className="grid grid-cols-4 items-start gap-4 p-3 rounded-lg border border-indigo-500/30 bg-indigo-500/5">
+                                    <label className="text-right text-xs font-semibold text-indigo-300 pt-1">Host Services</label>
+                                    <div className="col-span-3 space-y-2">
+                                        <p className="text-xs text-slate-400">Select services this host is authorized to provide:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {[
+                                                { id: 'voice', label: 'Voice Call' },
+                                                { id: 'video', label: 'Video Call' },
+                                                { id: 'room', label: 'Room Hosting' }
+                                            ].map((svc) => {
+                                                const types = ((editingUser as any).hostTypes || ['voice', 'video', 'room']) as string[];
+                                                const checked = types.includes(svc.id);
+                                                return (
+                                                    <button
+                                                        type="button"
+                                                        key={svc.id}
+                                                        onClick={() => {
+                                                            const next = checked
+                                                                ? types.filter(t => t !== svc.id)
+                                                                : [...types, svc.id];
+                                                            if (next.length === 0) return;
+                                                            setEditingUser({
+                                                                ...editingUser,
+                                                                hostTypes: next
+                                                            } as any);
+                                                        }}
+                                                        className={`px-3 py-1.5 rounded-md text-xs font-medium border flex items-center gap-1.5 transition-colors ${
+                                                            checked
+                                                                ? 'bg-indigo-600/30 border-indigo-500 text-indigo-200'
+                                                                : 'bg-slate-800/40 border-slate-700 text-slate-400 hover:border-slate-600'
+                                                        }`}
+                                                    >
+                                                        <span className={`w-2 h-2 rounded-full ${checked ? 'bg-indigo-400' : 'bg-slate-600'}`} />
+                                                        {svc.label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     )}
                     <DialogFooter>
