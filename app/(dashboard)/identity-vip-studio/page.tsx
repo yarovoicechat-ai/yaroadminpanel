@@ -66,6 +66,7 @@ interface IdentityEntitlementItem {
   grantSource: string;
   grantReason?: string;
   createdAt: string;
+  badgeEntitlement?: IdentityEntitlementItem;
 }
 
 interface NameEffectItem {
@@ -129,6 +130,7 @@ export default function IdentityVipStudioPage() {
 
   // Data states
   const [officialIds, setOfficialIds] = useState<IdentityEntitlementItem[]>([]);
+  const [uniqueIds, setUniqueIds] = useState<IdentityEntitlementItem[]>([]);
   const [nameEffects, setNameEffects] = useState<NameEffectItem[]>([]);
   const [assets, setAssets] = useState<AssetLibraryRecord[]>([]);
   const [entitlements, setEntitlements] = useState<IdentityEntitlementItem[]>([]);
@@ -136,6 +138,7 @@ export default function IdentityVipStudioPage() {
 
   // Search & Filters
   const [officialSearch, setOfficialSearch] = useState('');
+  const [uniqueSearch, setUniqueSearch] = useState('');
   const [entitlementFilterType, setEntitlementFilterType] = useState('all');
   const [entitlementFilterStatus, setEntitlementFilterStatus] = useState('all');
   const [auditLogActionFilter, setAuditLogActionFilter] = useState('all');
@@ -150,6 +153,16 @@ export default function IdentityVipStudioPage() {
   const [grantDurationDays, setGrantDurationDays] = useState(30);
   const [grantReason, setGrantReason] = useState('Verified Official Representative');
   const [isUploadingBadge, setIsUploadingBadge] = useState(false);
+  const [uniqueTargetUser, setUniqueTargetUser] = useState('');
+  const [uniqueDisplayId, setUniqueDisplayId] = useState('');
+  const [uniqueIdLevels, setUniqueIdLevels] = useState<any[]>([]);
+  const [selectedUniqueLevelId, setSelectedUniqueLevelId] = useState('');
+  const [uniqueLevelForm, setUniqueLevelForm] = useState({
+    name: '', levelNumber: 1, badgeName: 'VIP ID', badgeIconUrl: '', animationType: 'svga', description: '',
+  });
+  const [editingUniqueLevelId, setEditingUniqueLevelId] = useState<string | null>(null);
+  const [uniqueDurationDays, setUniqueDurationDays] = useState(30);
+  const [isUploadingUniqueBadge, setIsUploadingUniqueBadge] = useState(false);
 
   // Name Effect Form State
   const [isEffectModalOpen, setIsEffectModalOpen] = useState(false);
@@ -198,8 +211,10 @@ export default function IdentityVipStudioPage() {
   const loadStudioData = async () => {
     setLoading(true);
     try {
-      const [officialRes, effectsRes, assetsRes, entitleRes, logsRes] = await Promise.all([
+      const [officialRes, uniqueRes, uniqueLevelsRes, effectsRes, assetsRes, entitleRes, logsRes] = await Promise.all([
         apiClient.get<any>('/api/identity/admin/official-ids').catch(() => ({ data: { entitlements: [] } })),
+        apiClient.get<any>('/api/identity/admin/unique-ids').catch(() => ({ data: { entitlements: [] } })),
+        apiClient.get<any>('/api/identity/admin/unique-id-levels').catch(() => ({ data: { levels: [] } })),
         apiClient.get<any>('/api/identity/admin/effects').catch(() => ({ data: { effects: [] } })),
         apiClient.get<any>('/api/identity/admin/assets').catch(() => ({ data: { assets: [] } })),
         apiClient.get<any>('/api/identity/admin/entitlements?limit=100').catch(() => ({ data: { entitlements: [] } })),
@@ -207,6 +222,11 @@ export default function IdentityVipStudioPage() {
       ]);
 
       if (officialRes.data?.entitlements) setOfficialIds(officialRes.data.entitlements);
+      if (uniqueRes.data?.entitlements) setUniqueIds(uniqueRes.data.entitlements);
+      if (uniqueLevelsRes.data?.levels) {
+        setUniqueIdLevels(uniqueLevelsRes.data.levels);
+        setSelectedUniqueLevelId((current) => current || uniqueLevelsRes.data.levels.find((level: any) => level.status === 'active')?._id || '');
+      }
       if (effectsRes.data?.effects) setNameEffects(effectsRes.data.effects);
       if (assetsRes.data?.assets) setAssets(assetsRes.data.assets);
       if (entitleRes.data?.entitlements) setEntitlements(entitleRes.data.entitlements);
@@ -236,7 +256,7 @@ export default function IdentityVipStudioPage() {
 
     try {
       toast.loading('Uploading animated badge asset...');
-      const res = await apiClient.post<any>('/api/uploads/file', formData);
+      const res = await apiClient.uploadFile<any>('/api/uploads/file', formData);
       toast.dismiss();
       if (res.data?.url) {
         setGrantBadgeUrl(res.data.url);
@@ -292,6 +312,125 @@ export default function IdentityVipStudioPage() {
       loadStudioData();
     } catch (err: any) {
       toast.error(err.message || 'Failed to revoke official ID');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUploadUniqueBadgeFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.svga')) {
+      toast.error('Upload an SVGA badge file');
+      e.target.value = '';
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    setIsUploadingUniqueBadge(true);
+    try {
+      const res = await apiClient.uploadFile<any>('/api/uploads/file', formData);
+      const url = res.data?.url || res.data?.data?.url;
+      if (url) {
+        setUniqueLevelForm((current) => ({ ...current, badgeIconUrl: url }));
+        toast.success('VIP ID level badge uploaded');
+      } else {
+        toast.error('Upload finished, but no badge URL was returned');
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || err.message || 'Badge upload failed');
+    } finally {
+      setIsUploadingUniqueBadge(false);
+      e.target.value = '';
+    }
+  };
+
+  const resetUniqueLevelForm = () => {
+    setEditingUniqueLevelId(null);
+    setUniqueLevelForm({ name: '', levelNumber: 1, badgeName: 'VIP ID', badgeIconUrl: '', animationType: 'svga', description: '' });
+  };
+
+  const handleSaveUniqueIdLevel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uniqueLevelForm.name.trim() || !uniqueLevelForm.badgeIconUrl.trim()) {
+      toast.error('Level name and uploaded badge are required');
+      return;
+    }
+    setLoading(true);
+    try {
+      const request = editingUniqueLevelId
+        ? apiClient.put(`/api/identity/admin/unique-id-levels/${editingUniqueLevelId}`, uniqueLevelForm)
+        : apiClient.post('/api/identity/admin/unique-id-levels', uniqueLevelForm);
+      await request;
+      toast.success(editingUniqueLevelId ? 'VIP ID level updated' : 'VIP ID level created');
+      resetUniqueLevelForm();
+      await loadStudioData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to save VIP ID level');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEditUniqueIdLevel = (level: any) => {
+    setEditingUniqueLevelId(level._id);
+    setUniqueLevelForm({
+      name: level.name || '',
+      levelNumber: Number(level.config?.levelNumber || level.config?.vipLevel || 1),
+      badgeName: level.config?.badgeName || 'VIP ID',
+      badgeIconUrl: level.config?.badgeIconUrl || '',
+      animationType: level.config?.animationType || 'svga',
+      description: level.description || '',
+    });
+  };
+
+  const handleDeleteUniqueIdLevel = async (level: any) => {
+    if (!confirm(`Delete VIP ID level "${level.name}"? Existing user assignments keep their badge.`)) return;
+    try {
+      await apiClient.delete(`/api/identity/admin/unique-id-levels/${level._id}`);
+      if (selectedUniqueLevelId === level._id) setSelectedUniqueLevelId('');
+      if (editingUniqueLevelId === level._id) resetUniqueLevelForm();
+      toast.success('VIP ID level deleted');
+      await loadStudioData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to delete VIP ID level');
+    }
+  };
+
+  const handleGrantUniqueId = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uniqueTargetUser.trim() || !uniqueDisplayId.trim() || !selectedUniqueLevelId) {
+      toast.error('User, unique ID, and a configured VIP ID level are required');
+      return;
+    }
+    setLoading(true);
+    try {
+      await apiClient.post('/api/identity/admin/unique-ids/grant', {
+        userIdentifier: uniqueTargetUser.trim(),
+        displayId: uniqueDisplayId.trim(),
+        uniqueLevelId: selectedUniqueLevelId,
+        durationDays: Number(uniqueDurationDays),
+      });
+      toast.success(`Unique ID ${uniqueDisplayId} granted for ${uniqueDurationDays} days`);
+      setUniqueTargetUser('');
+      setUniqueDisplayId('');
+      await loadStudioData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to grant unique ID');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRevokeUniqueId = async (numericUserId: number) => {
+    if (!confirm(`Revoke the temporary unique ID for User ${numericUserId}? Their permanent numeric ID will be shown again.`)) return;
+    setLoading(true);
+    try {
+      await apiClient.post(`/api/identity/admin/unique-ids/${numericUserId}/revoke`, { reason: 'Revoked by admin via Identity Studio' });
+      toast.success(`Unique ID revoked; User ${numericUserId} is back on their permanent ID`);
+      loadStudioData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to revoke unique ID');
     } finally {
       setLoading(false);
     }
@@ -381,6 +520,16 @@ export default function IdentityVipStudioPage() {
       return uId.includes(q) || disp.includes(q) || name.includes(q);
     });
   }, [officialIds, officialSearch]);
+
+  const filteredUniqueIds = useMemo(() => {
+    if (!uniqueSearch.trim()) return uniqueIds;
+    const q = uniqueSearch.trim().toLowerCase();
+    return uniqueIds.filter((item) =>
+      String(item.userId).includes(q) ||
+      String(item.config?.displayId || '').toLowerCase().includes(q) ||
+      String(item.userObjectId?.name || item.userObjectId?.userName || '').toLowerCase().includes(q)
+    );
+  }, [uniqueIds, uniqueSearch]);
 
   const filteredEntitlements = useMemo(() => {
     return entitlements.filter((item) => {
@@ -882,58 +1031,134 @@ export default function IdentityVipStudioPage() {
             SECTION 3: UNIQUE ID BADGES
         ========================================================================= */}
         <TabsContent value="unique_badges" className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <Gem className="w-5 h-5 text-cyan-400" />
-                Unique ID Badges & Visual Emblems
-              </h2>
-              <p className="text-xs text-slate-400 mt-1">
-                Visual badges displayed directly adjacent to user IDs. The original numeric account ID remains completely untouched.
-              </p>
-            </div>
+          <div>
+            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+              <Gem className="w-5 h-5 text-cyan-400" />
+              Unique ID & VIP Badge Management
+            </h2>
+            <p className="text-xs text-slate-400 mt-1">
+              Assign a searchable vanity ID such as 1111 or 222222 with its animated badge and VIP level. When it expires, the permanent numeric ID appears again automatically.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card className="bg-slate-900/60 border-white/10 rounded-2xl p-6 space-y-4">
-              <div className="p-4 rounded-xl bg-slate-950 border border-white/5 flex items-center justify-center">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-cyan-500/40 bg-cyan-500/10 text-cyan-300 font-bold text-xs shadow-lg shadow-cyan-500/10">
-                  <Gem className="w-4 h-4 text-cyan-400 animate-pulse" />
-                  VIP ID • 1000000002
-                </div>
-              </div>
-              <h3 className="font-bold text-white text-sm">Diamond Tier Badge</h3>
-              <p className="text-xs text-slate-400">
-                Pulsing cyan border with radiant gemstone emblem. Reserved for top gifters and custom store purchasers.
-              </p>
+          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+            <Card className="bg-slate-900/60 border-white/10 rounded-2xl xl:col-span-1">
+              <CardHeader className="border-b border-white/5 pb-4">
+                <CardTitle className="text-lg font-bold text-white flex items-center gap-2">
+                  <Plus className="w-5 h-5 text-cyan-400" /> Create & Assign Unique ID
+                </CardTitle>
+                <p className="text-xs text-slate-400">The account ID stays permanent. The new ID and badge share the selected validity.</p>
+              </CardHeader>
+              <CardContent className="p-5">
+                <form onSubmit={handleGrantUniqueId} className="space-y-4">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1">User ID / username</label>
+                    <Input value={uniqueTargetUser} onChange={(e) => setUniqueTargetUser(e.target.value)} placeholder="e.g. 1000000002" className="bg-slate-800/80 border-white/10 text-xs" required />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1">Unique display ID</label>
+                    <Input value={uniqueDisplayId} onChange={(e) => setUniqueDisplayId(e.target.value.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 24))} placeholder="e.g. 1111 or 222222" className="bg-slate-800/80 border-white/10 text-xs font-mono" minLength={3} maxLength={24} required />
+                    <p className="text-[10px] text-slate-500 mt-1">3–24 letters, numbers, hyphens, or underscores.</p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-300 block mb-1">VIP ID level</label>
+                    <select value={selectedUniqueLevelId} onChange={(e) => setSelectedUniqueLevelId(e.target.value)} className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-xs text-white" required>
+                      <option value="">Select a configured level</option>
+                      {uniqueIdLevels.filter((level) => level.status === 'active').map((level) => <option key={level._id} value={level._id}>Level {level.config?.levelNumber || level.config?.vipLevel} - {level.name}</option>)}
+                    </select>
+                    {uniqueIdLevels.filter((level) => level.status === 'active').length === 0 && <p className="text-[10px] text-amber-300 mt-1">Create an active level below first.</p>}
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-semibold text-slate-300 block mb-1">Validity (days)</label>
+                      <Input type="number" min={1} max={730} value={uniqueDurationDays} onChange={(e) => setUniqueDurationDays(Number(e.target.value))} className="bg-slate-800/80 border-white/10 text-xs" required />
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-xl bg-cyan-500/10 border border-cyan-500/25 text-[11px] text-slate-300 leading-relaxed">
+                    The new ID can be found by search while active. On expiry or revoke, both the ID and its badge stop resolving and the user’s permanent numeric ID is shown.
+                  </div>
+                  <Button type="submit" disabled={loading || !selectedUniqueLevelId} className="w-full bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs h-10">
+                    <Gem className="w-4 h-4 mr-1.5" /> Assign VIP ID ({uniqueDurationDays} days)
+                  </Button>
+                </form>
+              </CardContent>
             </Card>
 
-            <Card className="bg-slate-900/60 border-white/10 rounded-2xl p-6 space-y-4">
-              <div className="p-4 rounded-xl bg-slate-950 border border-white/5 flex items-center justify-center">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 text-amber-300 font-bold text-xs shadow-lg shadow-amber-500/10">
-                  <Crown className="w-4 h-4 text-amber-400" />
-                  GOLDEN ID • 1000000002
+            <Card className="bg-slate-900/60 border-white/10 rounded-2xl xl:col-span-2">
+              <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-white/5">
+                <div>
+                  <CardTitle className="text-lg font-bold text-white">Assigned Unique IDs</CardTitle>
+                  <p className="text-xs text-slate-400 mt-1">Active assignments remain searchable until expiry.</p>
                 </div>
-              </div>
-              <h3 className="font-bold text-white text-sm">Imperial Gold Badge</h3>
-              <p className="text-xs text-slate-400">
-                Rotating golden frame for SVIP 8 & SVIP 9 emperors. Shimmers continuously in room member lists.
-              </p>
-            </Card>
-
-            <Card className="bg-slate-900/60 border-white/10 rounded-2xl p-6 space-y-4">
-              <div className="p-4 rounded-xl bg-slate-950 border border-white/5 flex items-center justify-center">
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-pink-500/40 bg-pink-500/10 text-pink-300 font-bold text-xs shadow-lg shadow-pink-500/10">
-                  <Sparkles className="w-4 h-4 text-pink-400" />
-                  SPECIAL ID • 1000000002
+                <div className="w-full sm:w-64">
+                  <Input value={uniqueSearch} onChange={(e) => setUniqueSearch(e.target.value)} placeholder="Search ID, display name, user…" className="bg-slate-800/80 border-white/10 text-xs h-9" />
                 </div>
-              </div>
-              <h3 className="font-bold text-white text-sm">Rainbow Aura Emblem</h3>
-              <p className="text-xs text-slate-400">
-                Full-spectrum cycling aura badge. Automatically expires on schedule without modifying user account balance.
-              </p>
+              </CardHeader>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader className="bg-slate-950/40">
+                    <TableRow className="border-white/5">
+                      <TableHead className="text-slate-400 text-xs">User</TableHead>
+                      <TableHead className="text-slate-400 text-xs">Unique ID</TableHead>
+                      <TableHead className="text-slate-400 text-xs">Level / Badge</TableHead>
+                      <TableHead className="text-slate-400 text-xs">Validity</TableHead>
+                      <TableHead className="text-right text-slate-400 text-xs">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUniqueIds.length === 0 ? (
+                      <TableRow><TableCell colSpan={5} className="text-center py-12 text-slate-500 text-sm">No unique IDs found.</TableCell></TableRow>
+                    ) : filteredUniqueIds.map((item) => {
+                      const badge = item.badgeEntitlement;
+                      const active = item.status === 'active' && new Date(item.expiresAt) > new Date() && new Date(item.startsAt) <= new Date();
+                      const userName = item.userObjectId?.name || item.userObjectId?.userName || 'User';
+                      return (
+                        <TableRow key={item._id} className="border-white/5 hover:bg-white/[0.02]">
+                          <TableCell><div className="font-medium text-white text-xs">{userName}</div><div className="font-mono text-[10px] text-slate-500">{item.userId}</div></TableCell>
+                          <TableCell><span className="font-mono font-bold text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 px-2 py-1 rounded-lg text-xs">{item.config?.displayId}</span></TableCell>
+                          <TableCell><div className="flex items-center gap-2"><span className="rounded bg-slate-800 px-2 py-1 text-[10px] font-bold text-amber-300">VIP {badge?.config?.vipLevel || item.config?.vipLevel || 1}</span><span className="text-xs text-slate-300">{badge?.config?.badgeName || 'VIP ID'}</span></div></TableCell>
+                          <TableCell><div className="text-xs text-slate-300">{new Date(item.expiresAt).toLocaleDateString()}</div><div className={`text-[10px] ${active ? 'text-emerald-400' : 'text-red-400'}`}>{active ? 'Active' : item.status === 'revoked' ? 'Revoked' : 'Expired'}</div></TableCell>
+                          <TableCell className="text-right">{active && <Button variant="destructive" size="sm" onClick={() => handleRevokeUniqueId(item.userId)} className="h-7 text-xs bg-red-500/20 hover:bg-red-500/40 text-red-300 border border-red-500/30">Revoke</Button>}</TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
             </Card>
           </div>
+
+          <Card className="bg-slate-900/60 border-white/10 rounded-2xl">
+            <CardHeader className="border-b border-white/5 pb-4">
+              <CardTitle className="text-lg font-bold text-white flex items-center gap-2"><Layers className="w-5 h-5 text-cyan-400" /> Manage VIP ID Levels</CardTitle>
+              <p className="text-xs text-slate-400">Create levels here and upload the SVGA badge used for users assigned to that level.</p>
+            </CardHeader>
+            <CardContent className="p-5 grid grid-cols-1 xl:grid-cols-2 gap-6">
+              <form onSubmit={handleSaveUniqueIdLevel} className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="text-xs font-semibold text-slate-300 block mb-1">Level name</label><Input value={uniqueLevelForm.name} onChange={(e) => setUniqueLevelForm((current) => ({ ...current, name: e.target.value }))} placeholder="Official" className="bg-slate-800/80 border-white/10 text-xs" required /></div>
+                  <div><label className="text-xs font-semibold text-slate-300 block mb-1">Level number</label><Input type="number" min={1} value={uniqueLevelForm.levelNumber} onChange={(e) => setUniqueLevelForm((current) => ({ ...current, levelNumber: Number(e.target.value) }))} className="bg-slate-800/80 border-white/10 text-xs" required /></div>
+                </div>
+                <div><label className="text-xs font-semibold text-slate-300 block mb-1">Badge label</label><Input value={uniqueLevelForm.badgeName} onChange={(e) => setUniqueLevelForm((current) => ({ ...current, badgeName: e.target.value }))} placeholder="VIP ID" className="bg-slate-800/80 border-white/10 text-xs" required /></div>
+                <div><label className="text-xs font-semibold text-slate-300 block mb-1">Upload level badge (.svga)</label><Input type="file" accept=".svga" onChange={handleUploadUniqueBadgeFile} disabled={isUploadingUniqueBadge} className="bg-slate-800/80 border-white/10 text-xs file:mr-3 file:rounded-md file:border-0 file:bg-cyan-500/20 file:px-3 file:py-1 file:text-cyan-200" />{isUploadingUniqueBadge && <p className="text-[10px] text-cyan-300 mt-1">Uploading badge...</p>}{uniqueLevelForm.badgeIconUrl && <p className="text-[10px] text-emerald-300 mt-1 truncate">Badge ready: {uniqueLevelForm.badgeIconUrl}</p>}</div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div><label className="text-xs font-semibold text-slate-300 block mb-1">Animation type</label><select value={uniqueLevelForm.animationType} onChange={(e) => setUniqueLevelForm((current) => ({ ...current, animationType: e.target.value }))} className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-xs text-white"><option value="svga">SVGA</option><option value="pulse">Pulse</option><option value="shimmer">Shimmer</option><option value="glow">Glow</option><option value="static">Static</option></select></div>
+                  <div><label className="text-xs font-semibold text-slate-300 block mb-1">Description</label><Input value={uniqueLevelForm.description} onChange={(e) => setUniqueLevelForm((current) => ({ ...current, description: e.target.value }))} placeholder="Optional" className="bg-slate-800/80 border-white/10 text-xs" /></div>
+                </div>
+                <div className="flex gap-2"><Button type="submit" disabled={loading || isUploadingUniqueBadge || !uniqueLevelForm.badgeIconUrl} className="flex-1 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs">{editingUniqueLevelId ? 'Save Level Changes' : 'Create Level'}</Button>{editingUniqueLevelId && <Button type="button" variant="outline" onClick={resetUniqueLevelForm} className="border-white/10 text-white">Cancel</Button>}</div>
+              </form>
+              <div className="space-y-2 max-h-[420px] overflow-y-auto">
+                {uniqueIdLevels.length === 0 ? <div className="rounded-xl border border-dashed border-white/10 p-6 text-center text-xs text-slate-500">No levels configured yet.</div> : uniqueIdLevels.map((level) => (
+                  <div key={level._id} className="flex items-center gap-3 rounded-xl bg-slate-800/70 border border-white/5 p-3">
+                    <div className="w-12 h-12 shrink-0 rounded-lg bg-slate-950/70 border border-white/10 flex items-center justify-center overflow-hidden"><span className="text-[10px] font-bold text-cyan-300">L{level.config?.levelNumber || level.config?.vipLevel}</span></div>
+                    <div className="min-w-0 flex-1"><div className="text-xs font-semibold text-white truncate">{level.name} - {level.config?.badgeName || 'VIP ID'}</div><div className="text-[10px] text-slate-400 truncate">{level.config?.badgeIconUrl || 'No badge asset'}</div><div className={`text-[10px] ${level.status === 'active' ? 'text-emerald-400' : 'text-slate-500'}`}>{level.status}</div></div>
+                    <Button type="button" variant="outline" size="sm" onClick={() => handleEditUniqueIdLevel(level)} className="h-8 border-white/10 text-slate-200"><Edit2 className="w-3.5 h-3.5" /></Button>
+                    <Button type="button" variant="outline" size="sm" onClick={() => handleDeleteUniqueIdLevel(level)} className="h-8 border-red-500/20 text-red-300 hover:bg-red-500/10"><Trash2 className="w-3.5 h-3.5" /></Button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* =========================================================================

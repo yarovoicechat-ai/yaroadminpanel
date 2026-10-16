@@ -54,6 +54,7 @@ interface AssetOption {
     uniqueId: string;
     name: string;
     category: string;
+    number?: string;
     audience?: string;
     isStaffOnly?: boolean;
     imageUrl?: string;
@@ -216,6 +217,7 @@ export default function AssetDistributionPage() {
         if (!clean) return;
         const found = assets.find(a => 
             String(a.uniqueId).toLowerCase() === clean.toLowerCase() ||
+            String(a.number || '').toLowerCase() === clean.toLowerCase() ||
             String(a._id) === clean
         );
         if (found) {
@@ -241,8 +243,9 @@ export default function AssetDistributionPage() {
                 const q = assetSearchQuery.toLowerCase();
                 const matchName = item.name.toLowerCase().includes(q);
                 const matchId = String(item.uniqueId || '').toLowerCase().includes(q);
+                const matchDisplayId = String(item.number || '').toLowerCase().includes(q);
                 const matchCat = String(item.category || '').toLowerCase().includes(q);
-                return matchName || matchId || matchCat;
+                return matchName || matchId || matchDisplayId || matchCat;
             }
             return true;
         });
@@ -587,7 +590,7 @@ export default function AssetDistributionPage() {
                                             >
                                                 <div className="flex items-start justify-between gap-1 mb-2">
                                                     <Badge className="bg-pink-500/20 text-pink-300 border border-pink-500/30 text-[10px] font-mono font-bold">
-                                                        ID: {asset.uniqueId || 'N/A'}
+                                                        {asset.number ? `Unique ID: ${asset.number} · ` : ''}Asset ID: {asset.uniqueId || 'N/A'}
                                                     </Badge>
                                                     {asset.isStaffOnly && (
                                                         <Badge className="bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[9px]">
@@ -631,7 +634,7 @@ export default function AssetDistributionPage() {
                                             <div className="flex items-center gap-2">
                                                 <p className="font-black text-sm text-slate-100">{selectedAsset.name}</p>
                                                 <Badge className="bg-pink-500 text-black font-black text-[10px]">
-                                                    ID: {selectedAsset.uniqueId}
+                                                    {selectedAsset.number ? `Unique ID: ${selectedAsset.number} · ` : ''}Asset ID: {selectedAsset.uniqueId}
                                                 </Badge>
                                             </div>
                                             <p className="text-xs text-slate-400">

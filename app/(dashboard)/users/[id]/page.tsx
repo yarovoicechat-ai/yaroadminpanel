@@ -39,6 +39,8 @@ export default function UserDetailPage() {
     const [countryCode, setCountryCode] = useState('');
     const [isBlocked, setIsBlocked] = useState(false);
     const [userName, setUserNameState] = useState('');
+    const [isProfileVerified, setIsProfileVerified] = useState(false);
+    const [verifiedTitle, setVerifiedTitle] = useState('');
 
     useEffect(() => {
         if (!id) return;
@@ -62,6 +64,8 @@ export default function UserDetailPage() {
                     setCountryCode(u.country?.code || '');
                     setIsBlocked(u.isBlocked || false);
                     setUserNameState(u.userName || '');
+                    setIsProfileVerified(Boolean((u as any).isProfileVerified));
+                    setVerifiedTitle((u as any).verifiedTitle || '');
                 } else {
                     toast.error("User not found");
                 }
@@ -94,7 +98,9 @@ export default function UserDetailPage() {
                 country: {
                     name: countryName,
                     code: countryCode
-                }
+                },
+                isProfileVerified,
+                verifiedTitle: isProfileVerified ? verifiedTitle.trim() : ''
             };
 
             const response = await apiClient.patch(API_ENDPOINTS.USERS.UPDATE(id), payload);
@@ -159,7 +165,11 @@ export default function UserDetailPage() {
                     <img src={getAdminAvatar(user)} alt={user.name} className="h-full w-full object-cover" />
                 </div>
                 <div className="text-center sm:text-left">
-                    <h1 className="text-3xl font-bold text-white tracking-tight">{user.name}</h1>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <h1 className="text-3xl font-bold text-white tracking-tight">{user.name}</h1>
+                        {isProfileVerified && <CheckCircle className="h-5 w-5 fill-blue-500 text-blue-500" aria-label="Verified profile" />}
+                        {isProfileVerified && verifiedTitle && <Badge className="bg-blue-500/10 text-blue-300 border-blue-500/30">{verifiedTitle}</Badge>}
+                    </div>
                     <p className="text-sm font-mono text-cyan-400 font-bold mt-1">ID: #{user.userId}</p>
                     <div className="flex items-center justify-center sm:justify-start gap-2 mt-2">
                         <Badge variant="secondary" className="bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20 capitalize font-bold text-xs">{user.role}</Badge>
@@ -240,7 +250,7 @@ export default function UserDetailPage() {
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-slate-400 font-semibold">Ip :-</span>
-                                    <span className="text-fuchsia-400 font-mono">110.227.235.4</span>
+                                    <span className="text-fuchsia-400 font-mono">{(user as any).ipAddress || (user as any).lastIp || 'N/A'}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                     <span className="text-slate-400 font-semibold">Last login:-</span>
@@ -268,7 +278,7 @@ export default function UserDetailPage() {
                             </div>
                             <div className="flex items-center gap-2">
                                 <Globe className="h-4 w-4 text-fuchsia-400" />
-                                <span>Lives in {countryName || 'India'} ({countryCode || 'IN'})</span>
+                                <span>Lives in {countryName || 'Unknown'}{countryCode ? ` (${countryCode})` : ''}</span>
                             </div>
                         </CardContent>
                     </Card>
@@ -394,6 +404,34 @@ export default function UserDetailPage() {
                                         onChange={e => setBio(e.target.value)}
                                         placeholder="Add bio context..."
                                     />
+                                </div>
+
+                                <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4 space-y-3">
+                                    <div className="flex items-start gap-3">
+                                        <input
+                                            id="edit-profile-verified"
+                                            type="checkbox"
+                                            checked={isProfileVerified}
+                                            onChange={e => setIsProfileVerified(e.target.checked)}
+                                            className="mt-0.5 h-4 w-4 rounded border-slate-700 bg-slate-950 text-blue-500 focus:ring-blue-500"
+                                        />
+                                        <div>
+                                            <label htmlFor="edit-profile-verified" className="text-sm font-semibold text-slate-200">Verified profile</label>
+                                            <p className="text-xs text-slate-400">Show a blue tick beside this user’s name in their profile.</p>
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-1.5">
+                                        <label htmlFor="edit-verified-title" className="text-xs font-semibold text-slate-400">Verified title / post name</label>
+                                        <Input
+                                            id="edit-verified-title"
+                                            value={verifiedTitle}
+                                            onChange={e => setVerifiedTitle(e.target.value.slice(0, 60))}
+                                            placeholder="e.g. Official Host"
+                                            maxLength={60}
+                                            disabled={!isProfileVerified}
+                                            className="bg-slate-950 border-slate-800 text-slate-200"
+                                        />
+                                    </div>
                                 </div>
 
                                 {/* Suspend Switch */}

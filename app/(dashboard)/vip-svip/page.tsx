@@ -56,6 +56,8 @@ interface VipPackage {
     price: number;
     currency: string;
     badge: string;
+    badgeUrl?: string;
+    badgeAnimationUrl?: string;
     crown: string;
     entryTag: string;
     entryFrame?: string;
@@ -130,6 +132,7 @@ export default function VipSvipManagementPage() {
     const [isVipModalOpen, setIsVipModalOpen] = useState(false);
     const [editingVip, setEditingVip] = useState<VipPackage | null>(null);
     const [submittingVip, setSubmittingVip] = useState(false);
+    const [vipBadgeUploading, setVipBadgeUploading] = useState(false);
 
     const [vipForm, setVipForm] = useState({
         name: '',
@@ -138,6 +141,8 @@ export default function VipSvipManagementPage() {
         vipLevel: 1,
         rarity: 'epic',
         price: 50000,
+        badgeUrl: '',
+        badgeAnimationUrl: '',
         badge: '👑 VIP 1',
         crown: 'https://api.yaroapp.in/uploads/vip/crown_gold.webp',
         entryTag: '👑 VIP ARRIVED',
@@ -234,6 +239,8 @@ export default function VipSvipManagementPage() {
             vipLevel: vipList.length + 1,
             rarity: 'epic',
             price: 50000,
+            badgeUrl: '',
+            badgeAnimationUrl: '',
             badge: `👑 VIP ${vipList.length + 1}`,
             crown: 'https://api.yaroapp.in/uploads/vip/crown_gold.webp',
             entryTag: '👑 VIP KNIGHT HAS ENTERED',
@@ -254,6 +261,8 @@ export default function VipSvipManagementPage() {
             vipLevel: vip.vipLevel || 1,
             rarity: vip.rarity || 'epic',
             price: vip.price || 0,
+            badgeUrl: vip.badgeUrl || '',
+            badgeAnimationUrl: vip.badgeAnimationUrl || '',
             badge: vip.badge || '👑 VIP',
             crown: vip.crown || '',
             entryTag: vip.entryTag || '',
@@ -301,6 +310,33 @@ export default function VipSvipManagementPage() {
             toast.error(err.message || 'Error saving VIP package');
         } finally {
             setSubmittingVip(false);
+        }
+    };
+
+    const handleVipBadgeUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const formData = new FormData();
+        formData.append('file', file);
+        setVipBadgeUploading(true);
+        try {
+            const res = await apiClient.uploadFile<any>('/api/uploads/file', formData);
+            const url = res.data?.url || res.data?.data?.url;
+            if (!url) {
+                toast.error('Upload finished, but no badge URL was returned');
+                return;
+            }
+            if (/\.svga(?:\?|$)/i.test(file.name)) {
+                setVipForm((current) => ({ ...current, badgeAnimationUrl: url }));
+            } else {
+                setVipForm((current) => ({ ...current, badgeUrl: url }));
+            }
+            toast.success('VIP level badge uploaded');
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || err.message || 'Badge upload failed');
+        } finally {
+            setVipBadgeUploading(false);
+            e.target.value = '';
         }
     };
 
@@ -1227,6 +1263,14 @@ export default function VipSvipManagementPage() {
                                         className="bg-slate-950 border-slate-800 text-white"
                                     />
                                 </div>
+                            </div>
+
+                            <div className="space-y-2 rounded-xl border border-amber-500/20 bg-amber-500/5 p-3">
+                                <label className="text-xs font-semibold text-slate-300 block">VIP Level Badge Asset</label>
+                                <Input type="file" accept=".svga,image/*,.gif,.webp" onChange={handleVipBadgeUpload} disabled={vipBadgeUploading} className="bg-slate-950 border-slate-800 text-white file:mr-3 file:rounded-md file:border-0 file:bg-amber-500/20 file:px-3 file:py-1 file:text-amber-200" />
+                                {vipBadgeUploading && <p className="text-[10px] text-amber-300">Uploading level badge…</p>}
+                                {vipForm.badgeUrl && <p className="text-[10px] text-slate-400 truncate">Static badge: {vipForm.badgeUrl}</p>}
+                                {vipForm.badgeAnimationUrl && <p className="text-[10px] text-emerald-300 truncate">SVGA badge: {vipForm.badgeAnimationUrl}</p>}
                             </div>
 
                             <div>

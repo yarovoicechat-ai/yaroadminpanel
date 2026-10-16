@@ -8,7 +8,7 @@ import {
     Users, UserCheck, ShieldAlert, Video, Plus, Flag, HelpCircle,
     Ban, AlertOctagon, Calendar, MessageSquare, Bell, Share2,
     CheckSquare, FileCheck, DollarSign, Coins, Gem, ChevronDown, ChevronRight,
-    Crown, Briefcase, Terminal, ShieldCheck, Settings, Headphones, Globe,
+    Crown, Briefcase, Terminal, ShieldCheck, Settings, Headphones, Globe, Hash,
     FileText, Layers, Radio, Sliders, Image as ImageIcon, Download, Sparkles, ShoppingBag,
     Heart, Flame
 } from 'lucide-react';
@@ -55,7 +55,6 @@ const defaultRoleConfig = { label: 'Staff', color: 'text-slate-400', bg: 'bg-sla
 const storeSubmenu: SubmenuItem[] = [
     { name: 'Store Overview', href: '/store' },
     { name: '🎁 Asset Distribution', href: '/store/distribute' },
-    { name: 'Unique ID', href: '/store/unique-ids' },
     { name: 'Frames', href: '/store/frames' },
     { name: 'Chat Bubbles', href: '/store/chat-bubbles' },
     { name: 'Themes', href: '/store/themes' },
@@ -66,6 +65,11 @@ const storeSubmenu: SubmenuItem[] = [
     { name: 'Profile Cards', href: '/store/profile-cards' },
     { name: 'Room Cards', href: '/store/room-cards' },
     { name: 'Profile Entries', href: '/store/profile-entries' },
+];
+
+const uniqueIdSubmenu: SubmenuItem[] = [
+    { name: 'Unique ID Levels', href: '/store/unique-id-levels' },
+    { name: 'Unique IDs', href: '/store/unique-ids' },
 ];
 
 const levelSubmenu: SubmenuItem[] = [
@@ -115,6 +119,7 @@ const managementSidebarSections: SidebarSection[] = [
                 category: 'Dashboard',
                 submenu: storeSubmenu,
             },
+            { name: 'Unique ID', icon: Hash, category: 'Dashboard', submenu: uniqueIdSubmenu },
             { name: 'Recharge Plans', href: '/plans/recharge', icon: Coins, category: 'Dashboard' },
             { name: 'Beans Plans', href: '/plans/beans', icon: Gem, category: 'Dashboard' },
             { name: 'SVIP Plan Builder', href: '/plans/svip', icon: Crown, category: 'Dashboard' },
@@ -157,6 +162,7 @@ const adminSidebarSections: SidebarSection[] = [
                 category: 'Dashboard',
                 submenu: storeSubmenu,
             },
+            { name: 'Unique ID', icon: Hash, category: 'Dashboard', submenu: uniqueIdSubmenu },
             { name: 'Recharge Plans', href: '/plans/recharge', icon: Coins, category: 'Dashboard' },
             { name: 'Beans Plans', href: '/plans/beans', icon: Gem, category: 'Dashboard' },
             { name: 'SVIP Plan Builder', href: '/plans/svip', icon: Crown, category: 'Dashboard' },
