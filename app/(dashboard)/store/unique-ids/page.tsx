@@ -57,9 +57,9 @@ export default function UniqueIdsPage() {
 
   const saveItem = async (event: React.FormEvent) => {
     event.preventDefault();
-    const code = form.displayId.trim();
+    const code = form.displayId.trim().toUpperCase();
     if (!chosenLevel || chosenLevel.status !== 'active') { toast.error('Choose an active Unique ID level'); return; }
-    if (!/^\d+$/.test(code) || code.length !== Number(form.digitCount)) { toast.error(`Enter exactly ${form.digitCount} numeric digits`); return; }
+    if (!/^[A-Z0-9]+$/.test(code) || code.length !== Number(form.digitCount)) { toast.error(`Enter exactly ${form.digitCount} letters or numbers`); return; }
     if (form.location === 'event' && !form.eventId) { toast.error('Choose the event that will award this ID'); return; }
     if (form.location === 'level' && (!Number.isInteger(Number(form.requiredLevel)) || Number(form.requiredLevel) < 1)) { toast.error('Set a valid reward level'); return; }
     const metadata = {
@@ -67,6 +67,8 @@ export default function UniqueIdsPage() {
       number: code,
       displayId: code,
       uniqueDisplayId: code,
+      idLength: Number(form.digitCount),
+      characterCount: Number(form.digitCount),
       digits: Number(form.digitCount),
       digitCount: Number(form.digitCount),
       uniqueIdLevelId: chosenLevel._id,
@@ -123,8 +125,8 @@ export default function UniqueIdsPage() {
     setEditingId(item._id);
     setForm({
       name: item.name || '',
-      displayId: String(metadata.uniqueDisplayId || metadata.displayId || metadata.number || ''),
-      digitCount: Number(metadata.digitCount || metadata.digits || String(metadata.number || '').length || 3),
+      displayId: String(metadata.uniqueDisplayId || metadata.displayId || metadata.number || '').toUpperCase(),
+      digitCount: Number(metadata.characterCount || metadata.idLength || metadata.digitCount || metadata.digits || String(metadata.number || '').length || 3),
       levelId: String(metadata.uniqueIdLevelId || ''),
       location: metadata.location || 'store',
       progressionType: metadata.progressionType || 'wealth',
@@ -156,7 +158,7 @@ export default function UniqueIdsPage() {
         <Card className="h-fit"><CardHeader><CardTitle>{editingId ? 'Edit Unique ID' : 'Create Unique ID'}</CardTitle></CardHeader><CardContent>
           <form onSubmit={saveItem} className="space-y-4">
             <label className="block space-y-1 text-xs text-muted-foreground">ID name<Input value={form.name} onChange={(e) => setForm((current) => ({ ...current, name: e.target.value }))} placeholder="Lucky 111" maxLength={70} /></label>
-            <div className="grid grid-cols-2 gap-3"><label className="space-y-1 text-xs text-muted-foreground">Number of digits<Input type="number" min={3} max={12} value={form.digitCount} onChange={(e) => setForm((current) => { const digitCount = Math.max(3, Math.min(12, Number(e.target.value) || 3)); return { ...current, digitCount, displayId: current.displayId.slice(0, digitCount) }; })} required /></label><label className="space-y-1 text-xs text-muted-foreground">Unique ID number<Input value={form.displayId} inputMode="numeric" onChange={(e) => setForm((current) => ({ ...current, displayId: e.target.value.replace(/\D/g, '').slice(0, current.digitCount) }))} placeholder={'1'.repeat(Math.min(form.digitCount || 3, 6))} maxLength={12} required /></label></div>
+            <div className="grid grid-cols-2 gap-3"><label className="space-y-1 text-xs text-muted-foreground">ID length (characters)<Input type="number" min={3} max={12} value={form.digitCount} onChange={(e) => setForm((current) => { const digitCount = Math.max(3, Math.min(12, Number(e.target.value) || 3)); return { ...current, digitCount, displayId: current.displayId.slice(0, digitCount) }; })} required /></label><label className="space-y-1 text-xs text-muted-foreground">Unique ID<Input value={form.displayId} autoCapitalize="characters" onChange={(e) => setForm((current) => ({ ...current, displayId: e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, current.digitCount) }))} placeholder="AB1" maxLength={12} required /></label></div>
             <label className="block space-y-1 text-xs text-muted-foreground">Unique ID level<select value={form.levelId} onChange={(e) => setForm((current) => ({ ...current, levelId: e.target.value }))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm" required><option value="">Choose level</option>{levels.filter((level) => level.status === 'active').map((level) => <option key={level._id} value={level._id}>Level {level.config?.levelNumber || level.config?.vipLevel} · {level.name}</option>)}</select></label>
             {chosenLevel && <div className="rounded-xl border border-amber-400/20 bg-gradient-to-r from-amber-500/10 to-slate-900 p-3"><div className="flex items-center gap-3">{previewIsImage ? <img src={assetUrl} alt="Selected level badge" className="h-12 w-12 object-contain" /> : <div className="flex h-12 w-12 animate-pulse items-center justify-center rounded-full border-2 border-amber-300 bg-amber-700"><Gem className="h-6 w-6 text-white" /></div>}<div className="min-w-0"><div className="font-semibold">Level {chosenLevel.config?.levelNumber || chosenLevel.config?.vipLevel} · {chosenLevel.name}</div><div className="text-xs text-muted-foreground">{chosenLevel.config?.badgeName || 'VIP ID'} badge preview</div></div></div><div className="mt-3 truncate rounded-lg bg-slate-950/60 px-3 py-2 text-center font-mono text-xl font-black tracking-[0.25em] text-amber-300">{form.displayId || '0'.repeat(Math.min(form.digitCount || 3, 6))}</div></div>}
             <label className="block space-y-1 text-xs text-muted-foreground">Where is this ID available?<select value={form.location} onChange={(e) => setForm((current) => ({ ...current, location: e.target.value }))} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"><option value="store">Store purchase</option><option value="level">Level reward</option><option value="event">Event reward</option></select></label>
@@ -175,7 +177,7 @@ export default function UniqueIdsPage() {
             const location = metadata.location || 'store';
             const locationLabel = location === 'level' ? `${metadata.progressionType || 'wealth'} level ${metadata.requiredLevel || ''}` : location === 'event' ? metadata.eventTitle || 'Event' : 'Store';
             return <div key={item._id} className="flex flex-wrap items-center gap-3 rounded-xl border p-3">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 font-mono font-black text-amber-300">{metadata.digitCount || metadata.digits || String(metadata.number || '').length}D</div>
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-amber-500/10 font-mono font-black text-amber-300">{metadata.characterCount || metadata.idLength || metadata.digitCount || metadata.digits || String(metadata.number || '').length}C</div>
               <div className="min-w-0 flex-1"><div className="font-semibold">{metadata.number || metadata.uniqueDisplayId || item.name}</div><div className="truncate text-xs text-muted-foreground">{item.name} · Level {metadata.levelNumber || '?'} {metadata.levelName || ''}</div></div>
               <div className="flex items-center gap-2 text-xs text-muted-foreground">{location === 'store' ? <ShoppingBag className="h-4 w-4" /> : location === 'level' ? <Trophy className="h-4 w-4" /> : <CalendarDays className="h-4 w-4" />}{locationLabel}</div>
               {location === 'store' && <Badge variant="outline"><Gem className="mr-1 h-3 w-3" />{item.price.toLocaleString()}</Badge>}

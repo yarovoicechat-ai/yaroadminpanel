@@ -407,7 +407,7 @@ export default function IdentityVipStudioPage() {
     try {
       await apiClient.post('/api/identity/admin/unique-ids/grant', {
         userIdentifier: uniqueTargetUser.trim(),
-        displayId: uniqueDisplayId.trim(),
+        displayId: uniqueDisplayId.trim().toUpperCase(),
         uniqueLevelId: selectedUniqueLevelId,
         durationDays: Number(uniqueDurationDays),
       });
@@ -1057,8 +1057,8 @@ export default function IdentityVipStudioPage() {
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-300 block mb-1">Unique display ID</label>
-                    <Input value={uniqueDisplayId} onChange={(e) => setUniqueDisplayId(e.target.value.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 24))} placeholder="e.g. 1111 or 222222" className="bg-slate-800/80 border-white/10 text-xs font-mono" minLength={3} maxLength={24} required />
-                    <p className="text-[10px] text-slate-500 mt-1">3–24 letters, numbers, hyphens, or underscores.</p>
+                    <Input value={uniqueDisplayId} autoCapitalize="characters" onChange={(e) => setUniqueDisplayId(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 12))} placeholder="e.g. ABCD or A12B" className="bg-slate-800/80 border-white/10 text-xs font-mono" minLength={3} maxLength={12} required />
+                    <p className="text-[10px] text-slate-500 mt-1">3–12 uppercase letters or numbers.</p>
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-slate-300 block mb-1">VIP ID level</label>
