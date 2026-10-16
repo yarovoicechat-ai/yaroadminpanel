@@ -209,7 +209,7 @@ export default function SvipPlansPage() {
 
     try {
       toast.loading('Uploading asset...');
-      const res = await apiClient.post<any>('/api/uploads/file', form);
+      const res = await apiClient.uploadFile<any>('/api/upload/file', form);
       toast.dismiss();
       if (res.data?.url) {
         toast.success('Asset uploaded successfully!');

@@ -256,7 +256,7 @@ export default function IdentityVipStudioPage() {
 
     try {
       toast.loading('Uploading animated badge asset...');
-      const res = await apiClient.uploadFile<any>('/api/uploads/file', formData);
+      const res = await apiClient.uploadFile<any>('/api/upload/file', formData);
       toast.dismiss();
       if (res.data?.url) {
         setGrantBadgeUrl(res.data.url);
@@ -329,7 +329,7 @@ export default function IdentityVipStudioPage() {
     formData.append('file', file);
     setIsUploadingUniqueBadge(true);
     try {
-      const res = await apiClient.uploadFile<any>('/api/uploads/file', formData);
+      const res = await apiClient.uploadFile<any>('/api/upload/file', formData);
       const url = res.data?.url || res.data?.data?.url;
       if (url) {
         setUniqueLevelForm((current) => ({ ...current, badgeIconUrl: url }));

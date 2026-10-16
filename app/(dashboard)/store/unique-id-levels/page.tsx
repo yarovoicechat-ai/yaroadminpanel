@@ -77,7 +77,7 @@ export default function UniqueIdLevelsPage() {
     try {
       const body = new FormData();
       body.append('file', file);
-      const res = await apiClient.uploadFile<any>('/api/uploads/file', body);
+      const res = await apiClient.uploadFile<any>('/api/upload/file', body);
       const url = res.data?.url || res.data?.data?.url;
       if (!url) throw new Error('Upload did not return a file URL');
       setForm((current) => ({ ...current, badgeIconUrl: url, animationType: getAssetType(file.name) }));

@@ -320,7 +320,7 @@ export default function VipSvipManagementPage() {
         formData.append('file', file);
         setVipBadgeUploading(true);
         try {
-            const res = await apiClient.uploadFile<any>('/api/uploads/file', formData);
+            const res = await apiClient.uploadFile<any>('/api/upload/file', formData);
             const url = res.data?.url || res.data?.data?.url;
             if (!url) {
                 toast.error('Upload finished, but no badge URL was returned');

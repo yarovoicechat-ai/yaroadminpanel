@@ -37,7 +37,7 @@ export default function CreateAgencyPage() {
                     const formData = new FormData();
                     formData.append('file', file);
                     formData.append('folder', 'Agencies/Logos');
-                    const res = await apiClient.uploadFile('/api/upload', formData);
+                    const res = await apiClient.uploadFile('/api/upload/file', formData);
                     if (res.success && res.data?.url) {
                         setAgencyLogo(res.data.url);
                     }

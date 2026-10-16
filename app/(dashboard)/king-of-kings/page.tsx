@@ -134,7 +134,7 @@ export default function KingOfKingsAdminPage() {
 
     try {
       toast.loading('Uploading asset...');
-      const res = await apiClient.post<any>('/api/uploads/file', formData);
+      const res = await apiClient.uploadFile<any>('/api/upload/file', formData);
       toast.dismiss();
       if (res.data?.url) {
         toast.success('File uploaded successfully!');
