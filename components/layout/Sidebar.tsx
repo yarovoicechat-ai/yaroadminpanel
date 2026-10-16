@@ -68,8 +68,9 @@ const storeSubmenu: SubmenuItem[] = [
 ];
 
 const uniqueIdSubmenu: SubmenuItem[] = [
+    { name: 'User Unique IDs', href: '/users/unique-ids' },
     { name: 'Unique ID Levels', href: '/store/unique-id-levels' },
-    { name: 'Unique IDs', href: '/store/unique-ids' },
+    { name: 'Store Catalog IDs', href: '/store/unique-ids' },
 ];
 
 const levelSubmenu: SubmenuItem[] = [
@@ -119,6 +120,7 @@ const managementSidebarSections: SidebarSection[] = [
                 category: 'Dashboard',
                 submenu: storeSubmenu,
             },
+            { name: 'User Unique IDs', href: '/users/unique-ids', icon: Hash, category: 'Dashboard' },
             { name: 'Unique ID', icon: Hash, category: 'Dashboard', submenu: uniqueIdSubmenu },
             { name: 'Recharge Plans', href: '/plans/recharge', icon: Coins, category: 'Dashboard' },
             { name: 'Beans Plans', href: '/plans/beans', icon: Gem, category: 'Dashboard' },
@@ -187,8 +189,15 @@ const adminSidebarSections: SidebarSection[] = [
                 icon: Users,
                 category: 'Users',
                 submenu: [
-                    { name: 'User List', href: '/users' }
+                    { name: 'User List', href: '/users' },
+                    { name: 'User Unique IDs', href: '/users/unique-ids' },
                 ]
+            },
+            {
+                name: 'User Unique IDs',
+                href: '/users/unique-ids',
+                icon: Hash,
+                category: 'Users'
             },
             {
                 name: 'Operator',
