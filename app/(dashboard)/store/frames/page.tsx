@@ -23,6 +23,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { suggestAssetName } from '@/lib/aiAssetName';
 
 export interface FrameItem {
   _id: string;
@@ -87,7 +88,7 @@ export default function StoreFramesPage() {
 
       // 1. Fetch from Store catalog category Frames
       try {
-        const res = await apiClient.get(API_ENDPOINTS.STORE.ITEMS, { category: 'Frames' });
+        const res = await apiClient.get(API_ENDPOINTS.STORE.ITEMS, { category: 'Frames', includeStaff: true });
         if (res && res.data) {
           const raw = Array.isArray(res.data) ? res.data : (res.data.items || []);
           if (Array.isArray(raw) && raw.length > 0) {
@@ -231,8 +232,11 @@ export default function StoreFramesPage() {
 
       if (!url) throw new Error('File URL not returned from server');
 
+      const suggestedName = await suggestAssetName(file, 'avatar frame');
+
       setFormData(prev => ({
         ...prev,
+        name: prev.name.trim() ? prev.name : (suggestedName || prev.name),
         image: url,
         imageName: file.name,
       }));
@@ -262,8 +266,11 @@ export default function StoreFramesPage() {
       const url = res.data?.url || (res as any).url;
       if (!url) throw new Error('Animation URL not returned from server');
 
+      const suggestedName = await suggestAssetName(file, 'avatar frame');
+
       setFormData(prev => ({
         ...prev,
+        name: prev.name.trim() ? prev.name : (suggestedName || prev.name),
         animationUrl: url,
         animationFileName: file.name,
       }));
@@ -286,7 +293,7 @@ export default function StoreFramesPage() {
       return;
     }
 
-    const price = Number(formData.price30Days) || Number(formData.price) || 0;
+    const price = Math.max(0, Number(formData.price30Days) || 0);
     const payload = {
       name: formData.name.trim(),
       category: 'Frames',
@@ -295,9 +302,9 @@ export default function StoreFramesPage() {
       isStaffOnly: formData.audience === 'employee' || formData.isStaffOnly,
       price,
       priceOptions: [
-        { days: 3, diamonds: Number(formData.price3Days) || Math.round(price * 0.15) },
-        { days: 7, diamonds: Number(formData.price7Days) || Math.round(price * 0.3) },
-        { days: 15, diamonds: Number(formData.price15Days) || Math.round(price * 0.55) },
+        { days: 3, diamonds: Math.max(0, Number(formData.price3Days) || 0) },
+        { days: 7, diamonds: Math.max(0, Number(formData.price7Days) || 0) },
+        { days: 15, diamonds: Math.max(0, Number(formData.price15Days) || 0) },
         { days: 30, diamonds: price },
       ],
       validity: formData.validity,
@@ -320,16 +327,27 @@ export default function StoreFramesPage() {
         toast.success(`Frame "${formData.name}" updated successfully!`);
       } else {
         await apiClient.post(API_ENDPOINTS.STORE.CREATE, payload);
-        // Also sync legacy frame endpoint
-        try {
-          await apiClient.post(API_ENDPOINTS.FRAMES.CREATE, {
-            name: formData.name.trim(),
-            level: Number(formData.levelRequired) || 1,
-            image: formData.image,
-            animationUrl: formData.animationUrl || '',
-          });
-        } catch (_) {}
-        toast.success(`Frame "${formData.name}" uploaded! Live in store & app.`);
+        // Keep staff-only frames out of the legacy public frame/level catalog.
+        if (formData.audience !== 'employee' && !formData.isStaffOnly) {
+          try {
+            await apiClient.post(API_ENDPOINTS.FRAMES.CREATE, {
+              name: formData.name.trim(),
+              level: Number(formData.levelRequired) || 1,
+              image: formData.image,
+              animationUrl: formData.animationUrl || '',
+              price,
+              priceOptions: payload.priceOptions,
+              validity: formData.validity,
+              badgeText: formData.badgeText,
+              desc: formData.desc || `Exclusive avatar profile frame: ${formData.name}`,
+              audience: formData.audience,
+              isStaffOnly: false,
+            });
+          } catch (_) {}
+        }
+        toast.success(formData.audience === 'employee' || formData.isStaffOnly
+          ? `Staff-only frame "${formData.name}" created. It is hidden from the public store.`
+          : `Frame "${formData.name}" uploaded! Live in store & app.`);
       }
       setIsModalOpen(false);
       fetchFrames();

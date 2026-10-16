@@ -34,6 +34,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
+import { suggestAssetName } from '@/lib/aiAssetName';
 
 export interface PrivilegeItem {
   key: string;
@@ -212,6 +213,9 @@ export default function SvipPlansPage() {
       const res = await apiClient.uploadFile<any>('/api/upload/file', form);
       toast.dismiss();
       if (res.data?.url) {
+        const suggestedName = fieldName === 'heroBadgeUrl'
+          ? await suggestAssetName(file, 'SVIP level badge')
+          : null;
         toast.success('Asset uploaded successfully!');
         if (fieldName.startsWith('tag.')) {
           const sub = fieldName.split('.')[1];
@@ -229,6 +233,7 @@ export default function SvipPlansPage() {
           setFormData((prev) => ({
             ...prev,
             [fieldName]: res.data.url,
+            ...(fieldName === 'heroBadgeUrl' && !(prev.name || '').trim() && suggestedName ? { name: suggestedName } : {}),
           }));
         }
       }

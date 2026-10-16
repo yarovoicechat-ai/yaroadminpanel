@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
+import { suggestAssetName } from '@/lib/aiAssetName';
 
 interface KingRewardItem {
   key: string;
@@ -137,11 +138,13 @@ export default function KingOfKingsAdminPage() {
       const res = await apiClient.uploadFile<any>('/api/upload/file', formData);
       toast.dismiss();
       if (res.data?.url) {
+        const suggestedName = await suggestAssetName(file, 'King of Kings badge');
         toast.success('File uploaded successfully!');
         if (editingPlan) {
           setEditingPlan((prev: any) => ({
             ...prev,
             [fieldName]: res.data.url,
+            name: prev?.name?.trim() ? prev.name : (suggestedName || prev?.name || ''),
           }));
         }
       }

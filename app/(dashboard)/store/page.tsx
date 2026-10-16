@@ -30,6 +30,7 @@ import {
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
+import { suggestAssetName } from '@/lib/aiAssetName';
 
 export type StoreCategory =
   | 'All'
@@ -123,7 +124,7 @@ export default function StoreManagementPage() {
   const fetchStoreItems = async () => {
     try {
       setLoading(true);
-      const res = await apiClient.get(API_ENDPOINTS.STORE.ITEMS);
+      const res = await apiClient.get(API_ENDPOINTS.STORE.ITEMS, { includeStaff: true });
       if (res && res.data) {
         const fetchedItems = res.data.items || res.data || [];
         setItems(fetchedItems);
@@ -267,7 +268,12 @@ export default function StoreManagementPage() {
       const response = await apiClient.uploadFile<{ url: string }>('/api/upload/file', body);
       const url = response.data?.url;
       if (!url) throw new Error('Upload URL was not returned');
-      setFormData(current => ({ ...current, [field]: url }));
+      const suggestedName = await suggestAssetName(file, `${formData.category} store item`);
+      setFormData(current => ({
+        ...current,
+        [field]: url,
+        name: current.name.trim() ? current.name : (suggestedName || current.name),
+      }));
       toast.success(`${isAnimation ? 'Item file' : 'Preview image'} uploaded`);
     } catch (error: any) {
       toast.error(error?.message || 'File upload failed');

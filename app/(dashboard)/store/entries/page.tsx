@@ -25,6 +25,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 import { uploadToCloudinary } from '@/lib/cloudinary';
+import { suggestAssetName } from '@/lib/aiAssetName';
 
 export interface EntryItem {
   _id: string;
@@ -129,7 +130,7 @@ export default function StoreEntriesPage() {
                   image: si.imageUrl || si.image || '',
                   animationUrl: si.animationUrl || '',
                   bannerColors: si.bgColors && si.bgColors.length >= 2 ? si.bgColors : ['#F59E0B', '#B45309'],
-                  price: si.price || 15000,
+                  price: si.price ?? 15000,
                   priceOptions: si.priceOptions,
                   validity: si.validity || '30 Days',
                   rarity: 'epic',
@@ -252,9 +253,11 @@ export default function StoreEntriesPage() {
       }
 
       if (!url) throw new Error('File URL not returned');
+      const suggestedName = await suggestAssetName(file, 'entry effect');
 
       setFormData(prev => ({
         ...prev,
+        name: prev.name.trim() ? prev.name : (suggestedName || prev.name),
         image: url,
         imageName: file.name,
       }));
@@ -283,9 +286,11 @@ export default function StoreEntriesPage() {
       const res = await apiClient.uploadFile<{ url: string }>(API_ENDPOINTS.UPLOAD.FILE, body);
       const url = res.data?.url || (res as any).url;
       if (!url) throw new Error('Animation URL not returned');
+      const suggestedName = await suggestAssetName(file, 'entry effect');
 
       setFormData(prev => ({
         ...prev,
+        name: prev.name.trim() ? prev.name : (suggestedName || prev.name),
         animationUrl: url,
         animationFileName: file.name,
       }));
@@ -333,7 +338,7 @@ export default function StoreEntriesPage() {
       return;
     }
 
-    const price = Number(formData.price30Days) || Number(formData.price) || 0;
+    const price = Math.max(0, Number(formData.price30Days) || 0);
     const bannerColors = [formData.bannerColor1, formData.bannerColor2];
 
     const payload = {
@@ -347,9 +352,9 @@ export default function StoreEntriesPage() {
       bannerColors,
       price,
       priceOptions: [
-        { days: 3, diamonds: Number(formData.price3Days) || Math.round(price * 0.15) },
-        { days: 7, diamonds: Number(formData.price7Days) || Math.round(price * 0.3) },
-        { days: 15, diamonds: Number(formData.price15Days) || Math.round(price * 0.55) },
+        { days: 3, diamonds: Math.max(0, Number(formData.price3Days) || 0) },
+        { days: 7, diamonds: Math.max(0, Number(formData.price7Days) || 0) },
+        { days: 15, diamonds: Math.max(0, Number(formData.price15Days) || 0) },
         { days: 30, diamonds: price },
       ],
       validity: formData.validity,

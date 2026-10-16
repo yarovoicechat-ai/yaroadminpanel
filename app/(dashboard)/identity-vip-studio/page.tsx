@@ -49,6 +49,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
+import { suggestAssetName } from '@/lib/aiAssetName';
 
 interface IdentityEntitlementItem {
   _id: string;
@@ -320,8 +321,10 @@ export default function IdentityVipStudioPage() {
   const handleUploadUniqueBadgeFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.name.toLowerCase().endsWith('.svga')) {
-      toast.error('Upload an SVGA badge file');
+    const extension = file.name.split('.').pop()?.toLowerCase() || '';
+    const allowedTypes: Record<string, string> = { svga: 'svga', png: 'static', jpg: 'static', jpeg: 'static', webp: 'webp', gif: 'gif' };
+    if (!allowedTypes[extension]) {
+      toast.error('Upload an SVGA, PNG, JPEG, WebP, or GIF badge file');
       e.target.value = '';
       return;
     }
@@ -332,7 +335,13 @@ export default function IdentityVipStudioPage() {
       const res = await apiClient.uploadFile<any>('/api/upload/file', formData);
       const url = res.data?.url || res.data?.data?.url;
       if (url) {
-        setUniqueLevelForm((current) => ({ ...current, badgeIconUrl: url }));
+        const suggestedName = await suggestAssetName(file, 'Unique ID level badge');
+        setUniqueLevelForm((current) => ({
+          ...current,
+          name: current.name.trim() ? current.name : (suggestedName || current.name),
+          badgeIconUrl: url,
+          animationType: allowedTypes[extension],
+        }));
         toast.success('VIP ID level badge uploaded');
       } else {
         toast.error('Upload finished, but no badge URL was returned');
@@ -1140,7 +1149,7 @@ export default function IdentityVipStudioPage() {
                   <div><label className="text-xs font-semibold text-slate-300 block mb-1">Level number</label><Input type="number" min={1} value={uniqueLevelForm.levelNumber} onChange={(e) => setUniqueLevelForm((current) => ({ ...current, levelNumber: Number(e.target.value) }))} className="bg-slate-800/80 border-white/10 text-xs" required /></div>
                 </div>
                 <div><label className="text-xs font-semibold text-slate-300 block mb-1">Badge label</label><Input value={uniqueLevelForm.badgeName} onChange={(e) => setUniqueLevelForm((current) => ({ ...current, badgeName: e.target.value }))} placeholder="VIP ID" className="bg-slate-800/80 border-white/10 text-xs" required /></div>
-                <div><label className="text-xs font-semibold text-slate-300 block mb-1">Upload level badge (.svga)</label><Input type="file" accept=".svga" onChange={handleUploadUniqueBadgeFile} disabled={isUploadingUniqueBadge} className="bg-slate-800/80 border-white/10 text-xs file:mr-3 file:rounded-md file:border-0 file:bg-cyan-500/20 file:px-3 file:py-1 file:text-cyan-200" />{isUploadingUniqueBadge && <p className="text-[10px] text-cyan-300 mt-1">Uploading badge...</p>}{uniqueLevelForm.badgeIconUrl && <p className="text-[10px] text-emerald-300 mt-1 truncate">Badge ready: {uniqueLevelForm.badgeIconUrl}</p>}</div>
+                <div><label className="text-xs font-semibold text-slate-300 block mb-1">Upload level badge (SVGA, PNG, JPEG, WebP, GIF)</label><Input type="file" accept=".svga,.png,.jpg,.jpeg,.webp,.gif" onChange={handleUploadUniqueBadgeFile} disabled={isUploadingUniqueBadge} className="bg-slate-800/80 border-white/10 text-xs file:mr-3 file:rounded-md file:border-0 file:bg-cyan-500/20 file:px-3 file:py-1 file:text-cyan-200" />{isUploadingUniqueBadge && <p className="text-[10px] text-cyan-300 mt-1">Uploading badge...</p>}{uniqueLevelForm.badgeIconUrl && <p className="text-[10px] text-emerald-300 mt-1 truncate">Badge ready: {uniqueLevelForm.badgeIconUrl}</p>}</div>
                 <div className="grid grid-cols-2 gap-3">
                   <div><label className="text-xs font-semibold text-slate-300 block mb-1">Animation type</label><select value={uniqueLevelForm.animationType} onChange={(e) => setUniqueLevelForm((current) => ({ ...current, animationType: e.target.value }))} className="w-full bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-xs text-white"><option value="svga">SVGA</option><option value="pulse">Pulse</option><option value="shimmer">Shimmer</option><option value="glow">Glow</option><option value="static">Static</option></select></div>
                   <div><label className="text-xs font-semibold text-slate-300 block mb-1">Description</label><Input value={uniqueLevelForm.description} onChange={(e) => setUniqueLevelForm((current) => ({ ...current, description: e.target.value }))} placeholder="Optional" className="bg-slate-800/80 border-white/10 text-xs" /></div>

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { suggestAssetName } from '@/lib/aiAssetName';
 
 type UniqueIdLevel = {
   _id: string;
@@ -80,7 +81,13 @@ export default function UniqueIdLevelsPage() {
       const res = await apiClient.uploadFile<any>('/api/upload/file', body);
       const url = res.data?.url || res.data?.data?.url;
       if (!url) throw new Error('Upload did not return a file URL');
-      setForm((current) => ({ ...current, badgeIconUrl: url, animationType: getAssetType(file.name) }));
+      const suggestedName = await suggestAssetName(file, 'Unique ID level badge');
+      setForm((current) => ({
+        ...current,
+        name: current.name.trim() ? current.name : (suggestedName || current.name),
+        badgeIconUrl: url,
+        animationType: getAssetType(file.name),
+      }));
       toast.success('Level badge uploaded');
     } catch (error: any) {
       toast.error(error?.message || 'Badge upload failed');

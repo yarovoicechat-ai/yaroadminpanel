@@ -45,6 +45,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
+import { suggestAssetName } from '@/lib/aiAssetName';
 
 interface VipPackage {
     _id: string;
@@ -326,10 +327,11 @@ export default function VipSvipManagementPage() {
                 toast.error('Upload finished, but no badge URL was returned');
                 return;
             }
+            const suggestedName = await suggestAssetName(file, 'VIP level badge');
             if (/\.svga(?:\?|$)/i.test(file.name)) {
-                setVipForm((current) => ({ ...current, badgeAnimationUrl: url }));
+                setVipForm((current) => ({ ...current, name: current.name.trim() ? current.name : (suggestedName || current.name), badgeAnimationUrl: url }));
             } else {
-                setVipForm((current) => ({ ...current, badgeUrl: url }));
+                setVipForm((current) => ({ ...current, name: current.name.trim() ? current.name : (suggestedName || current.name), badgeUrl: url }));
             }
             toast.success('VIP level badge uploaded');
         } catch (err: any) {

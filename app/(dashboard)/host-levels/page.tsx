@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
+import { suggestAssetName } from '@/lib/aiAssetName';
 
 interface LevelReward {
     type: 'frame' | 'entry';
@@ -162,7 +163,7 @@ export default function HostLevelsPage() {
         }
     };
 
-    const uploadRewardFile = async (file: File | undefined, uploadKey: string, onUploaded: (url: string) => void) => {
+    const uploadRewardFile = async (file: File | undefined, uploadKey: string, onUploaded: (url: string) => void, onNameSuggested?: (name: string) => void) => {
         if (!file) return;
         if (!/\.(svga|gif|webp|png|jpe?g)$/i.test(file.name)) {
             toast.error('Reward asset must be an image, GIF, WebP, or SVGA file');
@@ -175,7 +176,9 @@ export default function HostLevelsPage() {
             const response = await apiClient.uploadFile<{ url: string }>('/api/upload/file', body);
             const url = response.data?.url;
             if (!url) throw new Error('Upload URL was not returned');
+            const suggestedName = await suggestAssetName(file, 'host level reward');
             onUploaded(url);
+            if (suggestedName) onNameSuggested?.(suggestedName);
             toast.success('Reward asset uploaded');
         } catch (error: any) {
             toast.error(error?.message || 'Reward upload failed');
@@ -350,7 +353,7 @@ export default function HostLevelsPage() {
                                                         accept=".svga,image/png,image/jpeg,image/gif,image/webp"
                                                         className="hidden"
                                                         disabled={uploadingReward !== null}
-                                                        onChange={event => uploadRewardFile(event.target.files?.[0], `add-${index}`, url => updateAddReward(index, /\.svga$/i.test(url) ? { animationUrl: url } : { imageUrl: url }))}
+                                                        onChange={event => uploadRewardFile(event.target.files?.[0], `add-${index}`, url => updateAddReward(index, /\.svga$/i.test(url) ? { animationUrl: url } : { imageUrl: url }), name => setAddForm(current => ({ ...current, rewards: current.rewards.map((reward, rewardIndex) => rewardIndex === index && !reward.name.trim() ? { ...reward, name } : reward) })))}
                                                     />
                                                 </label>
                                                 <Button type="button" variant="outline" className="ml-2 h-9 text-red-400" onClick={() => setAddForm(form => ({ ...form, rewards: form.rewards.filter((_, rewardIndex) => rewardIndex !== index) }))}>

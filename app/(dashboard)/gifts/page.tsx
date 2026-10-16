@@ -18,6 +18,7 @@ import {
 import { Gift, Plus, Trash2, Pencil, Search, PackageOpen, UploadCloud, Loader2, CheckCircle2, FileUp, Sparkles, FolderUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
+import { suggestAssetName } from '@/lib/aiAssetName';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 
 interface GiftItem {
@@ -134,6 +135,7 @@ export default function GiftsPage() {
             const res = await apiClient.uploadFile('/api/upload/file', formData);
             if (res.success && res.data?.url) {
                 const uploadedUrl = res.data.url;
+                const suggestedName = await suggestAssetName(file, 'virtual gift');
                 setForm(prev => {
                     const ext = file.name.toLowerCase().split('.').pop();
                     let autoType = prev.mediaType;
@@ -146,6 +148,7 @@ export default function GiftsPage() {
                     return {
                         ...prev,
                         [field]: uploadedUrl,
+                        name: prev.name.trim() ? prev.name : (suggestedName || prev.name),
                         mediaType: isAnimation ? autoType : prev.mediaType,
                     };
                 });
