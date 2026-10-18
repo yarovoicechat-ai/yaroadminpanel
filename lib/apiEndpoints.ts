@@ -261,5 +261,13 @@ export const API_ENDPOINTS = {
 
         GRANT: '/api/vip/admin/grant',
     },
+
+    // Agora Multi-Project Manager (Read-Only Telemetry View)
+    AGORA: {
+        PROJECTS: '/api/management/agora/projects',
+        USAGE: '/api/management/agora/usage',
+        USAGE_HISTORY: '/api/management/agora/usage/history',
+        SWITCH_HISTORY: '/api/management/agora/switch-history',
+    },
 } as const;
 

@@ -91,6 +91,7 @@ const managementSidebarSections: SidebarSection[] = [
             { name: 'App Releases (APK)', href: '/app-releases', icon: Download, category: 'Dashboard' },
             { name: 'Screen Security & Code', href: '/screen-security', icon: ShieldCheck, category: 'Dashboard' },
             { name: 'App Settings', href: '/settings', icon: Settings, category: 'Settings' },
+            { name: 'Agora RTC Status', href: '/settings/communication/agora', icon: Radio, category: 'Settings' },
             { name: 'System Logs', href: '/logs', icon: Terminal, category: 'Developer' }
         ]
     },
@@ -154,6 +155,7 @@ const adminSidebarSections: SidebarSection[] = [
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
             { name: 'Live Rooms (Pin)', href: '/rooms', icon: Radio, category: 'Dashboard' },
             { name: 'Asset Distribution', href: '/store/distribute', icon: Sparkles, category: 'Dashboard' },
+            { name: 'Agora RTC Status', href: '/settings/communication/agora', icon: Radio, category: 'Dashboard' },
         ]
     },
     {
@@ -376,6 +378,7 @@ const adminSidebarSections: SidebarSection[] = [
         category: 'Settings',
         items: [
             { name: 'Settings', href: '/settings', icon: Settings, category: 'Settings' },
+            { name: 'Agora RTC Status', href: '/settings/communication/agora', icon: Radio, category: 'Settings' },
             { name: 'Workflows', href: '/settings/workflows', category: 'Settings', icon: Calendar },
             { name: 'Permission Builder', href: '/security/permissions', category: 'Settings', icon: ShieldAlert },
             { name: 'Role Templates', href: '/security/templates', category: 'Settings', icon: ShieldCheck },
