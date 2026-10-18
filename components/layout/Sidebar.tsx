@@ -55,6 +55,7 @@ const defaultRoleConfig = { label: 'Staff', color: 'text-slate-400', bg: 'bg-sla
 const storeSubmenu: SubmenuItem[] = [
     { name: 'Store Overview', href: '/store' },
     { name: '🎁 Asset Distribution', href: '/store/distribute' },
+    { name: '🎁 Gifts Catalog', href: '/gifts' },
     { name: 'Frames', href: '/store/frames' },
     { name: 'Chat Bubbles', href: '/store/chat-bubbles' },
     { name: 'Themes', href: '/store/themes' },
@@ -113,6 +114,7 @@ const managementSidebarSections: SidebarSection[] = [
         title: 'APP CONTENT & ECONOMY',
         category: 'Dashboard',
         items: [
+            { name: 'Gifts & Assets', href: '/gifts', icon: Gift, category: 'Dashboard' },
             { name: 'CMS Editor', href: '/cms', icon: FileText, category: 'Dashboard' },
             {
                 name: 'Store Management',
@@ -158,6 +160,7 @@ const adminSidebarSections: SidebarSection[] = [
         title: 'Store & Economy',
         category: 'Dashboard',
         items: [
+            { name: 'Gifts & Assets', href: '/gifts', icon: Gift, category: 'Dashboard' },
             {
                 name: 'Store Management',
                 icon: ShoppingBag,

@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Settings, Percent, DollarSign, ToggleLeft, ToggleRight, Radio, Shield, Mail, FileText, Crown, LogOut } from "lucide-react";
+import { Textarea } from "@/components/ui/Textarea";
+import { Settings, Percent, DollarSign, ToggleLeft, ToggleRight, Radio, Shield, Mail, FileText, Crown, LogOut, UserPlus, Trash2 } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 
@@ -24,11 +25,19 @@ export default function SettingsPage() {
         hostSharePerMinute: 28,
         chatMessageCost: 10,
         privacyPolicy: '',
-        termsAndConditions: ''
+        termsAndConditions: '',
+        enforceAllowedNames: false,
     });
+    const [blockedNamesText, setBlockedNamesText] = useState('');
+    const [allowedNamesText, setAllowedNamesText] = useState('');
+    const [globalManagers, setGlobalManagers] = useState<any[]>([]);
+    const [globalManagerId, setGlobalManagerId] = useState('');
+    const [managerSaving, setManagerSaving] = useState(false);
+    const [managerControlsAvailable, setManagerControlsAvailable] = useState(false);
 
     useEffect(() => {
         fetchSettings();
+        fetchGlobalManagers();
     }, []);
 
     const fetchSettings = async () => {
@@ -37,6 +46,8 @@ export default function SettingsPage() {
             const response = await apiClient.get('/api/admin/settings');
             if (response.success && response.data) {
                 setSettings(response.data);
+                setBlockedNamesText(Array.isArray(response.data.blockedNames) ? response.data.blockedNames.join('\n') : '');
+                setAllowedNamesText(Array.isArray(response.data.allowedNames) ? response.data.allowedNames.join('\n') : '');
             }
         } catch (error: any) {
             toast.error(error.message || 'Failed to fetch settings');
@@ -45,11 +56,63 @@ export default function SettingsPage() {
         }
     };
 
+    const parseNames = (value: string) => [...new Set(value.split(/[\n,]/).map((name) => name.trim()).filter(Boolean))];
+
+    const fetchGlobalManagers = async () => {
+        try {
+            const response = await apiClient.get('/api/admin/room-managers');
+            if (response.success) {
+                setGlobalManagers(Array.isArray(response.data) ? response.data : []);
+                setManagerControlsAvailable(true);
+            }
+        } catch {
+            setManagerControlsAvailable(false);
+        }
+    };
+
+    const addGlobalManager = async () => {
+        const id = globalManagerId.trim();
+        if (!/^\d+$/.test(id)) {
+            toast.error('Enter a numeric app user ID');
+            return;
+        }
+        try {
+            setManagerSaving(true);
+            const response = await apiClient.post('/api/admin/room-managers', { userId: id });
+            if (!response.success) throw new Error(response.message || 'Could not grant room manager access');
+            toast.success(`Global room access granted to ID ${id}`);
+            setGlobalManagerId('');
+            await fetchGlobalManagers();
+        } catch (error: any) {
+            toast.error(error.message || 'Could not grant room manager access');
+        } finally {
+            setManagerSaving(false);
+        }
+    };
+
+    const removeGlobalManager = async (userId: number) => {
+        try {
+            setManagerSaving(true);
+            const response = await apiClient.delete(`/api/admin/room-managers/${userId}`);
+            if (!response.success) throw new Error(response.message || 'Could not revoke room manager access');
+            toast.success(`Global room access removed from ID ${userId}`);
+            await fetchGlobalManagers();
+        } catch (error: any) {
+            toast.error(error.message || 'Could not revoke room manager access');
+        } finally {
+            setManagerSaving(false);
+        }
+    };
+
     const handleSaveSettings = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
             setSaving(true);
-            const response = await apiClient.patch('/api/admin/settings', settings);
+            const response = await apiClient.patch('/api/admin/settings', {
+                ...settings,
+                blockedNames: parseNames(blockedNamesText),
+                allowedNames: parseNames(allowedNamesText),
+            });
             if (response.success) {
                 toast.success('Configuration parameters updated successfully');
                 fetchSettings();
@@ -248,6 +311,70 @@ export default function SettingsPage() {
             </div>
 
             {/* ── Danger Zone: Role Promotion ── */}
+            <Card className="glass-card">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-slate-200">
+                        <Shield size={20} className="text-primary" />
+                        Name Restrictions
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">Rules are checked for display names at signup and profile edits. Blocked words also apply to usernames.</p>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                    <div className="flex items-center justify-between rounded-lg border border-border bg-slate-900/50 p-4">
+                        <div>
+                            <p className="text-sm font-bold text-slate-200">Allow only approved names</p>
+                            <p className="text-xs text-muted-foreground">When enabled, each new display name must match an approved entry; case and punctuation do not matter.</p>
+                        </div>
+                        <button type="button" onClick={() => handleChange('enforceAllowedNames', !settings.enforceAllowedNames)}>
+                            {settings.enforceAllowedNames ? <ToggleRight size={32} className="text-emerald-500" /> : <ToggleLeft size={32} className="text-muted-foreground" />}
+                        </button>
+                    </div>
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-300">Blocked names or words</label>
+                            <Textarea rows={5} value={blockedNamesText} onChange={(e) => setBlockedNamesText(e.target.value)} placeholder={'Official\nAdmin\nSupport'} />
+                            <p className="text-xs text-muted-foreground">One per line or comma separated. Matching ignores case, spaces, and punctuation.</p>
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-300">Approved names</label>
+                            <Textarea rows={5} value={allowedNamesText} onChange={(e) => setAllowedNamesText(e.target.value)} placeholder={'Aarav\nMaya'} />
+                            <p className="text-xs text-muted-foreground">Used when “Allow only approved names” is enabled.</p>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {managerControlsAvailable && <Card className="glass-card">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-slate-200">
+                        <Shield size={20} className="text-primary" />
+                        Global Room Managers
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground">These app IDs can manage moderation and room settings in every room. Other room users cannot mute, kick, or remove them.</p>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                        <Input inputMode="numeric" value={globalManagerId} onChange={(e) => setGlobalManagerId(e.target.value.replace(/\D/g, ''))} placeholder="App user ID" />
+                        <Button type="button" onClick={addGlobalManager} disabled={managerSaving || !globalManagerId.trim()} className="gap-2">
+                            <UserPlus size={16} /> Grant access
+                        </Button>
+                    </div>
+                    {globalManagers.length === 0 ? <p className="text-sm text-muted-foreground">No global room managers assigned.</p> : (
+                        <div className="divide-y divide-border rounded-lg border border-border">
+                            {globalManagers.map((manager) => <div key={manager.userId} className="flex items-center justify-between gap-3 p-3">
+                                <div>
+                                    <p className="font-semibold text-slate-200">{manager.name || manager.userName || 'App user'}</p>
+                                    <p className="text-xs text-muted-foreground">ID {manager.userId} · {manager.role}</p>
+                                </div>
+                                <Button type="button" variant="outline" disabled={managerSaving} onClick={() => removeGlobalManager(manager.userId)} className="gap-2 text-rose-300">
+                                    <Trash2 size={15} /> Remove
+                                </Button>
+                            </div>)}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>}
+
             <Card className="border-orange-500/40 bg-orange-500/5">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-orange-400">

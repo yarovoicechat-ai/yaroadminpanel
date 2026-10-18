@@ -22,9 +22,12 @@ import {
   Settings,
   ShieldAlert,
   Coins,
-  Server
+  Server,
+  Plus,
+  Gem
 } from 'lucide-react';
 import { apiClient } from '@/lib/apiClient';
+import GiftFormModal from '@/components/gifts/GiftFormModal';
 
 export default function ManagementDashboardPage() {
   const [stats, setStats] = useState({
@@ -36,6 +39,7 @@ export default function ManagementDashboardPage() {
     systemStatus: 'ONLINE',
   });
   const [loading, setLoading] = useState(true);
+  const [showAddGiftModal, setShowAddGiftModal] = useState(false);
 
   useEffect(() => {
     fetchManagementOverview();
@@ -80,9 +84,15 @@ export default function ManagementDashboardPage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-3 shrink-0 flex-wrap">
+            <Button
+              onClick={() => setShowAddGiftModal(true)}
+              className="bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-extrabold text-xs px-4 py-5 rounded-2xl shadow-xl flex items-center gap-2 border-none cursor-pointer"
+            >
+              <Plus className="w-4 h-4" /> + Add Gift (💎)
+            </Button>
             <Link href="/app-releases">
-              <Button className="bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold text-xs px-4 py-5 rounded-2xl shadow-xl flex items-center gap-2 border-none">
+              <Button className="bg-slate-800/80 hover:bg-slate-700 border border-slate-700 text-white font-bold text-xs px-4 py-5 rounded-2xl shadow-xl flex items-center gap-2">
                 <Download className="w-4 h-4" /> Download Latest APK (v1.8.5)
               </Button>
             </Link>
@@ -166,14 +176,23 @@ export default function ManagementDashboardPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-xs text-slate-400 leading-relaxed">
-                Upload gift icon images (.png) & full-screen SVGA/GIF animation files directly. Set coin prices & categories.
+                Upload gift icon images (.png) & full-screen SVGA/GIF animation files directly. Set diamond prices & categories.
               </p>
-              <Link href="/gifts" className="block">
-                <Button className="w-full bg-slate-800 hover:bg-pink-600 text-slate-200 hover:text-white font-bold text-xs rounded-xl flex items-center justify-between transition-all border-none">
-                  <span>Manage Gifts & Upload Files</span>
-                  <ArrowUpRight className="w-4 h-4" />
+              <div className="flex flex-col gap-2">
+                <Button
+                  onClick={() => setShowAddGiftModal(true)}
+                  className="w-full bg-gradient-to-r from-pink-600 via-rose-600 to-amber-600 hover:from-pink-500 hover:to-amber-500 text-white font-extrabold text-xs rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-pink-600/25 border-none py-2.5 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" />
+                  <span>+ Add New Gift (💎)</span>
                 </Button>
-              </Link>
+                <Link href="/gifts" className="block">
+                  <Button variant="outline" className="w-full bg-slate-800/80 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs rounded-xl flex items-center justify-between transition-all border-slate-700">
+                    <span>Manage Gifts & Upload Files</span>
+                    <ArrowUpRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
 
@@ -318,6 +337,13 @@ export default function ManagementDashboardPage() {
           </Card>
         </div>
       </div>
+
+      {/* Direct Gift Creation Modal for Management Panel */}
+      <GiftFormModal
+        open={showAddGiftModal}
+        onOpenChange={setShowAddGiftModal}
+        onSuccess={fetchManagementOverview}
+      />
     </div>
   );
 }
