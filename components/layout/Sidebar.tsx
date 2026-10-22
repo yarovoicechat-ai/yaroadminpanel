@@ -142,7 +142,8 @@ const managementSidebarSections: SidebarSection[] = [
         items: [
             { name: 'Events', href: '/events', icon: Calendar, category: 'Notifications' },
             { name: 'System Messages', href: '/messages/system', icon: MessageSquare, category: 'Notifications' },
-            { name: 'Activity Messages', href: '/messages/activity', icon: Bell, category: 'Notifications' }
+            { name: 'Activity Messages', href: '/messages/activity', icon: Bell, category: 'Notifications' },
+            { name: 'Staff Approval Requests', href: '/verification/requests', icon: FileCheck, category: 'Notifications' }
         ]
     }
 ];
@@ -318,6 +319,7 @@ const adminSidebarSections: SidebarSection[] = [
                 icon: FileCheck,
                 category: 'Notifications',
                 submenu: [
+                    { name: 'Host/Agency/Admin Applications', href: '/verification/requests' },
                     { name: 'Face Verification Requests', href: '/verification/face' },
                     { name: 'KYC Verification Requests', href: '/verification/kyc' },
                     { name: 'Verification Reports', href: '/verification/reports' },

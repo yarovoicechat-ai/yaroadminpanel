@@ -2,19 +2,64 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
-import { FileCheck, Check, X, ShieldAlert, User, ShieldCheck, Mail, Phone, Calendar, Key, AlertTriangle } from 'lucide-react';
+import { Check, X, ShieldCheck, Mail, Calendar, Key, AlertTriangle } from 'lucide-react';
 import { apiClient } from '@/lib/apiClient';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
+const normalizeToken = (value: unknown) => String(value || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+
+type ApprovalRecord = { role?: string };
+type RequestData = {
+  role?: string;
+  name?: string;
+  email?: string;
+  phoneNumber?: string;
+  referralCode?: string;
+  documents?: string[];
+};
+type RequestRecord = {
+  _id: string;
+  role?: string;
+  requestType: string;
+  data: RequestData;
+  status: string;
+  currentStepIndex?: number;
+  workflowSteps?: string[];
+  approvedBy?: ApprovalRecord[];
+  passwordBeforeApproval?: string;
+  createdAt: string;
+};
+
+const isAdminOperatorRequest = (request: RequestRecord) => {
+  const token = normalizeToken(request?.role || request?.requestType);
+  return token.includes('host') || token.includes('agency') || token.includes('admin');
+};
+
+const getCurrentApprovalStage = (request: RequestRecord) => {
+  const approvedByAdmin = (request.approvedBy || []).some((approval) => normalizeToken(approval.role) === 'admin');
+  return approvedByAdmin
+    ? { role: 'operator', label: 'Stage 2: Operator Final Approval', index: 1 }
+    : { role: 'admin', label: 'Stage 1: Admin Approval', index: 0 };
+};
+
+const isOpenRequest = (status: string) => ['pending', 'under_review'].includes(status);
+
+const canReviewRequest = (request: RequestRecord | null, actorRole: string | undefined) => {
+  if (!request || !actorRole || !isOpenRequest(request.status)) return false;
+  if (isAdminOperatorRequest(request)) return actorRole === getCurrentApprovalStage(request).role;
+  const currentStep = request.workflowSteps?.[Number(request.currentStepIndex || 0)];
+  return actorRole === 'owner' || Boolean(currentStep && actorRole === currentStep);
+};
+
 export default function RequestCenter() {
   const { user } = useAuth();
-  const [requests, setRequests] = useState<any[]>([]);
+  const [requests, setRequests] = useState<RequestRecord[]>([]);
   const [statusFilter, setStatusFilter] = useState('pending');
   const [loading, setLoading] = useState(false);
   
   // Modal / Detail States
-  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const [selectedRequest, setSelectedRequest] = useState<RequestRecord | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
   const [approvalComments, setApprovalComments] = useState('');
   const [customPassword, setCustomPassword] = useState('');
@@ -25,7 +70,13 @@ export default function RequestCenter() {
       setLoading(true);
       const res = await apiClient.get(`/api/ems/requests?status=${statusFilter}`);
       if (res.success && res.data) {
-        setRequests(res.data);
+        const payload = res.data as unknown;
+        const rows = Array.isArray(payload)
+          ? payload
+          : Array.isArray((payload as { data?: unknown })?.data)
+            ? (payload as { data: unknown[] }).data
+            : [];
+        setRequests(rows as RequestRecord[]);
       }
     } catch (err) {
       toast.error('Failed to load requests');
@@ -68,8 +119,8 @@ export default function RequestCenter() {
       } else {
         toast.error(res.message || 'Approval failed.');
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Error approving request.');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Error approving request.');
     } finally {
       setProcessing(false);
     }
@@ -102,7 +153,7 @@ export default function RequestCenter() {
     }
   };
 
-  const selectRequest = (req: any) => {
+  const selectRequest = (req: RequestRecord) => {
     setSelectedRequest(req);
     setCustomPassword(req.passwordBeforeApproval || '');
     setApprovalComments('');
@@ -122,7 +173,7 @@ export default function RequestCenter() {
 
       {/* Filter Tabs */}
       <div className="flex gap-2 bg-slate-900 border border-slate-800 p-1 rounded-xl w-fit">
-        {['pending', 'approved', 'rejected', 'cancelled', 'expired'].map(status => (
+        {['pending', 'under_review', 'approved', 'rejected', 'cancelled', 'expired'].map(status => (
           <button
             key={status}
             onClick={() => setStatusFilter(status)}
@@ -130,7 +181,7 @@ export default function RequestCenter() {
               statusFilter === status ? 'bg-primary text-white shadow-md' : 'text-slate-400 hover:text-slate-200'
             }`}
           >
-            {status}
+            {status.replace(/_/g, ' ')}
           </button>
         ))}
       </div>
@@ -168,9 +219,9 @@ export default function RequestCenter() {
                 </div>
 
                 <div className="shrink-0 flex items-center gap-3">
-                  {req.status === 'pending' && (
+                  {isOpenRequest(req.status) && (
                     <div className="text-[10px] bg-amber-500/10 border border-amber-500/25 px-2.5 py-0.5 rounded text-amber-500 font-bold uppercase">
-                      Stage {req.currentStepIndex + 1}/{req.workflowSteps.length || 1}
+                      {isAdminOperatorRequest(req) ? getCurrentApprovalStage(req).label : `Stage ${Number(req.currentStepIndex || 0) + 1}/${req.workflowSteps?.length || 1}`}
                     </div>
                   )}
                   {req.status === 'approved' && (
@@ -241,7 +292,7 @@ export default function RequestCenter() {
                 </div>
 
                 {/* Password Configuration (For Owner Only, Hidden for Admin/SuperAdmin/Agency) */}
-                {selectedRequest.status === 'pending' && !['admin', 'superAdmin', 'super-admin', 'agency'].includes(user?.role || '') && (
+                {isOpenRequest(selectedRequest.status) && !['admin', 'superAdmin', 'super-admin', 'agency'].includes(user?.role || '') && (
                   <div className="space-y-3 border-t border-slate-850 pt-4">
                     <h4 className="text-xs font-bold text-slate-400 uppercase flex items-center gap-1.5">
                       <Key className="h-3.5 w-3.5 text-primary" /> Generated Credentials
@@ -266,14 +317,24 @@ export default function RequestCenter() {
                 <div className="space-y-3 border-t border-slate-850 pt-4">
                   <h4 className="text-xs font-bold text-slate-400 uppercase">Workflow Stages</h4>
                   <div className="space-y-2">
-                    {selectedRequest.workflowSteps.map((roleStep: string, i: number) => {
-                      const isCurrent = selectedRequest.status === 'pending' && selectedRequest.currentStepIndex === i;
-                      const isApproved = selectedRequest.currentStepIndex > i || selectedRequest.status === 'approved';
+                    {(isAdminOperatorRequest(selectedRequest)
+                      ? ['Stage 1: Admin Approval', 'Stage 2: Operator Final Approval']
+                      : (selectedRequest.workflowSteps || [])
+                    ).map((roleStep: string, i: number) => {
+                      const currentStage = isAdminOperatorRequest(selectedRequest)
+                        ? getCurrentApprovalStage(selectedRequest)
+                        : { index: Number(selectedRequest.currentStepIndex || 0) };
+                      const isCurrent = isOpenRequest(selectedRequest.status) && currentStage.index === i;
+                      const isApproved = selectedRequest.status === 'approved' || (isAdminOperatorRequest(selectedRequest)
+                        ? (selectedRequest.approvedBy || []).some((approval) =>
+                            (i === 0 && normalizeToken(approval.role) === 'admin') ||
+                            (i === 1 && normalizeToken(approval.role) === 'operator'))
+                        : Number(selectedRequest.currentStepIndex || 0) > i);
                       
                       return (
                         <div key={i} className="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-900/50 border border-slate-900">
                           <span className="capitalize font-semibold text-slate-300">
-                            {roleStep} approval
+                            {roleStep}
                           </span>
                           <span>
                             {isApproved ? (
@@ -291,10 +352,10 @@ export default function RequestCenter() {
                 </div>
 
                 {/* Operations Section */}
-                {selectedRequest.status === 'pending' && (
+                {isOpenRequest(selectedRequest.status) && (
                   <div className="space-y-4 border-t border-slate-850 pt-4">
                     {/* Check if user can approve this stage */}
-                    {user?.role === 'owner' || user?.role === selectedRequest.workflowSteps[selectedRequest.currentStepIndex] ? (
+                    {canReviewRequest(selectedRequest, user?.role) ? (
                       <div className="space-y-3">
                         <div className="space-y-1.5">
                           <label className="text-[10px] text-slate-500 font-bold uppercase">Approval Comments</label>
@@ -320,32 +381,36 @@ export default function RequestCenter() {
                         <div>
                           <p className="font-bold">Access Denied</p>
                           <p className="mt-0.5 text-[10px] leading-normal">
-                            This step requires '{selectedRequest.workflowSteps[selectedRequest.currentStepIndex]}' approvals. Your current role is '{user?.role}'.
+                            This step requires the {isAdminOperatorRequest(selectedRequest)
+                              ? getCurrentApprovalStage(selectedRequest).role
+                              : selectedRequest.workflowSteps?.[Number(selectedRequest.currentStepIndex || 0)]} role. Your current role is {user?.role}.
                           </p>
                         </div>
                       </div>
                     )}
 
-                    {/* Rejection input */}
-                    <div className="border-t border-slate-850 pt-4 space-y-3">
-                      <div className="space-y-1.5">
-                        <label className="text-[10px] text-slate-500 font-bold uppercase">Rejection Reason</label>
-                        <textarea
-                          rows={2}
-                          placeholder="Why is this application rejected? (Required)"
-                          value={rejectionReason}
-                          onChange={(e) => setRejectionReason(e.target.value)}
-                          className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-primary resize-none"
-                        />
+                    {/* Rejection follows the same stage permission as approval. */}
+                    {canReviewRequest(selectedRequest, user?.role) && (
+                      <div className="border-t border-slate-850 pt-4 space-y-3">
+                        <div className="space-y-1.5">
+                          <label className="text-[10px] text-slate-500 font-bold uppercase">Rejection Reason</label>
+                          <textarea
+                            rows={2}
+                            placeholder="Why is this application rejected? (Required)"
+                            value={rejectionReason}
+                            onChange={(e) => setRejectionReason(e.target.value)}
+                            className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-primary resize-none"
+                          />
+                        </div>
+                        <button
+                          onClick={handleReject}
+                          disabled={processing}
+                          className="w-full flex items-center justify-center gap-2 bg-rose-900/20 border border-rose-950 text-rose-400 hover:bg-rose-900 hover:text-white font-bold py-2 rounded-lg text-xs transition-colors"
+                        >
+                          <X className="h-4 w-4" /> Reject Request
+                        </button>
                       </div>
-                      <button
-                        onClick={handleReject}
-                        disabled={processing}
-                        className="w-full flex items-center justify-center gap-2 bg-rose-900/20 border border-rose-950 text-rose-400 hover:bg-rose-900 hover:text-white font-bold py-2 rounded-lg text-xs transition-colors"
-                      >
-                        <X className="h-4 w-4" /> Reject Request
-                      </button>
-                    </div>
+                    )}
                   </div>
                 )}
               </CardContent>
