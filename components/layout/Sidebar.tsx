@@ -8,7 +8,7 @@ import {
     Users, UserCheck, ShieldAlert, Video, Plus, Flag, HelpCircle,
     Ban, AlertOctagon, Calendar, MessageSquare, Bell, Share2,
     CheckSquare, FileCheck, DollarSign, Coins, Gem, ChevronDown, ChevronRight,
-    Crown, Briefcase, Terminal, ShieldCheck, Settings, Headphones, Globe, Hash,
+    Crown, Briefcase, Terminal, ShieldCheck, Shield, Settings, Headphones, Globe, Hash,
     FileText, Layers, Radio, Sliders, Image as ImageIcon, Download, Sparkles, ShoppingBag,
     Heart, Flame
 } from 'lucide-react';
@@ -43,7 +43,9 @@ export const roleConfig: Record<string, { label: string; color: string; bg: stri
     owner: { label: 'Owner', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', icon: Crown },
     operator: { label: 'Operator', color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30', icon: UserCheck },
     superAdmin: { label: 'Super Admin', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/30', icon: ShieldCheck },
-    admin: { label: 'Admin', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', icon: UserCheck },
+    admin: { label: 'Admin', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', icon: ShieldCheck },
+    bdLeader: { label: 'BD Leader', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', icon: Shield },
+    bd: { label: 'BD', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30', icon: Award },
     agency: { label: 'Agency', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/30', icon: Briefcase },
     coinSeller: { label: 'Coin Seller', color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', icon: Coins },
     customerSupport: { label: 'Customer Support', color: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/30', icon: HelpCircle },
@@ -206,16 +208,6 @@ const adminSidebarSections: SidebarSection[] = [
                 category: 'Users'
             },
             {
-                name: 'Operator',
-                icon: UserCheck,
-                category: 'Users',
-                submenu: [
-                    { name: 'Create', href: '/operators/create' },
-                    { name: 'Requests', href: '/operators/request' },
-                    { name: 'List', href: '/operators' }
-                ]
-            },
-            {
                 name: 'Super Admin',
                 icon: ShieldAlert,
                 category: 'Users',
@@ -233,6 +225,36 @@ const adminSidebarSections: SidebarSection[] = [
                     { name: 'Create', href: '/admins/create' },
                     { name: 'Requests', href: '/admins/request' },
                     { name: 'List', href: '/admins' }
+                ]
+            },
+            {
+                name: 'BD Leader',
+                icon: Shield,
+                category: 'Users',
+                submenu: [
+                    { name: 'Create', href: '/bd-leaders/create' },
+                    { name: 'Requests', href: '/bd-leaders/request' },
+                    { name: 'List', href: '/bd-leaders' }
+                ]
+            },
+            {
+                name: 'BD',
+                icon: Award,
+                category: 'Users',
+                submenu: [
+                    { name: 'Create', href: '/bds/create' },
+                    { name: 'Requests', href: '/bds/request' },
+                    { name: 'List', href: '/bds' }
+                ]
+            },
+            {
+                name: 'Operator',
+                icon: UserCheck,
+                category: 'Users',
+                submenu: [
+                    { name: 'Create', href: '/operators/create' },
+                    { name: 'Requests', href: '/operators/request' },
+                    { name: 'List', href: '/operators' }
                 ]
             },
             {
