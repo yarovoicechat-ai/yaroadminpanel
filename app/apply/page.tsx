@@ -55,7 +55,23 @@ function ApplyPageContent() {
         return null;
     }
 
+    if (roleParam === 'bd' || roleParam === 'business-development') {
+        if (typeof window !== 'undefined') {
+            window.location.href = `/apply/bd${refCode ? `?referrer=${refCode}` : ''}`;
+        }
+        return null;
+    }
+
+    if (roleParam === 'bd-leader' || roleParam === 'bdleader') {
+        if (typeof window !== 'undefined') {
+            window.location.href = `/apply/bd-leader${refCode ? `?referrer=${refCode}` : ''}`;
+        }
+        return null;
+    }
+
     const ROLES = [
+        { name: 'BD Leader Form', href: `/apply/bd-leader${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-purple-600 to-indigo-700', desc: 'Apply as Regional Head / BD Leader' },
+        { name: 'BD Officer Form', href: `/apply/bd${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-blue-600 to-cyan-600', desc: 'Apply for Business Development (BD) Officer' },
         { name: 'Seller Form', href: `/apply/seller${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-amber-600 to-orange-600', desc: 'Apply to become a Coin Seller / Merchant' },
         { name: 'Customer Service Form', href: `/apply/customer-service${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-cyan-600 to-blue-600', desc: 'Apply for Customer Support Executive' },
         { name: 'Agency Form', href: `/apply/agency${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-purple-600 to-pink-600', desc: 'Apply to register an Agency' },
