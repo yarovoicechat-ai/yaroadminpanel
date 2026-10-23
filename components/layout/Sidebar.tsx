@@ -82,6 +82,15 @@ const levelSubmenu: SubmenuItem[] = [
     { name: 'Host Level Setup', href: '/host-levels' },
 ];
 
+const vipCenterSubmenu: SubmenuItem[] = [
+    { name: 'VIP Center Overview', href: '/vip-svip' },
+    { name: '👑 SVIP Elite Tiers', href: '/vip-svip?tab=svip' },
+    { name: '💎 SVIP Plan Builder', href: '/plans/svip' },
+    { name: '⭐ VIP Packages', href: '/vip-svip?tab=vip' },
+    { name: '🛡️ Grant VIP / SVIP', href: '/vip-svip?tab=grant' },
+    { name: '🎬 Live Studio Simulator', href: '/vip-svip?tab=preview' },
+];
+
 const managementSidebarSections: SidebarSection[] = [
     {
         title: 'CORE CONSOLE',
@@ -129,7 +138,14 @@ const managementSidebarSections: SidebarSection[] = [
             { name: 'Unique ID', icon: Hash, category: 'Dashboard', submenu: uniqueIdSubmenu },
             { name: 'Recharge Plans', href: '/plans/recharge', icon: Coins, category: 'Dashboard' },
             { name: 'Beans Plans', href: '/plans/beans', icon: Gem, category: 'Dashboard' },
-            { name: 'SVIP Plan Builder', href: '/plans/svip', icon: Crown, category: 'Dashboard' },
+            { name: 'King of Kings (KOK)', href: '/king-of-kings', icon: Crown, category: 'Dashboard' },
+            {
+                name: 'VIP Center (SVIP & VIP)',
+                icon: Crown,
+                category: 'Dashboard',
+                submenu: vipCenterSubmenu,
+            },
+            { name: 'SVIP Plan Builder', href: '/plans/svip', icon: Sparkles, category: 'Dashboard' },
             { name: 'VIP & SVIP Suite', href: '/vip-svip', icon: Crown, category: 'Dashboard' },
             { name: 'Identity & VIP Studio', href: '/identity-vip-studio', icon: Sparkles, category: 'Dashboard' },
             { name: 'Avatars', href: '/avatars', icon: ImageIcon, category: 'Dashboard' },
@@ -175,7 +191,14 @@ const adminSidebarSections: SidebarSection[] = [
             { name: 'Unique ID', icon: Hash, category: 'Dashboard', submenu: uniqueIdSubmenu },
             { name: 'Recharge Plans', href: '/plans/recharge', icon: Coins, category: 'Dashboard' },
             { name: 'Beans Plans', href: '/plans/beans', icon: Gem, category: 'Dashboard' },
-            { name: 'SVIP Plan Builder', href: '/plans/svip', icon: Crown, category: 'Dashboard' },
+            { name: 'King of Kings (KOK)', href: '/king-of-kings', icon: Crown, category: 'Dashboard' },
+            {
+                name: 'VIP Center (SVIP & VIP)',
+                icon: Crown,
+                category: 'Dashboard',
+                submenu: vipCenterSubmenu,
+            },
+            { name: 'SVIP Plan Builder', href: '/plans/svip', icon: Sparkles, category: 'Dashboard' },
             { name: 'VIP & SVIP Suite', href: '/vip-svip', icon: Crown, category: 'Dashboard' },
             { name: 'Identity & VIP Studio', href: '/identity-vip-studio', icon: Sparkles, category: 'Dashboard' },
         ]
