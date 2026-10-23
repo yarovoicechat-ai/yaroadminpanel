@@ -136,6 +136,7 @@ const managementSidebarSections: SidebarSection[] = [
             },
             { name: 'User Unique IDs', href: '/users/unique-ids', icon: Hash, category: 'Dashboard' },
             { name: 'Unique ID', icon: Hash, category: 'Dashboard', submenu: uniqueIdSubmenu },
+            { name: 'App BD & Agency Access', href: '/bd-agency-access', icon: Briefcase, category: 'Dashboard' },
             { name: 'Recharge Plans', href: '/plans/recharge', icon: Coins, category: 'Dashboard' },
             { name: 'Beans Plans', href: '/plans/beans', icon: Gem, category: 'Dashboard' },
             { name: 'King of Kings (KOK)', href: '/king-of-kings', icon: Crown, category: 'Dashboard' },
@@ -222,12 +223,19 @@ const adminSidebarSections: SidebarSection[] = [
                 submenu: [
                     { name: 'User List', href: '/users' },
                     { name: 'User Unique IDs', href: '/users/unique-ids' },
+                    { name: 'App BD & Agency Access', href: '/bd-agency-access' },
                 ]
             },
             {
                 name: 'User Unique IDs',
                 href: '/users/unique-ids',
                 icon: Hash,
+                category: 'Users'
+            },
+            {
+                name: 'App BD & Agency Access',
+                href: '/bd-agency-access',
+                icon: Briefcase,
                 category: 'Users'
             },
             {
