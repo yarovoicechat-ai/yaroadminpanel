@@ -96,6 +96,66 @@ const roleConfigs: Record<string, RoleLoginConfig> = {
         icon: Briefcase,
         defaultRedirect: '/agencies/request',
     },
+    'bd-leader': {
+        title: 'BD Leader Portal',
+        subtitle: 'Business Development Leader console to manage BD officers & regional agency expansion.',
+        badge: 'BD Leader Clearance',
+        glowColor: 'bg-indigo-500/15',
+        accentBg: 'bg-indigo-500/15',
+        accentBorder: 'border-indigo-500/40',
+        accentText: 'text-indigo-400',
+        buttonGradient: 'from-indigo-600 to-purple-600',
+        icon: ShieldAlert,
+        defaultRedirect: '/bd-leaders/request',
+    },
+    bdleader: {
+        title: 'BD Leader Portal',
+        subtitle: 'Business Development Leader console to manage BD officers & regional agency expansion.',
+        badge: 'BD Leader Clearance',
+        glowColor: 'bg-indigo-500/15',
+        accentBg: 'bg-indigo-500/15',
+        accentBorder: 'border-indigo-500/40',
+        accentText: 'text-indigo-400',
+        buttonGradient: 'from-indigo-600 to-purple-600',
+        icon: ShieldAlert,
+        defaultRedirect: '/bd-leaders/request',
+    },
+    bd: {
+        title: 'BD Officer Portal',
+        subtitle: 'Business Development Officer portal for talent onboarding & agency growth.',
+        badge: 'BD Officer Console',
+        glowColor: 'bg-blue-500/15',
+        accentBg: 'bg-blue-500/15',
+        accentBorder: 'border-blue-500/40',
+        accentText: 'text-blue-400',
+        buttonGradient: 'from-blue-600 to-indigo-600',
+        icon: Briefcase,
+        defaultRedirect: '/bds/request',
+    },
+    seller: {
+        title: 'Coin Seller Portal',
+        subtitle: 'Authorized coin sellers & stock ledger management portal.',
+        badge: 'Coin Seller Console',
+        glowColor: 'bg-amber-500/15',
+        accentBg: 'bg-amber-500/15',
+        accentBorder: 'border-amber-500/40',
+        accentText: 'text-amber-400',
+        buttonGradient: 'from-amber-600 to-orange-600',
+        icon: Crown,
+        defaultRedirect: '/sellers/request',
+    },
+    coinseller: {
+        title: 'Coin Seller Portal',
+        subtitle: 'Authorized coin sellers & stock ledger management portal.',
+        badge: 'Coin Seller Console',
+        glowColor: 'bg-amber-500/15',
+        accentBg: 'bg-amber-500/15',
+        accentBorder: 'border-amber-500/40',
+        accentText: 'text-amber-400',
+        buttonGradient: 'from-amber-600 to-orange-600',
+        icon: Crown,
+        defaultRedirect: '/sellers/request',
+    },
 };
 
 export default function RoleLoginPage({ params }: { params: Promise<{ role: string }> }) {
@@ -121,7 +181,7 @@ export default function RoleLoginPage({ params }: { params: Promise<{ role: stri
 
         try {
             setSubmitting(true);
-            await login(username, password);
+            await login(username, password, roleKey);
             toast.success(`Logged in successfully to ${config.title}`);
             router.push(config.defaultRedirect);
         } catch (error: any) {

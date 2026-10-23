@@ -31,6 +31,15 @@ export default function RoomsPage() {
     const [rooms, setRooms] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState('');
+    const [statusFilter, setStatusFilter] = useState<'all' | 'normal' | 'banned'>('all');
+    const [totalBanned, setTotalBanned] = useState(0);
+    const [totalNormal, setTotalNormal] = useState(0);
+
+    const [isBanModalOpen, setIsBanModalOpen] = useState(false);
+    const [banningRoom, setBanningRoom] = useState<any | null>(null);
+    const [banReason, setBanReason] = useState('');
+    const [banningLoading, setBanningLoading] = useState(false);
+
     const [selectedRoom, setSelectedRoom] = useState<any | null>(null);
     const [isActionOpen, setIsActionOpen] = useState(false);
     const [targetUserId, setTargetUserId] = useState('');
@@ -49,7 +58,7 @@ export default function RoomsPage() {
     const [loadingManagers, setLoadingManagers] = useState(false);
 
     useEffect(() => {
-        fetchRooms(pagination.currentPage);
+        fetchRooms(pagination.currentPage, statusFilter);
         fetchGlobalManagers();
     }, [pagination.currentPage]);
 
@@ -103,12 +112,20 @@ export default function RoomsPage() {
         }
     };
 
-    const fetchRooms = async (page: number) => {
+    const fetchRooms = async (page: number, customStatus?: string) => {
         try {
             setLoading(true);
-            const response = await apiClient.get('/api/admin/rooms', { page, limit: pagination.limit, search });
+            const activeStatus = customStatus || statusFilter;
+            const response = await apiClient.get('/api/admin/rooms', {
+                page,
+                limit: pagination.limit,
+                search,
+                status: activeStatus
+            });
             if (response.success && response.data) {
                 setRooms(response.data.rooms || []);
+                setTotalBanned(response.data.totalBanned || 0);
+                setTotalNormal(response.data.totalNormal || 0);
                 setPagination({
                     currentPage: response.data.page,
                     totalPages: response.data.totalPages,
@@ -120,6 +137,50 @@ export default function RoomsPage() {
             toast.error(error.message || 'Failed to fetch rooms');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const openBanModal = (room: any) => {
+        setBanningRoom(room);
+        setBanReason('');
+        setIsBanModalOpen(true);
+    };
+
+    const handleConfirmBan = async () => {
+        if (!banningRoom) return;
+        try {
+            setBanningLoading(true);
+            const res = await apiClient.post(`/api/admin/rooms/${banningRoom._id}/ban`, {
+                reason: banReason || 'Terminated & Banned by Admin Panel'
+            });
+            if (res.success) {
+                toast.success(`🚫 Room '${banningRoom.title}' has been successfully BANNED!`);
+                setIsBanModalOpen(false);
+                setBanningRoom(null);
+                setBanReason('');
+                fetchRooms(pagination.currentPage);
+            } else {
+                toast.error(res.message || 'Failed to ban room');
+            }
+        } catch (err: any) {
+            toast.error(err?.message || 'Error banning room');
+        } finally {
+            setBanningLoading(false);
+        }
+    };
+
+    const handleUnbanRoom = async (room: any) => {
+        if (!confirm(`Are you sure you want to unban room '${room.title}' and restore to normal status?`)) return;
+        try {
+            const res = await apiClient.post(`/api/admin/rooms/${room._id}/unban`);
+            if (res.success) {
+                toast.success(`✅ Room '${room.title}' unbanned and restored to Normal!`);
+                fetchRooms(pagination.currentPage);
+            } else {
+                toast.error(res.message || 'Failed to unban room');
+            }
+        } catch (err: any) {
+            toast.error(err?.message || 'Error unbanning room');
         }
     };
 
@@ -201,18 +262,47 @@ export default function RoomsPage() {
                 </div>
             </div>
 
-            <div className="flex items-center gap-4">
-                <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder="Search rooms..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        className="pl-9"
-                        onKeyDown={(e) => e.key === 'Enter' && fetchRooms(1)}
-                    />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 flex-wrap">
+                    <Button
+                        variant={statusFilter === 'all' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => { setStatusFilter('all'); fetchRooms(1, 'all'); }}
+                        className={`text-xs ${statusFilter === 'all' ? 'bg-indigo-600 text-white font-bold' : ''}`}
+                    >
+                        All Rooms ({pagination.totalCount})
+                    </Button>
+                    <Button
+                        variant={statusFilter === 'normal' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => { setStatusFilter('normal'); fetchRooms(1, 'normal'); }}
+                        className={`text-xs ${statusFilter === 'normal' ? 'bg-emerald-600 text-white font-bold' : 'text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10'}`}
+                    >
+                        🟢 Normal Rooms ({totalNormal})
+                    </Button>
+                    <Button
+                        variant={statusFilter === 'banned' ? 'default' : 'outline'}
+                        size="sm"
+                        onClick={() => { setStatusFilter('banned'); fetchRooms(1, 'banned'); }}
+                        className={`text-xs ${statusFilter === 'banned' ? 'bg-rose-600 text-white font-bold' : 'text-rose-400 border-rose-500/30 hover:bg-rose-500/10'}`}
+                    >
+                        🚫 Banned Rooms List ({totalBanned})
+                    </Button>
                 </div>
-                <Button onClick={() => fetchRooms(1)} className="font-semibold">Search</Button>
+
+                <div className="flex items-center gap-2">
+                    <div className="relative flex-1 max-w-sm">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search rooms..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="pl-9"
+                            onKeyDown={(e) => e.key === 'Enter' && fetchRooms(1)}
+                        />
+                    </div>
+                    <Button onClick={() => fetchRooms(1)} className="font-semibold text-xs h-9">Search</Button>
+                </div>
             </div>
 
             <Card className="glass-card">
@@ -236,15 +326,17 @@ export default function RoomsPage() {
                                 </TableRow>
                             ) : rooms.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={7} className="text-center py-8 text-slate-400">No active rooms found</TableCell>
+                                    <TableCell colSpan={7} className="text-center py-8 text-slate-400">
+                                        {statusFilter === 'banned' ? 'No banned rooms found.' : 'No active rooms found.'}
+                                    </TableCell>
                                 </TableRow>
                             ) : (
                                 rooms.map((room) => (
                                     <TableRow key={room._id} className="hover:bg-muted/30">
                                         <TableCell>
                                             <div className="flex items-center gap-3">
-                                                <div className={`p-2 rounded-lg ${room.isPinned ? 'bg-amber-500/20 text-amber-400' : 'bg-primary/10 text-primary'}`}>
-                                                    <Radio size={20} className="animate-pulse" />
+                                                <div className={`p-2 rounded-lg ${room.isBanned ? 'bg-rose-500/20 text-rose-400' : room.isPinned ? 'bg-amber-500/20 text-amber-400' : 'bg-primary/10 text-primary'}`}>
+                                                    <Radio size={20} className={room.isBanned ? '' : 'animate-pulse'} />
                                                 </div>
                                                 <div>
                                                     <div className="flex items-center gap-1.5">
@@ -253,11 +345,13 @@ export default function RoomsPage() {
                                                             <Pin size={13} className="text-amber-400 fill-amber-400" />
                                                         )}
                                                     </div>
-                                                    <p className="text-xs text-muted-foreground font-medium">Created: {new Date(room.createdAt).toLocaleTimeString()}</p>
+                                                    <p className="text-xs text-muted-foreground font-medium">
+                                                        Created: {room.createdAt ? new Date(room.createdAt).toLocaleDateString('en-IN') : '—'}
+                                                    </p>
                                                 </div>
                                             </div>
                                         </TableCell>
-                                        <TableCell className="font-semibold text-slate-300">{room.category}</TableCell>
+                                        <TableCell className="font-semibold text-slate-300">{room.category || 'General'}</TableCell>
                                         <TableCell>
                                             <div className="flex items-center gap-2">
                                                 <div className="h-7 w-7 rounded-full bg-slate-700 overflow-hidden flex items-center justify-center font-bold text-xs">
@@ -281,28 +375,85 @@ export default function RoomsPage() {
                                             )}
                                         </TableCell>
                                         <TableCell>
-                                            <Badge variant={room.isLocked ? "destructive" : "secondary"} className="font-semibold">
-                                                {room.isLocked ? 'Locked' : 'Open'}
-                                            </Badge>
+                                            {room.isBanned ? (
+                                                <div className="space-y-1">
+                                                    <Badge className="bg-rose-500/20 text-rose-300 border border-rose-500/40 font-bold flex items-center gap-1 w-fit">
+                                                        <ShieldAlert size={12} className="text-rose-400" />
+                                                        <span>🚫 BANNED</span>
+                                                    </Badge>
+                                                    {room.banReason && (
+                                                        <p className="text-[11px] text-rose-300/80 font-medium max-w-[180px] truncate" title={room.banReason}>
+                                                            {room.banReason}
+                                                        </p>
+                                                    )}
+                                                    {room.bannedBySpecialId && (
+                                                        <p className="text-[10px] text-amber-300 font-mono">
+                                                            By ID: #{room.bannedBySpecialId}
+                                                        </p>
+                                                    )}
+                                                    {room.bannedAt && (
+                                                        <p className="text-[10px] text-slate-400">
+                                                            {new Date(room.bannedAt).toLocaleDateString('en-IN')}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="space-y-1">
+                                                    <Badge className="bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 font-bold w-fit">
+                                                        🟢 NORMAL
+                                                    </Badge>
+                                                    <div>
+                                                        <Badge variant={room.isLocked ? "destructive" : "secondary"} className="text-[10px] py-0 px-1.5">
+                                                            {room.isLocked ? '🔒 Locked' : '🌐 Open'}
+                                                        </Badge>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </TableCell>
                                         <TableCell className="text-right">
-                                            <div className="flex items-center justify-end gap-2">
+                                            <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                                                {/* Ban / Unban Direct Buttons */}
+                                                {room.isBanned ? (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => handleUnbanRoom(room)}
+                                                        className="border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 flex items-center gap-1 text-xs h-8 px-2.5"
+                                                        title="Unban Room"
+                                                    >
+                                                        <CheckCircle2 size={13} />
+                                                        <span>Unban</span>
+                                                    </Button>
+                                                ) : (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => openBanModal(room)}
+                                                        className="border-rose-500/40 text-rose-400 hover:bg-rose-500/10 flex items-center gap-1 text-xs h-8 px-2.5"
+                                                        title="Ban Room from Panel"
+                                                    >
+                                                        <ShieldAlert size={13} />
+                                                        <span>Ban</span>
+                                                    </Button>
+                                                )}
+
                                                 <Button
                                                     size="sm"
                                                     variant={room.isPinned ? "default" : "outline"}
-                                                    className={room.isPinned ? "bg-amber-500 hover:bg-amber-600 text-black font-bold" : "hover:border-amber-500/50 hover:text-amber-400"}
+                                                    className={room.isPinned ? "bg-amber-500 hover:bg-amber-600 text-black font-bold h-8 px-2" : "hover:border-amber-500/50 hover:text-amber-400 h-8 px-2"}
                                                     onClick={() => openPinModal(room)}
                                                     title={room.isPinned ? `Pinned #${room.pinnedOrder || 1}. Click to edit or unpin` : "Pin Room to Top"}
                                                 >
-                                                    <Pin size={16} className={room.isPinned ? "fill-black" : ""} />
+                                                    <Pin size={14} className={room.isPinned ? "fill-black" : ""} />
                                                 </Button>
                                                 <Button
                                                     size="sm"
                                                     variant="outline"
                                                     onClick={() => handleLockToggle(room._id)}
+                                                    className="h-8 px-2"
                                                     title={room.isLocked ? "Unlock room" : "Lock room"}
                                                 >
-                                                    {room.isLocked ? <Unlock size={16} /> : <Lock size={16} />}
+                                                    {room.isLocked ? <Unlock size={14} /> : <Lock size={14} />}
                                                 </Button>
                                                 <Button
                                                     size="sm"
@@ -311,17 +462,19 @@ export default function RoomsPage() {
                                                         setSelectedRoom(room);
                                                         setIsActionOpen(true);
                                                     }}
+                                                    className="h-8 px-2"
                                                     title="Moderate User"
                                                 >
-                                                    <Shield size={16} />
+                                                    <Shield size={14} />
                                                 </Button>
                                                 <Button
                                                     size="sm"
                                                     variant="destructive"
                                                     onClick={() => handleDeleteRoom(room._id)}
+                                                    className="h-8 px-2"
                                                     title="Close room"
                                                 >
-                                                    <Trash2 size={16} />
+                                                    <Trash2 size={14} />
                                                 </Button>
                                             </div>
                                         </TableCell>
@@ -601,6 +754,56 @@ export default function RoomsPage() {
                         >
                             <Pin size={16} className="fill-black" />
                             {pinningRoom?.isPinned ? 'Update Priority' : 'Pin to Top'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Ban Room Dialog */}
+            <Dialog open={isBanModalOpen} onOpenChange={setIsBanModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2 text-rose-400">
+                            <ShieldAlert className="h-5 w-5" />
+                            <span>Ban Voice Room</span>
+                        </DialogTitle>
+                        <DialogDescription>
+                            Are you sure you want to ban this room? Banning will immediately terminate active broadcasts, kick all users, and prevent anyone from entering.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-3">
+                        <div className="p-3 bg-rose-500/10 border border-rose-500/20 rounded-lg text-sm text-rose-300">
+                            <p className="font-bold text-base text-rose-200">{banningRoom?.title}</p>
+                            <p className="text-xs text-rose-300/70 font-mono mt-0.5">Channel: {banningRoom?.channelName}</p>
+                            <p className="text-xs text-slate-300 mt-1">Host ID: <span className="font-mono text-amber-300">{banningRoom?.ownerId?.userId}</span> ({banningRoom?.ownerId?.name})</p>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-semibold text-slate-300">Ban Reason / Violation Notes</label>
+                            <Input
+                                placeholder="e.g. Inappropriate content / Room rule violation"
+                                value={banReason}
+                                onChange={(e) => setBanReason(e.target.value)}
+                                className="bg-slate-800 border-white/10 text-sm"
+                            />
+                        </div>
+                    </div>
+                    <DialogFooter className="gap-2 sm:justify-between">
+                        <Button
+                            variant="outline"
+                            onClick={() => setIsBanModalOpen(false)}
+                            disabled={banningLoading}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={handleConfirmBan}
+                            disabled={banningLoading}
+                            className="bg-rose-600 hover:bg-rose-700 text-white font-bold flex items-center gap-2 shadow-lg shadow-rose-600/30"
+                        >
+                            <ShieldAlert size={16} />
+                            {banningLoading ? 'Banning...' : 'Confirm Ban Room'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

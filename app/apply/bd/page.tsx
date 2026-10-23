@@ -362,6 +362,7 @@ function BdFormContent() {
                             <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Front Copy</label>
                             <FileUpload
                                 label="Upload Aadhaar Front"
+                                name="adharFrontUrl"
                                 value={formData.adharFrontUrl}
                                 onChange={url => updateField('adharFrontUrl', url)}
                             />
@@ -370,6 +371,7 @@ function BdFormContent() {
                             <label className="text-xs font-semibold text-white/80 block mb-1">Aadhaar Back Copy</label>
                             <FileUpload
                                 label="Upload Aadhaar Back"
+                                name="adharBackUrl"
                                 value={formData.adharBackUrl}
                                 onChange={url => updateField('adharBackUrl', url)}
                             />
@@ -381,6 +383,7 @@ function BdFormContent() {
                             <label className="text-xs font-semibold text-white/80 block mb-1">PAN Card / Govt ID</label>
                             <FileUpload
                                 label="Upload PAN Card"
+                                name="panCardUrl"
                                 value={formData.panCardUrl}
                                 onChange={url => updateField('panCardUrl', url)}
                             />
@@ -389,6 +392,7 @@ function BdFormContent() {
                             <label className="text-xs font-semibold text-white/80 block mb-1">Resume / CV (PDF or Image)</label>
                             <FileUpload
                                 label="Upload Resume"
+                                name="resumePdfUrl"
                                 value={formData.resumePdfUrl}
                                 onChange={url => updateField('resumePdfUrl', url)}
                             />

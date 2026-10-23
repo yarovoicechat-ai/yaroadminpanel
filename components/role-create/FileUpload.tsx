@@ -5,7 +5,7 @@ import { UploadCloud, CheckCircle2, FileText, AlertCircle } from 'lucide-react';
 
 interface FileUploadProps {
     label: string;
-    name: string;
+    name?: string;
     required?: boolean;
     value: File | string | null;
     onChange: (fileOrUrl: File | string | null) => void;
@@ -16,7 +16,7 @@ interface FileUploadProps {
 
 export const FileUpload: React.FC<FileUploadProps> = ({
     label,
-    name,
+    name = 'file',
     required = false,
     value,
     onChange,

@@ -4,7 +4,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
     Search, RefreshCw, CheckCircle2, XCircle, Award,
-    User, Mail, Phone, Calendar, MapPin, Eye, Plus
+    User, Mail, Phone, Calendar, MapPin, Eye, Plus,
+    Briefcase, FileText, ExternalLink, X
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
@@ -17,6 +18,7 @@ import {
     Table, TableBody, TableCell, TableHead,
     TableHeader, TableRow,
 } from "@/components/ui/Table";
+import { DeleteRequestButton } from '@/components/requests/DeleteRequestButton';
 
 export default function BdRequestsPage() {
     const { user: currentUser } = useAuth();
@@ -25,15 +27,25 @@ export default function BdRequestsPage() {
     const [search, setSearch] = useState('');
     const [statusFilter, setStatusFilter] = useState('all');
     const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+    const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
 
     const fetchRequests = useCallback(async () => {
         setLoading(true);
         try {
             const res = await apiClient.get('/api/ems/requests', { requestType: 'BD Request' });
-            const items = Array.isArray(res) ? res : (res?.data?.requests || res?.data || []);
+            const items = Array.isArray(res)
+                ? res
+                : Array.isArray(res?.data)
+                    ? res.data
+                    : Array.isArray(res?.data?.data)
+                        ? res.data.data
+                        : Array.isArray(res?.data?.requests)
+                            ? res.data.requests
+                            : [];
             setRequests(items);
         } catch (err: any) {
             toast.error(err?.message || 'Failed to load BD requests');
+            setRequests([]);
         } finally {
             setLoading(false);
         }
@@ -53,6 +65,9 @@ export default function BdRequestsPage() {
             const res = await apiClient.post(endpoint, payload);
             if (res.success || res.data) {
                 toast.success(isApprove ? '✅ BD application approved!' : '❌ BD application rejected.');
+                if (selectedCandidate && (selectedCandidate._id === id || selectedCandidate.id === id)) {
+                    setSelectedCandidate(null);
+                }
                 fetchRequests();
             } else {
                 toast.error(res.message || 'Action failed');
@@ -64,14 +79,31 @@ export default function BdRequestsPage() {
         }
     };
 
-    const filteredRequests = requests.filter((r) => {
+    const formatDate = (val?: any) => {
+        if (!val) return '—';
+        try {
+            const dt = new Date(val);
+            return isNaN(dt.getTime()) ? '—' : dt.toLocaleDateString('en-IN');
+        } catch {
+            return '—';
+        }
+    };
+
+    const safeRequests = Array.isArray(requests) ? requests : [];
+    const filteredRequests = safeRequests.filter((r) => {
+        if (!r || typeof r !== 'object') return false;
         const d = r.data || {};
-        const query = search.toLowerCase();
-        const matchesSearch = !search ||
-            (d.name && d.name.toLowerCase().includes(query)) ||
-            (d.email && d.email.toLowerCase().includes(query)) ||
-            (d.phoneNumber && d.phoneNumber.includes(query)) ||
-            (d.meethiChatId && d.meethiChatId.toLowerCase().includes(query));
+        const query = (search || '').toLowerCase().trim();
+        const name = String(d.name || d.fullName || '').toLowerCase();
+        const email = String(d.email || '').toLowerCase();
+        const phone = String(d.phoneNumber || d.mobile || '');
+        const meethiId = String(d.meethiChatId || d.mithiChatId || d.applicationId || '').toLowerCase();
+
+        const matchesSearch = !query ||
+            name.includes(query) ||
+            email.includes(query) ||
+            phone.includes(query) ||
+            meethiId.includes(query);
 
         const status = String(r.status || 'pending').toLowerCase();
         const matchesStatus = statusFilter === 'all' || status === statusFilter.toLowerCase();
@@ -87,7 +119,7 @@ export default function BdRequestsPage() {
                         BD (Business Development) Requests
                     </h2>
                     <p className="text-muted-foreground text-sm mt-1">
-                        Review candidate requests for Business Development officer positions.
+                        Review, inspect credentials, and approve candidate requests for Business Development Officer positions.
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -163,67 +195,85 @@ export default function BdRequestsPage() {
                             ) : (
                                 filteredRequests.map((req) => {
                                     const d = req.data || {};
+                                    const reqId = req._id || req.id || '';
                                     const isPending = String(req.status || 'pending').toLowerCase() === 'pending';
                                     const isApproved = String(req.status || '').toLowerCase() === 'approved';
+                                    const initialChar = String(d.name || 'B').trim().charAt(0).toUpperCase() || 'B';
+
                                     return (
-                                        <TableRow key={req._id || req.id}>
+                                        <TableRow key={reqId || String(Math.random())}>
                                             <TableCell>
                                                 <div className="flex items-center gap-3">
                                                     <div className="h-9 w-9 rounded-full bg-blue-500/10 flex items-center justify-center font-bold text-blue-500">
-                                                        {d.name ? d.name.charAt(0).toUpperCase() : 'B'}
+                                                        {initialChar}
                                                     </div>
                                                     <div>
-                                                        <div className="font-semibold text-sm">{d.name || 'Applicant'}</div>
-                                                        <div className="text-xs text-muted-foreground">Gender: {d.gender || '—'} • Age: {d.age || '—'}</div>
+                                                        <div className="font-semibold text-sm">{String(d.name || 'Applicant')}</div>
+                                                        <div className="text-xs text-muted-foreground">Gender: {String(d.gender || '—')} • Age: {String(d.age || '—')}</div>
                                                     </div>
                                                 </div>
                                             </TableCell>
                                             <TableCell>
-                                                <div className="text-xs font-semibold">{d.email || '—'}</div>
-                                                <div className="text-xs text-muted-foreground">{d.phoneNumber || d.mobile || '—'}</div>
+                                                <div className="text-xs font-semibold">{String(d.email || '—')}</div>
+                                                <div className="text-xs text-muted-foreground">{String(d.phoneNumber || d.mobile || '—')}</div>
                                                 <div className="text-[11px] font-mono text-blue-600 dark:text-blue-400 mt-0.5">
-                                                    ID: {d.meethiChatId || '—'}
+                                                    ID: {String(d.meethiChatId || d.mithiChatId || d.applicationId || '—')}
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-xs">
-                                                {d.state ? `${d.state}, ` : ''}{d.country || 'India'}
+                                                {d.state ? `${String(d.state)}, ` : ''}{String(d.country || 'India')}
                                             </TableCell>
                                             <TableCell>
                                                 <Badge
                                                     variant={isApproved ? "default" : isPending ? "outline" : "destructive"}
                                                     className={isApproved ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30" : isPending ? "bg-amber-500/10 text-amber-500 border-amber-500/30" : ""}
                                                 >
-                                                    {req.status || 'Pending'}
+                                                    {String(req.status || 'Pending')}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-xs text-muted-foreground">
-                                                {new Date(req.createdAt || req.registrationDate || Date.now()).toLocaleDateString()}
+                                                {formatDate(req.createdAt || req.registrationDate)}
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                {isPending ? (
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        <Button
-                                                            size="sm"
-                                                            variant="default"
-                                                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
-                                                            disabled={actionLoadingId === req._id}
-                                                            onClick={() => handleAction(req._id || req.id, true)}
-                                                        >
-                                                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Approve
-                                                        </Button>
-                                                        <Button
-                                                            size="sm"
-                                                            variant="outline"
-                                                            className="text-rose-500 hover:bg-rose-500/10 text-xs"
-                                                            disabled={actionLoadingId === req._id}
-                                                            onClick={() => handleAction(req._id || req.id, false)}
-                                                        >
-                                                            <XCircle className="w-3.5 h-3.5 mr-1" /> Reject
-                                                        </Button>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-xs text-muted-foreground">Completed</span>
-                                                )}
+                                                <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="text-xs h-8 px-2.5"
+                                                        onClick={() => setSelectedCandidate(req)}
+                                                    >
+                                                        <Eye className="w-3.5 h-3.5 mr-1" /> View
+                                                    </Button>
+
+                                                    {isPending && (
+                                                        <>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="default"
+                                                                className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs h-8 px-2.5"
+                                                                disabled={actionLoadingId === reqId}
+                                                                onClick={() => handleAction(reqId, true)}
+                                                            >
+                                                                <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Approve
+                                                            </Button>
+                                                            <Button
+                                                                size="sm"
+                                                                variant="outline"
+                                                                className="text-rose-500 hover:bg-rose-500/10 text-xs h-8 px-2.5"
+                                                                disabled={actionLoadingId === reqId}
+                                                                onClick={() => handleAction(reqId, false)}
+                                                            >
+                                                                <XCircle className="w-3.5 h-3.5 mr-1" /> Reject
+                                                            </Button>
+                                                        </>
+                                                    )}
+
+                                                    <DeleteRequestButton
+                                                        requestId={reqId}
+                                                        applicantName={d.name || 'BD Applicant'}
+                                                        onDeleted={fetchRequests}
+                                                    />
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     );
@@ -233,6 +283,152 @@ export default function BdRequestsPage() {
                     </Table>
                 </CardContent>
             </Card>
+
+            {/* Candidate Detail Modal */}
+            {selectedCandidate && (() => {
+                const candData = selectedCandidate.data || {};
+                const candId = selectedCandidate._id || selectedCandidate.id || '';
+                const isPending = String(selectedCandidate.status || 'pending').toLowerCase() === 'pending';
+                const isApproved = String(selectedCandidate.status || '').toLowerCase() === 'approved';
+
+                return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in-0">
+                        <div className="bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden text-slate-100">
+                            {/* Modal Header */}
+                            <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/50">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-lg">
+                                        {String(candData.name || 'B').trim().charAt(0).toUpperCase() || 'B'}
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold flex items-center gap-2">
+                                            {candData.name || 'Applicant Details'}
+                                            <Badge
+                                                variant={isApproved ? "default" : isPending ? "outline" : "destructive"}
+                                                className={isApproved ? "bg-emerald-500/10 text-emerald-500 border-emerald-500/30 text-xs" : isPending ? "bg-amber-500/10 text-amber-500 border-amber-500/30 text-xs" : "text-xs"}
+                                            >
+                                                {selectedCandidate.status || 'Pending'}
+                                            </Badge>
+                                        </h3>
+                                        <p className="text-xs text-slate-400">Application ID: {candData.meethiChatId || candData.applicationId || candId}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setSelectedCandidate(null)}
+                                    className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            {/* Modal Body */}
+                            <div className="p-6 overflow-y-auto space-y-5 text-sm">
+                                {/* Profile & Contacts */}
+                                <div>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-2.5">
+                                        Personal & Contact Information
+                                    </h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-slate-800/40 p-4 rounded-xl border border-slate-800">
+                                        <div><span className="text-slate-400 text-xs">Full Name:</span> <div className="font-medium">{candData.name || '—'}</div></div>
+                                        <div><span className="text-slate-400 text-xs">Email:</span> <div className="font-medium">{candData.email || '—'}</div></div>
+                                        <div><span className="text-slate-400 text-xs">Phone Number:</span> <div className="font-medium">{candData.phoneNumber || candData.mobile || '—'}</div></div>
+                                        <div><span className="text-slate-400 text-xs">WhatsApp / Alt:</span> <div className="font-medium">{candData.whatsappNo || candData.alternateMobile || '—'}</div></div>
+                                        <div><span className="text-slate-400 text-xs">Gender:</span> <div className="font-medium">{candData.gender || '—'}</div></div>
+                                        <div><span className="text-slate-400 text-xs">Age:</span> <div className="font-medium">{candData.age || '—'}</div></div>
+                                        <div><span className="text-slate-400 text-xs">Location:</span> <div className="font-medium">{candData.city ? `${candData.city}, ` : ''}{candData.state ? `${candData.state}, ` : ''}{candData.country || 'India'}</div></div>
+                                        <div><span className="text-slate-400 text-xs">Full Address:</span> <div className="font-medium">{candData.address || candData.fullAddress || '—'}</div></div>
+                                    </div>
+                                </div>
+
+                                {/* BD Experience & Creator Growth */}
+                                <div>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-2.5">
+                                        Business Development & Creator Growth
+                                    </h4>
+                                    <div className="space-y-3 bg-slate-800/40 p-4 rounded-xl border border-slate-800">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            <div><span className="text-slate-400 text-xs">Relevant Experience:</span> <div className="font-medium">{candData.bdExperience || candData.experience || '—'}</div></div>
+                                            <div><span className="text-slate-400 text-xs">Previous Platform:</span> <div className="font-medium">{candData.previousCompany || '—'}</div></div>
+                                            <div><span className="text-slate-400 text-xs">Target Monthly Creators:</span> <div className="font-medium">{candData.monthlyTarget || candData.targetCreators || '—'}</div></div>
+                                            <div><span className="text-slate-400 text-xs">Weekly Working Hours:</span> <div className="font-medium">{candData.hoursPerWeek ? `${candData.hoursPerWeek} hrs/week` : '—'}</div></div>
+                                        </div>
+                                        {candData.growthStrategy && (
+                                            <div>
+                                                <span className="text-slate-400 text-xs">Sourcing & Strategy:</span>
+                                                <div className="text-xs mt-1 text-slate-300 bg-slate-900/60 p-3 rounded-lg border border-slate-800/80 whitespace-pre-wrap">
+                                                    {candData.growthStrategy}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Documents & Attachments */}
+                                <div>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-blue-400 mb-2.5">
+                                        Verification & Documents
+                                    </h4>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-800/40 p-4 rounded-xl border border-slate-800 text-xs">
+                                        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between">
+                                            <span>Aadhaar Card</span>
+                                            {candData.aadhaarUrl || candData.adharFront || candData.aadhaarFront ? (
+                                                <a href={candData.aadhaarUrl || candData.adharFront || candData.aadhaarFront} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline flex items-center gap-1">
+                                                    View <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                            ) : <span className="text-slate-500">—</span>}
+                                        </div>
+                                        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between">
+                                            <span>PAN Card</span>
+                                            {candData.panUrl || candData.panCard || candData.pan ? (
+                                                <a href={candData.panUrl || candData.panCard || candData.pan} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline flex items-center gap-1">
+                                                    View <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                            ) : <span className="text-slate-500">—</span>}
+                                        </div>
+                                        <div className="p-2.5 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between">
+                                            <span>Resume / Profile</span>
+                                            {candData.resumeUrl || candData.portfolioUrl ? (
+                                                <a href={candData.resumeUrl || candData.portfolioUrl} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline flex items-center gap-1">
+                                                    View <ExternalLink className="w-3 h-3" />
+                                                </a>
+                                            ) : <span className="text-slate-500">—</span>}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="p-4 border-t border-slate-800 bg-slate-900/50 flex items-center justify-between">
+                                <Button variant="outline" size="sm" onClick={() => setSelectedCandidate(null)}>
+                                    Close
+                                </Button>
+                                {isPending && (
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            size="sm"
+                                            variant="outline"
+                                            className="text-rose-500 hover:bg-rose-500/10 text-xs"
+                                            disabled={actionLoadingId === candId}
+                                            onClick={() => handleAction(candId, false)}
+                                        >
+                                            <XCircle className="w-3.5 h-3.5 mr-1" /> Reject Application
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="default"
+                                            className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                                            disabled={actionLoadingId === candId}
+                                            onClick={() => handleAction(candId, true)}
+                                        >
+                                            <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Approve & Activate
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            })()}
         </div>
     );
 }

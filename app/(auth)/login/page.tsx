@@ -16,6 +16,8 @@ const rolePortals = [
     { name: 'Owner Portal', href: '/login/owner', role: 'owner', gradient: 'from-amber-500/20 to-orange-500/10 border-amber-500/30 text-amber-400', icon: Crown },
     { name: 'Super Admin', href: '/login/super-admin', role: 'super-admin', gradient: 'from-violet-500/20 to-indigo-500/10 border-violet-500/30 text-violet-400', icon: ShieldCheck },
     { name: 'Admin Console', href: '/login/admin', role: 'admin', gradient: 'from-emerald-500/20 to-teal-500/10 border-emerald-500/30 text-emerald-400', icon: ShieldAlert },
+    { name: 'BD Leader', href: '/login/bd-leader', role: 'bd-leader', gradient: 'from-indigo-500/20 to-purple-500/10 border-indigo-500/30 text-indigo-400', icon: ShieldCheck },
+    { name: 'BD Officer', href: '/login/bd', role: 'bd', gradient: 'from-blue-500/20 to-cyan-500/10 border-blue-500/30 text-blue-400', icon: Briefcase },
     { name: 'Operator Hub', href: '/login/operator', role: 'operator', gradient: 'from-cyan-500/20 to-blue-500/10 border-cyan-500/30 text-cyan-400', icon: UserCheck },
     { name: 'Customer Support', href: '/login/customer-service', role: 'customer-service', gradient: 'from-teal-500/20 to-emerald-500/10 border-teal-500/30 text-teal-400', icon: HelpCircle },
     { name: 'Agency Partner', href: '/login/agency', role: 'agency', gradient: 'from-pink-500/20 to-rose-500/10 border-pink-500/30 text-pink-400', icon: Briefcase },

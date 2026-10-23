@@ -25,59 +25,75 @@ export default function ReferralLinks() {
     {
       role: 'Super Admin',
       desc: 'Recruit executive Super Administrators for board & platform governance.',
-      url: `${adminFormBaseUrl}/apply/super-admin?referrer=${referralCode}`,
+      url: `${adminFormBaseUrl}/apply/super-admin?referrer=${referralCode}&role=super-admin`,
       icon: Key,
       color: 'text-rose-400 border-rose-500/20 bg-rose-500/5'
     },
     {
       role: 'Admin',
       desc: 'Recruit sub-administrators directly under your organization.',
-      url: `${adminFormBaseUrl}/apply/admin?referrer=${referralCode}`,
+      url: `${adminFormBaseUrl}/apply/admin?referrer=${referralCode}&role=admin`,
       icon: Briefcase,
       color: 'text-emerald-400 border-emerald-500/20 bg-emerald-500/5'
     },
     {
+      role: 'BD Leader',
+      desc: 'Recruit Business Development Leaders to manage BD teams and expansion.',
+      url: `${adminFormBaseUrl}/apply/bd-leader?referrer=${referralCode}&role=bd-leader`,
+      icon: Award,
+      color: 'text-indigo-400 border-indigo-500/20 bg-indigo-500/5'
+    },
+    {
+      role: 'BD Officer',
+      desc: 'Recruit Business Development Officers to onboard talent and expand agencies.',
+      url: `${adminFormBaseUrl}/apply/bd?referrer=${referralCode}&role=bd`,
+      icon: Award,
+      color: 'text-blue-400 border-blue-500/20 bg-blue-500/5'
+    },
+    {
       role: 'Operator',
       desc: 'Link operators directly to your organization.',
-      url: `${localOrigin ? `${localOrigin}/apply/operator` : 'https://operator.yaroapp.in/'}?referrer=${referralCode}&role=operator`,
+      url: `${adminFormBaseUrl}/apply/operator?referrer=${referralCode}&role=operator`,
       icon: Key,
       color: 'text-purple-400 border-purple-500/20 bg-purple-500/5'
     },
     {
       role: 'Agency',
       desc: 'Recruit sub-agencies. They inherit you as their parent node.',
-      url: `${localOrigin ? `${localOrigin}/apply/agency` : 'https://agency.yaroapp.in/'}?referrer=${referralCode}&role=agency`,
+      url: `${adminFormBaseUrl}/apply/agency?referrer=${referralCode}&role=agency`,
       icon: Briefcase,
       color: 'text-amber-400 border-amber-500/20 bg-amber-500/5'
     },
     {
       role: 'Host',
       desc: 'Sign up new hosts under your agency hierarchy automatically.',
-      url: `${localOrigin ? `${localOrigin}/apply/host` : 'https://host.yaroapp.in/'}?referrer=${referralCode}&role=host`,
+      url: `${adminFormBaseUrl}/apply/host?referrer=${referralCode}&role=host`,
       icon: Video,
       color: 'text-lime-400 border-lime-500/20 bg-lime-500/5'
     },
     {
       role: 'Customer Service Support',
       desc: 'Register customer support & helpdesk staff candidates.',
-      url: `${adminFormBaseUrl}/apply/customer-service?referrer=${referralCode}`,
+      url: `${adminFormBaseUrl}/apply/customer-service?referrer=${referralCode}&role=customer-service`,
       icon: Users,
       color: 'text-cyan-400 border-cyan-500/20 bg-cyan-500/5'
     },
     {
       role: 'Coin Seller',
       desc: 'Register subordinate coin sellers.',
-      url: `${adminFormBaseUrl}/apply/seller?referrer=${referralCode}`,
+      url: `${adminFormBaseUrl}/apply/seller?referrer=${referralCode}&role=seller`,
       icon: Award,
       color: 'text-pink-400 border-pink-500/20 bg-pink-500/5'
     }
   ];
 
   const roleAllowedLinksMap: Record<string, string[]> = {
-    owner: ['Super Admin', 'Admin', 'Operator', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
-    operator: ['Super Admin', 'Admin', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
-    superAdmin: ['Admin', 'Agency', 'Host', 'Customer Service Support'],
-    admin: ['Agency', 'Host', 'Customer Service Support'],
+    owner: ['Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Operator', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
+    operator: ['Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
+    superAdmin: ['Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
+    admin: ['BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
+    bdLeader: ['BD Officer', 'Agency', 'Host'],
+    bd: ['Agency', 'Host'],
     agency: ['Host'],
     coinSeller: [],
     customerSupport: ['Customer Service Support'],
