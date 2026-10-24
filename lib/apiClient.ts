@@ -118,9 +118,12 @@ class ApiClient {
             const baseUrl = this.getEffectiveBaseUrl();
             const url = new URL(`${baseUrl}${endpoint}`);
             if (params) {
-                Object.keys(params).forEach(key => {
-                    if (params[key] !== undefined && params[key] !== null) {
-                        url.searchParams.append(key, String(params[key]));
+                const actualParams: Record<string, any> = (params.params && typeof params.params === 'object' && !Array.isArray(params.params))
+                    ? (params.params as Record<string, any>)
+                    : params;
+                Object.keys(actualParams).forEach(key => {
+                    if (actualParams[key] !== undefined && actualParams[key] !== null) {
+                        url.searchParams.append(key, String(actualParams[key]));
                     }
                 });
             }
