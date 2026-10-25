@@ -71,8 +71,8 @@ function AgencyFormContent() {
                 return false;
             }
         } else if (currentStep === 1) {
-            if (!formData.managerName.trim() || !formData.email.trim() || !formData.phone.trim()) {
-                toast.error('Manager Name, Email, and Phone Number are required.');
+            if (!formData.managerName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.meethiLiveId.trim()) {
+                toast.error('Manager Name, Email, Phone Number, and Yaro User ID are required.');
                 return false;
             }
             if (!isValidEmail(formData.email)) {
@@ -114,6 +114,8 @@ function AgencyFormContent() {
                 name: formData.businessName,
                 agencyName: formData.businessName,
                 agencyLogo: formData.agencyLogoUrl,
+                yaroId: formData.meethiLiveId.trim(),
+                userId: formData.meethiLiveId.trim(),
                 age: formData.age ? Number(formData.age) : undefined,
                 gender: formData.gender,
                 email: normalizeEmail(formData.email),
@@ -330,14 +332,16 @@ function AgencyFormContent() {
                         </div>
                     </div>
                     <div>
-                        <label className="text-xs font-semibold text-white/80 block mb-1">Existing Yaro ID (If available)</label>
+                        <label className="text-xs font-semibold text-white/80 block mb-1">Yaro User ID *</label>
                         <input
                             type="text"
+                            required
                             value={formData.meethiLiveId}
                             onChange={e => updateField('meethiLiveId', e.target.value)}
-                            placeholder="e.g. YR_AGY_99"
+                            placeholder="e.g. 100021"
                             className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
                         />
+                        <p className="text-[11px] text-white/60 mt-1">Active Yaro App account ID is mandatory for Agency registration.</p>
                     </div>
                 </div>
             )}

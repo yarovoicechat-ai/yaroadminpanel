@@ -28,7 +28,7 @@ export default function AddHostPage() {
     const handleAddHostSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!name || !email || !mobile || !mithiId.trim()) {
-            toast.error('Please fill required fields: Name, Email, Mobile, Meethi Chat ID');
+            toast.error('Please fill required fields: Name, Email, Mobile, and Yaro User ID');
             return;
         }
 
@@ -42,7 +42,9 @@ export default function AddHostPage() {
                     phoneNumber: mobile,
                     gender,
                     dob,
-                    meethiChatId: mithiId || `MC_HST_${Math.floor(10000 + Math.random() * 90000)}`,
+                    yaroId: mithiId.trim(),
+                    userId: mithiId.trim(),
+                    meethiChatId: mithiId.trim(),
                     country,
                     state,
                     city,
@@ -126,8 +128,8 @@ export default function AddHostPage() {
                             <input type="date" value={dob} onChange={e => setDob(e.target.value)} className={inputClass} />
                         </div>
                         <div>
-                            <label className={labelClass}>Meethi Chat ID *</label>
-                            <input type="text" required value={mithiId} onChange={e => setMithiId(e.target.value)} placeholder="e.g. 500021 or MC100852" className={inputClass} />
+                            <label className={labelClass}>Yaro User ID (Mandatory) *</label>
+                            <input type="text" required value={mithiId} onChange={e => setMithiId(e.target.value)} placeholder="e.g. 100021" className={inputClass} />
                         </div>
                     </div>
                 </div>

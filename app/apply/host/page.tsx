@@ -103,6 +103,8 @@ function HostFormContent() {
                 phone: form.phone.trim(),
                 meethiChatId: form.meethiChatId.trim(),
                 mithiChatId: form.meethiChatId.trim(),
+                yaroId: form.meethiChatId.trim(),
+                userId: form.meethiChatId.trim(),
                 role: 'host',
                 referralCode: verifiedReferralCode,
                 voiceAudioUrl: form.portfolio,

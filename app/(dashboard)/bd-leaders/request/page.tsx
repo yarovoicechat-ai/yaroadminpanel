@@ -28,6 +28,7 @@ export default function BdLeaderRequestsPage() {
     const [statusFilter, setStatusFilter] = useState('all');
     const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
     const [selectedCandidate, setSelectedCandidate] = useState<any | null>(null);
+    const [enableAppAccess, setEnableAppAccess] = useState(true);
 
     const fetchRequests = useCallback(async () => {
         setLoading(true);
@@ -403,7 +404,16 @@ export default function BdLeaderRequestsPage() {
                                     Close
                                 </Button>
                                 {isPending && (
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-3">
+                                        <label className="flex items-center gap-1.5 text-xs text-slate-300 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                checked={enableAppAccess}
+                                                onChange={(e) => setEnableAppAccess(e.target.checked)}
+                                                className="h-3.5 w-3.5 rounded border-slate-700 bg-slate-900 text-emerald-500 cursor-pointer"
+                                            />
+                                            <span>App me Option Enable</span>
+                                        </label>
                                         <Button
                                             size="sm"
                                             variant="outline"

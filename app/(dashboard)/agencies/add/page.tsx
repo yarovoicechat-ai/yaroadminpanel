@@ -54,6 +54,7 @@ export default function CreateAgencyPage() {
         }
     };
     const [ownerName, setOwnerName] = useState('');
+    const [yaroId, setYaroId] = useState('');
     const [age, setAge] = useState('');
     const [gender, setGender] = useState('female');
     const [agencyCode, setAgencyCode] = useState('');
@@ -67,8 +68,8 @@ export default function CreateAgencyPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!agencyName || !ownerName || !email || !mobile) {
-            toast.error('Please fill all required fields: Agency Name, Owner Name, Email, Mobile');
+        if (!agencyName || !ownerName || !email || !mobile || !yaroId.trim()) {
+            toast.error('Please fill all required fields: Agency Name, Owner Name, Email, Mobile, and Yaro User ID');
             return;
         }
 
@@ -78,6 +79,9 @@ export default function CreateAgencyPage() {
                 requestType: 'Agency Request',
                 data: {
                     name: ownerName,
+                    yaroId: yaroId.trim(),
+                    userId: yaroId.trim(),
+                    meethiChatId: yaroId.trim(),
                     agencyName,
                     agencyLogo,
                     age: age ? Number(age) : undefined,
@@ -244,6 +248,20 @@ export default function CreateAgencyPage() {
                                 <option value="male">Male</option>
                                 <option value="other">Other</option>
                             </select>
+                        </div>
+
+                        <div>
+                            <label className="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">
+                                Yaro User ID (Mandatory) *
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                value={yaroId}
+                                onChange={(e) => setYaroId(e.target.value)}
+                                placeholder="e.g. 100021"
+                                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+                            />
                         </div>
 
                         <div>

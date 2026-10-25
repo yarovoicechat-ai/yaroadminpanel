@@ -20,6 +20,7 @@ function BdLeaderFormContent() {
 
     const [formData, setFormData] = useState({
         fullName: '',
+        yaroId: '',
         age: '',
         email: '',
         phone: '',
@@ -58,8 +59,8 @@ function BdLeaderFormContent() {
 
     const validateCurrentStep = (): boolean => {
         if (currentStep === 0) {
-            if (!formData.fullName.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.city.trim()) {
-                toast.error('Please fill in Full Name, Email, Phone, and City.');
+            if (!formData.fullName.trim() || !formData.yaroId.trim() || !formData.email.trim() || !formData.phone.trim() || !formData.city.trim()) {
+                toast.error('Please fill in Full Name, Yaro User ID, Email, Phone, and City.');
                 return false;
             }
             if (!/\S+@\S+\.\S+/.test(formData.email)) {
@@ -99,6 +100,8 @@ function BdLeaderFormContent() {
             setSubmitting(true);
             const payload = {
                 name: formData.fullName,
+                yaroId: formData.yaroId.trim(),
+                userId: formData.yaroId.trim(),
                 age: formData.age ? Number(formData.age) : undefined,
                 email: formData.email,
                 phone: formData.phone,
@@ -190,7 +193,7 @@ function BdLeaderFormContent() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
                             <label className="text-xs font-semibold text-white/80 block mb-1">Email Address *</label>
                             <input
@@ -202,7 +205,7 @@ function BdLeaderFormContent() {
                             />
                         </div>
                         <div>
-                            <label className="text-xs font-semibold text-white/80 block mb-1">WhatsApp / Phone Number *</label>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">WhatsApp / Phone *</label>
                             <input
                                 type="tel"
                                 value={formData.phone}
@@ -210,6 +213,18 @@ function BdLeaderFormContent() {
                                 placeholder="+91 9876543210"
                                 className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
                             />
+                        </div>
+                        <div>
+                            <label className="text-xs font-semibold text-white/80 block mb-1">Yaro User ID *</label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.yaroId}
+                                onChange={e => updateField('yaroId', e.target.value)}
+                                placeholder="e.g. 100021"
+                                className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-2.5 text-sm text-white placeholder-white/40 focus:ring-2 focus:ring-purple-400"
+                            />
+                            <p className="text-[11px] text-white/60 mt-1">Yaro App User ID is mandatory.</p>
                         </div>
                     </div>
 

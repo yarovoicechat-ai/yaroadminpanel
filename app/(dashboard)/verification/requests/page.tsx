@@ -63,6 +63,7 @@ export default function RequestCenter() {
   const [rejectionReason, setRejectionReason] = useState('');
   const [approvalComments, setApprovalComments] = useState('');
   const [customPassword, setCustomPassword] = useState('');
+  const [enableAppAccess, setEnableAppAccess] = useState(true);
   const [processing, setProcessing] = useState(false);
 
   const fetchRequests = async () => {
@@ -107,7 +108,8 @@ export default function RequestCenter() {
       }
 
       const res = await apiClient.post(`/api/ems/requests/${selectedRequest._id}/approve`, {
-        comments: approvalComments
+        comments: approvalComments,
+        enableAppAccess
       });
 
       if (res.success) {
@@ -367,6 +369,15 @@ export default function RequestCenter() {
                             className="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-primary resize-none"
                           />
                         </div>
+                        <label className="flex items-center gap-2.5 text-xs font-semibold text-slate-300 cursor-pointer bg-slate-900/90 p-2.5 rounded-lg border border-slate-800 hover:border-emerald-500/50 transition">
+                          <input
+                            type="checkbox"
+                            checked={enableAppAccess}
+                            onChange={(e) => setEnableAppAccess(e.target.checked)}
+                            className="h-4 w-4 rounded border-slate-700 bg-slate-950 text-emerald-500 focus:ring-emerald-500 cursor-pointer"
+                          />
+                          <span>App me Option / Role Portal unlock karein (Mobile App Access)</span>
+                        </label>
                         <button
                           onClick={handleApprove}
                           disabled={processing}
