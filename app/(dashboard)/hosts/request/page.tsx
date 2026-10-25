@@ -232,7 +232,7 @@ export default function HostRequestsPage() {
                         name: d.name || 'Host Applicant',
                         profilePhoto: d.profilePhoto || '',
                         meethiChatId: d.meethiChatId || d.mithiChatId || '',
-                        username: d.username ? `@${d.username.replace('@','')}` : '',
+                        username: d.username ? `@${String(d.username).replace('@','')}` : '',
                         gender: (d.gender as any) || 'Female',
                         age: d.age || 0,
                         dob: d.dob || '',
@@ -249,10 +249,10 @@ export default function HostRequestsPage() {
                         registrationDate: item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN') : '—',
                         aadhaarNo: d.aadhaarNo || '',
                         panNo: d.panNo || '',
-                        aadhaarFront: canViewSecrets ? d.adharFront || d.aadhaarFront || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('front') || doc.documentType === 'GovtID')?.url : '') || '' : '',
-                        aadhaarBack: canViewSecrets ? d.adharBack || d.aadhaarBack || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('back'))?.url : '') || '' : '',
-                        selfieWithIdCard: canViewSecrets ? d.selfieWithIdCard || d.pan || d.panCard || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.name?.toLowerCase().includes('selfie') || doc.name?.toLowerCase().includes('pan') || doc.documentType === 'SelfieWithID' || doc.documentType === 'Certificate')?.url : '') || '' : '',
-                        voiceAudioUrl: d.voiceAudioUrl || d.audio || d.audioUrl || d.voiceUrl || d.voice || d.portfolio || d.introAudio || d.audioURL || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc.documentType === 'Voice' || doc.documentType === 'Audio' || doc.documentType === 'Portfolio' || doc.name?.toLowerCase().includes('voice') || doc.name?.toLowerCase().includes('portfolio') || doc.name?.toLowerCase().includes('audition'))?.url : '') || '',
+                        aadhaarFront: canViewSecrets ? d.adharFront || d.aadhaarFront || (Array.isArray(item.documents) ? item.documents.find((doc: any) => (typeof doc?.name === 'string' && doc.name.toLowerCase().includes('front')) || doc?.documentType === 'GovtID')?.url : '') || '' : '',
+                        aadhaarBack: canViewSecrets ? d.adharBack || d.aadhaarBack || (Array.isArray(item.documents) ? item.documents.find((doc: any) => typeof doc?.name === 'string' && doc.name.toLowerCase().includes('back'))?.url : '') || '' : '',
+                        selfieWithIdCard: canViewSecrets ? d.selfieWithIdCard || d.pan || d.panCard || (Array.isArray(item.documents) ? item.documents.find((doc: any) => (typeof doc?.name === 'string' && (doc.name.toLowerCase().includes('selfie') || doc.name.toLowerCase().includes('pan'))) || doc?.documentType === 'SelfieWithID' || doc?.documentType === 'Certificate')?.url : '') || '' : '',
+                        voiceAudioUrl: d.voiceAudioUrl || d.audio || d.audioUrl || d.voiceUrl || d.voice || d.portfolio || d.introAudio || d.audioURL || (Array.isArray(item.documents) ? item.documents.find((doc: any) => doc?.documentType === 'Voice' || doc?.documentType === 'Audio' || doc?.documentType === 'Portfolio' || (typeof doc?.name === 'string' && (doc.name.toLowerCase().includes('voice') || doc.name.toLowerCase().includes('portfolio') || doc.name.toLowerCase().includes('audition'))))?.url : '') || '',
                         voiceDuration: d.voiceDuration || '0:30',
                         voiceWaveform: [30, 50, 70, 90, 60, 40, 80, 95, 75, 45, 85, 65, 90, 50, 35, 75, 85, 60, 40, 25],
                         qualification: d.qualification || '',
@@ -272,7 +272,7 @@ export default function HostRequestsPage() {
             }
         } catch (err) {
             console.error('Failed to load host requests:', err);
-            toast.error('Failed to load requests. Please refresh.');
+            toast.error(err?.message || 'Failed to load requests. Please refresh.');
             setRequests([]);
         } finally {
             setLoading(false);

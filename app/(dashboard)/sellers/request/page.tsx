@@ -253,7 +253,7 @@ export default function SellerRequestsPage() {
                         name: d.name || d.merchantName || 'Seller Applicant',
                         profilePhoto: d.profilePhoto || '',
                         meethiChatId: d.meethiChatId || '',
-                        username: d.username ? `@${d.username.replace('@','')}` : '',
+                        username: d.username ? `@${String(d.username).replace('@','')}` : '',
                         gender: (d.gender as any) || 'Male',
                         age: d.age || 0,
                         dob: d.dob || '',
@@ -287,7 +287,7 @@ export default function SellerRequestsPage() {
             }
         } catch (err) {
             console.error('Failed to load seller requests:', err);
-            toast.error('Failed to load requests. Please refresh.');
+            toast.error(err?.message || 'Failed to load requests. Please refresh.');
             setRequests([]);
         } finally {
             setLoading(false);

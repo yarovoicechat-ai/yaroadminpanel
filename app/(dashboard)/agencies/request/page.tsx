@@ -223,7 +223,7 @@ export default function AgencyRequestsPage() {
             }
         } catch (err) {
             console.error('Failed to load agency requests:', err);
-            toast.error('Failed to load requests. Please refresh.');
+            toast.error(err?.message || 'Failed to load requests. Please refresh.');
             setRequests([]);
         } finally {
             setLoading(false);

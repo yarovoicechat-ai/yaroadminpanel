@@ -182,7 +182,7 @@ export default function AdminRequestsPage() {
                         name: d.name || 'Applicant',
                         profilePhoto: d.profilePhoto || '',
                         meethiChatId: d.meethiChatId || d.mithiChatId || '',
-                        username: d.username ? `@${d.username.replace('@','')}` : '',
+                        username: d.username ? `@${String(d.username).replace('@','')}` : '',
                         gender: (d.gender as any) || 'Male',
                         age: d.age || 0,
                         dob: d.dob || '',
@@ -233,7 +233,7 @@ export default function AdminRequestsPage() {
             }
         } catch (err) {
             console.error('Failed to load admin requests:', err);
-            toast.error('Failed to load requests. Please refresh.');
+            toast.error(err?.message || 'Failed to load requests. Please refresh.');
             setRequests([]);
         } finally {
             setLoading(false);
