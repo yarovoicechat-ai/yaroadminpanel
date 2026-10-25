@@ -162,8 +162,7 @@ export function RoleCreateLayout({
                         </div>
                     ) : (
                         (() => {
-                            const isRestrictedReferral = referralState?.referrerRole && ['admin', 'superAdmin', 'super-admin', 'agency'].includes(referralState.referrerRole);
-                            const effectiveSteps = isRestrictedReferral ? steps.filter(s => s.id !== 'documents' && s.id !== 'oath') : steps;
+                            const effectiveSteps = steps;
                             const activeStepIndex = Math.min(currentStep, effectiveSteps.length - 1);
 
                             return (
