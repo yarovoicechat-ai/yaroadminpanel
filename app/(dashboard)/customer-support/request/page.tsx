@@ -286,7 +286,7 @@ export default function CustomerSupportRequestsPage() {
             } else {
                 setRequests([]);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to load CS requests:', err);
             toast.error(err?.message || 'Failed to load requests. Please refresh.');
             setRequests([]);

@@ -40,7 +40,7 @@ export type StoreCategory =
   | 'Frames'
   | 'Entry'
   | 'Theme'
-  | 'Tassel'
+  | 'Entrance'
   | 'VIP'
   | 'King of Kings';
 
@@ -80,7 +80,7 @@ const CATEGORIES: { label: StoreCategory; icon: any; color: string }[] = [
   { label: 'Frames', icon: Sparkles, color: 'text-rose-400' },
   { label: 'Entry', icon: Car, color: 'text-orange-400' },
   { label: 'Theme', icon: Palette, color: 'text-purple-400' },
-  { label: 'Tassel', icon: Layers, color: 'text-amber-300' },
+  { label: 'Entrance', icon: Layers, color: 'text-amber-300' },
   { label: 'VIP', icon: Crown, color: 'text-yellow-400' },
   { label: 'King of Kings', icon: Crown, color: 'text-amber-300' },
 ];
@@ -719,11 +719,11 @@ export default function StoreManagementPage() {
                     </div>
                   )}
 
-                  {selectedItem.category === 'Tassel' && (
+                  {selectedItem.category === 'Entrance' && (
                     <div className="w-full text-center">
                       <Layers className="w-10 h-10 text-amber-300 mx-auto mb-2" />
                       <p className="text-white font-black text-sm">{selectedItem.name}</p>
-                      <p className="text-slate-300 text-xs">Profile Silk Tassel Badge</p>
+                      <p className="text-slate-300 text-xs">Room Entrance</p>
                     </div>
                   )}
                 </div>

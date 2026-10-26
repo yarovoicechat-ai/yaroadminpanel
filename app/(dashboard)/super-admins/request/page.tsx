@@ -225,7 +225,7 @@ export default function SuperAdminRequestsPage() {
             } else {
                 setRequests([]);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to load super admin requests:', err);
             toast.error(err?.message || 'Failed to load requests. Please refresh.');
             setRequests([]);

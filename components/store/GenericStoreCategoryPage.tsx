@@ -1,5 +1,6 @@
 'use client';
 
+import EntryPresentationFields from '@/components/store/EntryPresentationFields';
 import React, { useState, useEffect } from 'react';
 import {
   Sparkles,
@@ -87,6 +88,8 @@ export default function GenericStoreCategoryPage({
     imageName: '',
     animationUrl: '',
     animationFileName: '',
+    showAvatar: false,
+    comingText: 'is coming',
     desc: '',
     extraValue: '',
     isActive: true,
@@ -129,6 +132,8 @@ export default function GenericStoreCategoryPage({
       imageName: '',
       animationUrl: '',
       animationFileName: '',
+      showAvatar: false,
+      comingText: 'is coming',
       desc: '',
       extraValue: '',
       isActive: true,
@@ -157,6 +162,8 @@ export default function GenericStoreCategoryPage({
       imageName: item.imageUrl ? item.imageUrl.split('/').pop() || 'Existing image' : '',
       animationUrl: item.animationUrl || '',
       animationFileName: item.animationUrl ? item.animationUrl.split('/').pop() || 'Existing animation' : '',
+      showAvatar: item.metadata?.showAvatar === true,
+      comingText: String(item.metadata?.comingText || 'is coming'),
       desc: item.desc || '',
       extraValue: extraFieldKey && item.metadata ? String(item.metadata[extraFieldKey] || '') : '',
       isActive: item.isActive !== false,
@@ -241,13 +248,19 @@ export default function GenericStoreCategoryPage({
     }
 
     const price = Number(formData.price30Days) || Number(formData.price) || 0;
-    const metadata: Record<string, any> = {};
+    const metadata: Record<string, any> = { ...(editingItem?.metadata || {}) };
+    if (categoryName === 'Entrance') {
+      metadata.showAvatar = formData.showAvatar;
+      metadata.comingText = formData.comingText.trim() || 'is coming';
+    }
     if (extraFieldKey && formData.extraValue) {
       metadata[extraFieldKey] = formData.extraValue.trim();
     }
 
     const resolvedImage = formData.image || formData.animationUrl;
-    const resolvedAnimation = formData.animationUrl || formData.image;
+    const resolvedAnimation = categoryName === 'Entrance'
+      ? formData.animationUrl
+      : formData.animationUrl || formData.image;
 
     const payload = {
       name: formData.name.trim(),
@@ -674,6 +687,9 @@ export default function GenericStoreCategoryPage({
                 </div>
               )}
 
+              {categoryName === 'Entrance' && <EntryPresentationFields
+                showAvatar={formData.showAvatar} comingText={formData.comingText}
+                onChange={value => setFormData(previous => ({ ...previous, ...value }))} />}
               {/* Uploads Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800">

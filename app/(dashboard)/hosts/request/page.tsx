@@ -270,7 +270,7 @@ export default function HostRequestsPage() {
             } else {
                 setRequests([]);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to load host requests:', err);
             toast.error(err?.message || 'Failed to load requests. Please refresh.');
             setRequests([]);

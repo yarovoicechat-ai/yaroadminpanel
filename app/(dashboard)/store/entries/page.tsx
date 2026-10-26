@@ -1,5 +1,6 @@
 'use client';
 
+import EntryPresentationFields from '@/components/store/EntryPresentationFields';
 import React, { useState, useEffect } from 'react';
 import {
   Car,
@@ -49,6 +50,7 @@ export interface EntryItem {
   sortOrder: number;
   badgeText?: string;
   desc?: string;
+  metadata?: Record<string, any>;
   createdAt?: string;
 }
 
@@ -68,7 +70,7 @@ export default function StoreEntriesPage() {
   // Form State
   const [formData, setFormData] = useState({
     name: '',
-    tagText: '👑 VIP HAS ENTERED',
+    tagText: '👑 is coming',
     animationType: 'BANNER' as EntryItem['animationType'],
     price: 15000,
     price3Days: 2250,
@@ -89,6 +91,8 @@ export default function StoreEntriesPage() {
     isVip: true,
     isLimited: false,
     isActive: true,
+    showAvatar: false,
+    comingText: 'is coming',
     desc: '',
   });
 
@@ -125,7 +129,7 @@ export default function StoreEntriesPage() {
                 list.push({
                   _id: si._id || si.id,
                   name: si.name,
-                  tagText: si.metadata?.banner || si.badgeText || '👑 VIP HAS ENTERED',
+                  tagText: si.metadata?.banner || si.badgeText || '👑 is coming',
                   animationType: si.metadata?.animationType || 'BANNER',
                   image: si.imageUrl || si.image || '',
                   animationUrl: si.animationUrl || '',
@@ -137,6 +141,7 @@ export default function StoreEntriesPage() {
                   isVip: Boolean(si.badgeText?.includes('VIP')),
                   isLimited: false,
                   isActive: si.isActive !== false,
+                  metadata: si.metadata || {},
                   duration: si.metadata?.entryDurationSec ? si.metadata.entryDurationSec * 1000 : 3000,
                   sortOrder: si.sortOrder || 1,
                   badgeText: si.badgeText || 'HOT',
@@ -183,7 +188,7 @@ export default function StoreEntriesPage() {
     setEditingItem(null);
     setFormData({
       name: '',
-      tagText: '👑 VIP HAS ENTERED',
+      tagText: '👑 is coming',
       animationType: 'BANNER',
       price: 15000,
       price3Days: 2250,
@@ -204,6 +209,8 @@ export default function StoreEntriesPage() {
       isVip: true,
       isLimited: false,
       isActive: true,
+      showAvatar: false,
+      comingText: 'is coming',
       desc: '',
     });
     setIsModalOpen(true);
@@ -218,7 +225,7 @@ export default function StoreEntriesPage() {
 
     setFormData({
       name: item.name || '',
-      tagText: item.tagText || '👑 VIP HAS ENTERED',
+      tagText: item.tagText || '👑 is coming',
       animationType: item.animationType || 'BANNER',
       price: p30,
       price3Days: p3,
@@ -239,6 +246,8 @@ export default function StoreEntriesPage() {
       isVip: item.isVip !== false,
       isLimited: Boolean(item.isLimited),
       isActive: item.isActive !== false,
+      showAvatar: item.metadata?.showAvatar === true,
+      comingText: String(item.metadata?.comingText || 'is coming'),
       desc: item.desc || '',
     });
     setIsModalOpen(true);
@@ -362,7 +371,8 @@ export default function StoreEntriesPage() {
 
     const payload = {
       name: formData.name.trim(),
-      tagText: formData.tagText.trim() || '👑 VIP HAS ENTERED',
+      tagText: formData.tagText.trim() || '👑 is coming',
+      metadata: { ...(editingItem?.metadata || {}), showAvatar: formData.showAvatar, comingText: formData.comingText.trim() || 'is coming' },
       animationType: formData.animationType,
       image: formData.image,
       imageUrl: formData.image,
@@ -630,7 +640,7 @@ export default function StoreEntriesPage() {
                     <div className="relative z-10 max-w-[65%]">
                       <div className="text-[10px] font-bold text-amber-200 tracking-wider flex items-center gap-1">
                         <Flame size={12} className="text-amber-400" />
-                        {item.tagText || 'VIP ARRIVED'}
+                        {item.metadata?.comingText || 'is coming'}
                       </div>
                       <div className="text-xs font-bold text-white mt-1 truncate" title={item.name}>
                         {item.name}
@@ -755,6 +765,9 @@ export default function StoreEntriesPage() {
             </span>
           </div>
 
+          {testingItem.metadata?.showAvatar === true && (
+            <div className="w-20 h-20 rounded-full border-2 border-cyan-300 bg-slate-800 flex items-center justify-center text-white z-20">Avatar</div>
+          )}
           {/* Floating Top Banner (Matches Mobile App RoomEntryEffectEngine) */}
           <div
             className="w-full max-w-lg p-3.5 rounded-2xl border border-white/30 shadow-2xl relative overflow-hidden animate-in slide-in-from-left duration-500 z-20 mt-4"
@@ -772,7 +785,7 @@ export default function StoreEntriesPage() {
               </div>
               <div className="space-y-0.5 flex-1 min-w-0">
                 <div className="text-[11px] font-black text-amber-200 tracking-wider uppercase flex items-center gap-1">
-                  <span>🔥</span> {testingItem.tagText || '👑 VIP HAS ENTERED'}
+                  <span>🔥</span> {testingItem.metadata?.comingText || '👑 is coming'}
                 </div>
                 <div className="text-sm font-extrabold text-white truncate">
                   Aarav King 👑
@@ -874,7 +887,7 @@ export default function StoreEntriesPage() {
                   >
                     <option value="FULL_SCREEN">Full Screen SVGA Entrance (Edge-to-Edge Ride)</option>
                     <option value="BANNER">Top Banner Slide (Car / Limousine)</option>
-                    <option value="VIP_ENTRANCE">Grand VIP Entrance (Royal Aura)</option>
+                    <option value="VIP_ENTRANCE">Legacy entrance animation</option>
                     <option value="CENTER_AVATAR">Center Screen Avatar Pop</option>
                     <option value="PARTICLES">Screen Sparkling Particles</option>
                     <option value="SPECIAL_EVENT">Mythic Dragon / Stage Arrival</option>
@@ -882,6 +895,8 @@ export default function StoreEntriesPage() {
                 </div>
               </div>
 
+              <EntryPresentationFields showAvatar={formData.showAvatar} comingText={formData.comingText}
+                onChange={value => setFormData(previous => ({ ...previous, ...value }))} />
               {/* Tag / Banner Text & Rarity */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
@@ -890,7 +905,7 @@ export default function StoreEntriesPage() {
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. 👑 VIP HAS ENTERED, 🔥 KING IS HERE"
+                    placeholder="e.g. 👑 is coming, 🔥 KING IS HERE"
                     value={formData.tagText}
                     onChange={e => setFormData(prev => ({ ...prev, tagText: e.target.value }))}
                     className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder-slate-600 focus:outline-none focus:border-orange-500"

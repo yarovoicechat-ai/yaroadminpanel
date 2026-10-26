@@ -285,7 +285,7 @@ export default function SellerRequestsPage() {
             } else {
                 setRequests([]);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to load seller requests:', err);
             toast.error(err?.message || 'Failed to load requests. Please refresh.');
             setRequests([]);

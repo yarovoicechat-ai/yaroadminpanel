@@ -207,7 +207,7 @@ export default function OperatorRequestsPage() {
             } else {
                 setRequests([]);
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to load operator requests:', err);
             toast.error(err?.message || 'Failed to load requests. Please refresh.');
             setRequests([]);
