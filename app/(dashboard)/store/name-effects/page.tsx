@@ -54,10 +54,21 @@ export default function NameEffectsPage() {
     } catch (error: any) { toast.error(error.message || 'Could not remove effect'); }
     finally { setBusy(false); }
   };
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterType, setFilterType] = useState('all');
+
+  const filteredEffects = effects.filter(effect => {
+    const matchesSearch = !searchQuery.trim() ||
+      effect.name.toLowerCase().includes(searchQuery.toLowerCase().trim()) ||
+      effect.config.animationType.toLowerCase().includes(searchQuery.toLowerCase().trim());
+    const matchesType = filterType === 'all' || effect.config.animationType === filterType;
+    return matchesSearch && matchesType;
+  });
+
   return <div className="space-y-6 pb-12 text-white">
     <div className="flex items-center justify-between gap-4">
       <div><h1 className="text-2xl font-bold">Name Effect</h1>
-        <p className="mt-1 text-sm text-slate-400">10 animated name styles. Apply to any account from this panel.</p></div>
+        <p className="mt-1 text-sm text-slate-400">{effects.length || 60} animated name styles. Apply to any account from this panel.</p></div>
       <button onClick={load} disabled={loading || busy} className="rounded-xl border border-slate-700 px-4 py-2 text-sm">Refresh</button>
     </div>
     <form onSubmit={apply} className="grid gap-4 rounded-2xl border border-cyan-500/30 bg-slate-900 p-5 md:grid-cols-4">
@@ -66,7 +77,7 @@ export default function NameEffectsPage() {
           className="mt-2 w-full rounded-lg bg-slate-950 p-3 text-sm text-white" /></label>
       <label className="text-xs text-slate-300">Name Effect
         <select value={selected} onChange={event => setSelected(event.target.value)} className="mt-2 w-full rounded-lg bg-slate-950 p-3 text-sm text-white">
-          {effects.map(effect => <option key={effect.slug} value={effect.slug}>{effect.name}</option>)}
+          {effects.map(effect => <option key={effect.slug} value={effect.slug}>{effect.name} ({effect.config.animationType.replace(/_/g, ' ')})</option>)}
         </select></label>
       <label className="text-xs text-slate-300">Validity
         <select value={days} onChange={event => setDays(Number(event.target.value))} className="mt-2 w-full rounded-lg bg-slate-950 p-3 text-sm text-white">
@@ -74,21 +85,46 @@ export default function NameEffectsPage() {
         </select></label>
       <button type="submit" disabled={busy || loading || !selected} className="self-end rounded-xl bg-cyan-500 px-4 py-3 text-sm font-bold text-slate-950 disabled:opacity-40">{busy ? 'Saving...' : 'Apply Name Effect'}</button>
     </form>
-    <label className="flex max-w-md items-center gap-3 text-sm text-slate-400">Preview name
-      <input value={preview} maxLength={60} onChange={event => setPreview(event.target.value)} className="rounded-lg border border-slate-700 bg-slate-900 p-2 text-white" />
-    </label>
+    
+    <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-4">
+      <label className="flex max-w-xs items-center gap-2 text-xs text-slate-400">
+        <span>Preview Text:</span>
+        <input value={preview} maxLength={40} onChange={event => setPreview(event.target.value)} className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-white" />
+      </label>
+      <div className="flex flex-1 max-w-sm items-center gap-2">
+        <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search 60 effects..."
+          className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-sm text-white" />
+        {searchQuery && <button onClick={() => setSearchQuery('')} className="text-xs text-slate-400 hover:text-white">Clear</button>}
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5 text-xs">
+        {['all', 'rainbow', 'shimmer', 'neon', 'gradient_scroll', 'glow_pulse', 'gold_rotate'].map(type => (
+          <button key={type} type="button" onClick={() => setFilterType(type)}
+            className={'rounded-lg px-2.5 py-1 transition-all ' + (filterType === type ? 'bg-cyan-500 font-bold text-slate-950' : 'bg-slate-800 text-slate-300 hover:bg-slate-700')}>
+            {type === 'all' ? 'All (' + effects.length + ')' : type.replace(/_/g, ' ')}
+          </button>
+        ))}
+      </div>
+    </div>
+
     {loading && <p className="text-sm text-slate-400">Loading effects...</p>}
     <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-      {effects.map(effect => <button type="button" key={effect.slug} onClick={() => setSelected(effect.slug)}
-        aria-pressed={selected === effect.slug} className={'rounded-2xl border bg-slate-900 p-5 text-left ' + (selected === effect.slug ? 'border-cyan-400' : 'border-slate-700')}>
+      {filteredEffects.map(effect => <button type="button" key={effect.slug} onClick={() => setSelected(effect.slug)}
+        aria-pressed={selected === effect.slug} className={'rounded-2xl border bg-slate-900 p-5 text-left transition-all ' + (selected === effect.slug ? 'border-cyan-400 ring-2 ring-cyan-500/30' : 'border-slate-800 hover:border-slate-700')}>
         <div className="flex min-h-20 items-center justify-center overflow-hidden rounded-lg bg-slate-950">
           <span className={'effect-preview ' + (effect.config.animationType === 'glow_pulse' ? 'effect-pulse' : '')}
             style={{ backgroundImage: 'linear-gradient(90deg,' + effect.config.colors.join(',') + ',' + effect.config.colors[0] + ')', animationDuration: (4.2 / (effect.config.animationSpeed || 1)) + 's' }}>
             {preview || 'BULLET'}
           </span>
         </div>
-        <h2 className="mt-4 text-sm font-bold">{effect.name}</h2>
-        <p className="mt-1 text-xs text-slate-400">{effect.config.animationType.replace(/_/g, ' ')}</p>
+        <div className="mt-3 flex items-center justify-between">
+          <h2 className="text-sm font-bold truncate">{effect.name}</h2>
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-800 text-cyan-300 capitalize">{effect.config.animationType.replace(/_/g, ' ')}</span>
+        </div>
+        <div className="mt-2 flex gap-1">
+          {effect.config.colors.slice(0, 5).map((color, idx) => (
+            <span key={idx} className="h-2 w-3 rounded-sm" style={{ backgroundColor: color }} />
+          ))}
+        </div>
       </button>)}
     </div>
     <div className="rounded-2xl border border-slate-700 bg-slate-900 p-5">
