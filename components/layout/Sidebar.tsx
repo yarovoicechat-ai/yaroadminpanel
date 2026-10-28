@@ -595,9 +595,10 @@ export default function Sidebar() {
 
         const roleStr = user?.role ? String(user.role).toLowerCase().replace(/[-_]/g, '') : '';
         const isStoreOpsRestricted = ['admin', 'superadmin', 'customersupport', 'cs', 'bd', 'bdleader', 'agency', 'coinseller', 'seller'].includes(roleStr);
+        const isStoreEconomyHidden = isStoreOpsRestricted || roleStr === 'operator';
 
-        // Hide Store & Economy completely for restricted roles
-        if (isStoreOpsRestricted && (
+        // Hide Store & Economy completely for restricted roles and operator
+        if (isStoreEconomyHidden && (
             section.title.toUpperCase().includes('STORE') ||
             section.title.toUpperCase().includes('ECONOMY')
         )) {
