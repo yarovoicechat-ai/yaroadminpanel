@@ -97,6 +97,7 @@ const managementSidebarSections: SidebarSection[] = [
         title: 'CORE CONSOLE',
         category: 'Dashboard',
         items: [
+            { name: 'Team & Hosting Targets', href: '/team', icon: Users, category: 'Dashboard' },
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
             { name: 'Live Rooms (Pin)', href: '/rooms', icon: Radio, category: 'Dashboard' },
             { name: 'Asset Distribution', href: '/store/distribute', icon: Sparkles, category: 'Dashboard' },
@@ -173,6 +174,7 @@ const adminSidebarSections: SidebarSection[] = [
         title: 'Core Console',
         category: 'Dashboard',
         items: [
+            { name: 'Team & Hosting Targets', href: '/team', icon: Users, category: 'Dashboard' },
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
             { name: 'Live Rooms (Pin)', href: '/rooms', icon: Radio, category: 'Dashboard' },
             { name: 'Asset Distribution', href: '/store/distribute', icon: Sparkles, category: 'Dashboard' },
@@ -559,6 +561,7 @@ export default function Sidebar() {
     };
 
     const hasDynamicRoute = (href: string) => {
+        if (href === '/team') return isRouteAllowed(user?.role || 'user', href);
         if (!permissionsLoaded || user?.role === 'owner') return true;
         if (allowedPages.length === 0) return true;
         return allowedPages.includes('*') ||
@@ -587,7 +590,7 @@ export default function Sidebar() {
     const activeSections = (mounted && isManagementPanel) ? managementSidebarSections : adminSidebarSections;
 
     const filteredSections = activeSections.map(section => {
-        if (!hasDynamicMenu(section.category)) return null;
+        if (!hasDynamicMenu(section.category) && !section.items.some(item => item.href === '/team' && isRouteAllowed(user?.role || 'user', '/team'))) return null;
         if (user?.role === 'admin' && section.title.toUpperCase().includes('REFERRAL')) return null;
 
         const roleStr = user?.role ? String(user.role).toLowerCase() : '';

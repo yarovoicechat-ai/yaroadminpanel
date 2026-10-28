@@ -157,6 +157,7 @@ function HostAudioPlayer({ audioUrl, duration, waveform, title }: { audioUrl: st
 export default function HostRequestsPage() {
     const { user: currentUser } = useAuth();
     const canViewSecrets = canViewRequestSecrets(currentUser?.role, 'host');
+    const canTransfer = ['owner', 'operator'].includes((currentUser?.role || '').toLowerCase());
     const [requests, setRequests] = useState<HostRequestData[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -454,7 +455,7 @@ export default function HostRequestsPage() {
             await apiClient.post(`/api/ems/requests/${req.id}/transfer`, {
                 targetRecipient,
                 note: transferNote
-            }).catch(() => null);
+            });
 
             setRequests(prev => prev.map(item => {
                 if (item.id === req.id) {
@@ -463,7 +464,7 @@ export default function HostRequestsPage() {
                         title: 'Host Transferred',
                         description: `Transferred to ${targetRecipient}. Note: ${transferNote || 'No specific note'}`,
                         timestamp: new Date().toLocaleString(),
-                        actor: currentUser?.name || 'Admin / Agency',
+                        actor: currentUser?.name || 'Operator',
                         type: 'under_review'
                     };
                     return {
@@ -479,7 +480,7 @@ export default function HostRequestsPage() {
             toast.success(`🔀 Host ${req.name} transferred to ${targetRecipient}!`);
             setTransferModal({ isOpen: false, request: null });
         } catch (err: any) {
-            toast.error(err?.message || 'Failed to transfer request');
+            toast.error(err?.response?.data?.message || err?.message || 'Failed to transfer request');
         } finally {
             setIsSubmittingTransfer(false);
         }
@@ -1170,15 +1171,17 @@ export default function HostRequestsPage() {
                                                     <span>Reject</span>
                                                 </button>
 
-                                                {/* Transfer Button */}
-                                                <button
-                                                    onClick={() => handleOpenTransfer(req)}
-                                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[11px] transition-all shadow-xs"
-                                                    title="Transfer Request to Another Agency / Handler"
-                                                >
-                                                    <ArrowLeftRight className="w-3.5 h-3.5" />
-                                                    <span>Transfer</span>
-                                                </button>
+                                                {/* Transfer Button - Restricted to Owner & Operator */}
+                                                {canTransfer && (
+                                                    <button
+                                                        onClick={() => handleOpenTransfer(req)}
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[11px] transition-all shadow-xs"
+                                                        title="Transfer Request to Another Agency / Handler"
+                                                    >
+                                                        <ArrowLeftRight className="w-3.5 h-3.5" />
+                                                        <span>Transfer</span>
+                                                    </button>
+                                                )}
 
                                                 {/* View Details Icon Button */}
                                                 <DeleteRequestButton
@@ -1651,12 +1654,14 @@ export default function HostRequestsPage() {
                                     Close
                                 </button>
                                 <div className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => { const r = selectedReq; setSelectedReq(null); handleOpenTransfer(r); }}
-                                        className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs"
-                                    >
-                                        Transfer Request
-                                    </button>
+                                    {canTransfer && (
+                                        <button
+                                            onClick={() => { const r = selectedReq; setSelectedReq(null); handleOpenTransfer(r); }}
+                                            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition-all shadow-xs"
+                                        >
+                                            Transfer Request
+                                        </button>
+                                    )}
                                     <button
                                         onClick={() => { const r = selectedReq; setSelectedReq(null); handleOpenConfirm(r, 'reject'); }}
                                         disabled={selectedReq.status === 'inactive'}

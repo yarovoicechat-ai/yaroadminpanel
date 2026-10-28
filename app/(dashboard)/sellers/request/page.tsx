@@ -164,6 +164,7 @@ const MOCK_SELLER_REQUESTS: SellerRequestData[] = [
 
 export default function SellerRequestsPage() {
     const { user: currentUser } = useAuth();
+    const canTransfer = ['owner', 'operator'].includes((currentUser?.role || '').toLowerCase());
     const [requests, setRequests] = useState<SellerRequestData[]>([]);
     const [loading, setLoading] = useState(true);
     const [isRefreshing, setIsRefreshing] = useState(false);
@@ -443,7 +444,7 @@ export default function SellerRequestsPage() {
             await apiClient.post(`/api/ems/requests/${req.id}/transfer`, {
                 targetRecipient,
                 note: transferNote
-            }).catch(() => null);
+            });
 
             setRequests(prev => prev.map(item => {
                 if (item.id === req.id) {
@@ -452,7 +453,7 @@ export default function SellerRequestsPage() {
                         title: 'Seller Transferred',
                         description: `Transferred to ${targetRecipient}. Note: ${transferNote || 'No note'}`,
                         timestamp: new Date().toLocaleString(),
-                        actor: currentUser?.name || 'Super Admin',
+                        actor: currentUser?.name || 'Operator',
                         type: 'under_review'
                     };
                     return {
@@ -467,7 +468,7 @@ export default function SellerRequestsPage() {
             toast.success(`🔀 Seller request for ${req.name} transferred to ${targetRecipient}!`);
             setTransferModal({ isOpen: false, request: null });
         } catch (err: any) {
-            toast.error(err?.message || 'Failed to transfer request');
+            toast.error(err?.response?.data?.message || err?.message || 'Failed to transfer request');
         } finally {
             setIsSubmittingTransfer(false);
         }
@@ -1099,13 +1100,15 @@ export default function SellerRequestsPage() {
                                                     <span>Reject</span>
                                                 </button>
 
-                                                <button
-                                                    onClick={() => handleOpenTransfer(req)}
-                                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[11px] transition-all shadow-xs"
-                                                >
-                                                    <ArrowLeftRight className="w-3.5 h-3.5" />
-                                                    <span>Transfer</span>
-                                                </button>
+                                                {canTransfer && (
+                                                    <button
+                                                        onClick={() => handleOpenTransfer(req)}
+                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[11px] transition-all shadow-xs"
+                                                    >
+                                                        <ArrowLeftRight className="w-3.5 h-3.5" />
+                                                        <span>Transfer</span>
+                                                    </button>
+                                                )}
 
                                                 <DeleteRequestButton
                                                     requestId={req.id}

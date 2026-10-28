@@ -281,6 +281,32 @@ export function RoleManagementDashboard() {
         )}
       </div>
 
+      {/* Team & Hosting Targets Console Quick Access */}
+      <section className="relative overflow-hidden rounded-3xl border border-indigo-500/30 bg-gradient-to-r from-indigo-950/60 via-slate-900/80 to-purple-950/60 p-6 backdrop-blur-xl shadow-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 shadow-lg shadow-indigo-500/30">
+            <Users className="h-6 w-6 text-white" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] font-bold text-indigo-400 uppercase tracking-wider">Enterprise Management</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
+            </div>
+            <h3 className="text-base font-black text-white">Team & Hosting Targets Console</h3>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Track separate voice, video & room hosting targets in Beans, view hierarchy lists, and send recruitment invitations.
+            </p>
+          </div>
+        </div>
+        <a
+          href="/team"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-xs shadow-lg shadow-indigo-600/30 transition-all shrink-0"
+        >
+          <span>Open Team Console</span>
+          <ArrowUpRight className="h-4 w-4" />
+        </a>
+      </section>
+
       {/* Metric Cards Grid */}
       <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {metrics.map((metric) => {

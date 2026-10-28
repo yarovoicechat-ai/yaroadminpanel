@@ -412,6 +412,8 @@ export const isRouteAllowed = (role: string, route: string): boolean => {
   if (!role || role === 'owner') return true;
 
   const path = route.split('?')[0].split('#')[0];
+  if (path === '/team' || path.startsWith('/team/')) return ['owner', 'operator', 'superAdmin', 'super-admin', 'admin', 'bdLeader', 'bd-leader', 'bd', 'agency', 'host'].includes(role);
+
 
   // Universal routes accessible to all authenticated roles
   const UNIVERSAL_ALLOWED_ROUTES = ['/dashboard', '/profile', '/tasks', '/messages/system', '/messages/activity'];

@@ -179,7 +179,7 @@ export default function WithdrawalsPage() {
                                                     <span>&#8377;</span>{w.amount} net payout
                                                 </div>
                                                 {w.grossAmount !== undefined && <div className="text-xs text-slate-400">Gross {String.fromCharCode(8377)}{w.grossAmount} | Fee {String.fromCharCode(8377)}{w.platformFee} ({w.platformFeePercent || 5}%)</div>}
-                                                <div className="text-xs text-slate-500">{w.coinsDeducted} coins deducted</div>
+                                                <div className="text-xs text-slate-500">{w.coinsDeducted} {w.economyVersion ? `earned Beans (${w.economyVersion})` : 'legacy coins'} deducted</div>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="outline" className="capitalize border-slate-700 text-slate-300">
