@@ -593,17 +593,72 @@ export default function Sidebar() {
         if (!hasDynamicMenu(section.category) && !section.items.some(item => item.href === '/team' && isRouteAllowed(user?.role || 'user', '/team'))) return null;
         if (user?.role === 'admin' && section.title.toUpperCase().includes('REFERRAL')) return null;
 
-        const roleStr = user?.role ? String(user.role).toLowerCase() : '';
-        const isRestrictedRole = roleStr === 'admin' || roleStr === 'superadmin' || roleStr === 'super-admin' || roleStr === 'agency';
+        const roleStr = user?.role ? String(user.role).toLowerCase().replace(/[-_]/g, '') : '';
+        const isStoreOpsRestricted = ['admin', 'superadmin', 'customersupport', 'cs', 'bd', 'bdleader', 'agency', 'coinseller', 'seller'].includes(roleStr);
+
+        // Hide Store & Economy completely for restricted roles
+        if (isStoreOpsRestricted && (
+            section.title.toUpperCase().includes('STORE') ||
+            section.title.toUpperCase().includes('ECONOMY')
+        )) {
+            return null;
+        }
+
+        const isRestrictedRole = roleStr === 'admin' || roleStr === 'superadmin' || roleStr === 'agency';
         if (isRestrictedRole && (section.title.toUpperCase().includes('FINANCE') || section.title.toUpperCase().includes('RECHARGE'))) {
             return null;
         }
 
         const filteredItems = section.items.map(item => {
+            if (isStoreOpsRestricted) {
+                const itemName = (item.name || '').toLowerCase();
+                const itemHref = (item.href || '').toLowerCase();
+                if (
+                    itemHref === '/rooms' || itemHref.startsWith('/rooms/') ||
+                    itemHref === '/store/distribute' || itemHref.startsWith('/store/distribute') ||
+                    itemHref === '/referrals' || itemHref.startsWith('/referrals') ||
+                    itemHref === '/users' || itemHref.startsWith('/users') ||
+                    itemHref === '/bd-agency-access' || itemHref.startsWith('/bd-agency-access') ||
+                    itemHref === '/messages/system' || itemHref.startsWith('/messages/system') ||
+                    itemHref === '/messages/activity' || itemHref.startsWith('/messages/activity') ||
+                    itemHref.startsWith('/verification') ||
+                    itemName.includes('live rooms') ||
+                    itemName.includes('asset distribution') ||
+                    itemName.includes('user refer') ||
+                    itemName.includes('app bd & agency') ||
+                    itemName === 'users' ||
+                    itemName.includes('system message') ||
+                    itemName === 'activity' ||
+                    itemName.includes('verification')
+                ) {
+                    return null;
+                }
+            }
+
             if (item.submenu && item.submenu.length > 0) {
-                const validSubmenu = item.submenu.filter(sub =>
-                    isRouteAllowed(user?.role || 'user', sub.href) && hasDynamicRoute(sub.href)
-                );
+                const validSubmenu = item.submenu.filter(sub => {
+                    if (isStoreOpsRestricted) {
+                        const subHref = (sub.href || '').toLowerCase();
+                        const subName = (sub.name || '').toLowerCase();
+                        if (
+                            subHref === '/rooms' || subHref.startsWith('/rooms/') ||
+                            subHref === '/store/distribute' || subHref.startsWith('/store/distribute') ||
+                            subHref === '/referrals' || subHref.startsWith('/referrals') ||
+                            subHref === '/users' || subHref.startsWith('/users') ||
+                            subHref === '/bd-agency-access' || subHref.startsWith('/bd-agency-access') ||
+                            subHref === '/messages/system' || subHref.startsWith('/messages/system') ||
+                            subHref === '/messages/activity' || subHref.startsWith('/messages/activity') ||
+                            subHref.startsWith('/verification') ||
+                            subName.includes('asset distribution') ||
+                            subName === 'user list' ||
+                            subName.includes('app bd & agency') ||
+                            subName.includes('verification')
+                        ) {
+                            return false;
+                        }
+                    }
+                    return isRouteAllowed(user?.role || 'user', sub.href) && hasDynamicRoute(sub.href);
+                });
                 if (validSubmenu.length === 0) return null;
                 return {
                     ...item,

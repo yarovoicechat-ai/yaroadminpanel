@@ -1,3 +1,40 @@
+
+export const STORE_AND_OPS_RESTRICTED_ROLES = [
+  'admin',
+  'superadmin',
+  'superAdmin',
+  'super-admin',
+  'customersupport',
+  'customerSupport',
+  'cs',
+  'bd',
+  'bdleader',
+  'bdLeader',
+  'bd-leader',
+  'agency',
+  'seller',
+  'coinseller',
+  'coinSeller',
+];
+
+export const STORE_AND_OPS_RESTRICTED_ROUTES = [
+  '/rooms',
+  '/store',
+  '/store/distribute',
+  '/gifts',
+  '/plans/recharge',
+  '/plans/beans',
+  '/plans/svip',
+  '/king-of-kings',
+  '/vip-svip',
+  '/identity-vip-studio',
+  '/referrals',
+  '/users',
+  '/bd-agency-access',
+  '/messages/system',
+  '/messages/activity',
+  '/verification',
+];
 export interface RoleDefinition {
   name: string;
   allowedRoutes: string[];
@@ -415,8 +452,22 @@ export const isRouteAllowed = (role: string, route: string): boolean => {
   if (path === '/team' || path.startsWith('/team/')) return ['owner', 'operator', 'superAdmin', 'super-admin', 'admin', 'bdLeader', 'bd-leader', 'bd', 'agency', 'host'].includes(role);
 
 
+  // Check if role is restricted from store, rooms, referrals, users, and messaging
+  const normalizedRole = role.toLowerCase().replace(/[-_]/g, '');
+  const isRestrictedRole = STORE_AND_OPS_RESTRICTED_ROLES.some(
+    (r) => r.toLowerCase().replace(/[-_]/g, '') === normalizedRole
+  );
+
+  if (isRestrictedRole) {
+    if (STORE_AND_OPS_RESTRICTED_ROUTES.some(
+      (denied) => path === denied || path.startsWith(`${denied}/`)
+    )) {
+      return false;
+    }
+  }
+
   // Universal routes accessible to all authenticated roles
-  const UNIVERSAL_ALLOWED_ROUTES = ['/dashboard', '/profile', '/tasks', '/messages/system', '/messages/activity'];
+  const UNIVERSAL_ALLOWED_ROUTES = ['/dashboard', '/profile', '/tasks'];
   if (UNIVERSAL_ALLOWED_ROUTES.some((allowed) => path === allowed || path.startsWith(`${allowed}/`))) {
     return true;
   }
