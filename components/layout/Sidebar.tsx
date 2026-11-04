@@ -40,6 +40,8 @@ interface SidebarSection {
 }
 
 export const roleConfig: Record<string, { label: string; color: string; bg: string; border: string; icon: any }> = {
+    countryManager: { label: 'Country Manager', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', icon: Globe },
+    stateManager: { label: 'State Manager', color: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/30', icon: Globe },
     owner: { label: 'Owner', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', icon: Crown },
     operator: { label: 'Operator', color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30', icon: UserCheck },
     superAdmin: { label: 'Super Admin', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/30', icon: ShieldCheck },
@@ -280,6 +282,11 @@ const adminSidebarSections: SidebarSection[] = [
                     { name: 'Requests', href: '/bds/request' },
                     { name: 'List', href: '/bds' }
                 ]
+            },
+            {
+                name: 'Country Manager', icon: Globe, category: 'Users', submenu: [{ name: 'Create', href: '/country-managers/create' }, { name: 'Requests', href: '/country-managers/request' }, { name: 'List', href: '/country-managers' }]
+            },
+            { name: 'State Manager', icon: Globe, category: 'Users', submenu: [{ name: 'Create', href: '/state-managers/create' }, { name: 'Requests', href: '/state-managers/request' }, { name: 'List', href: '/state-managers' }]
             },
             {
                 name: 'Operator',
@@ -531,7 +538,7 @@ export default function Sidebar() {
         const fetchPermissions = async () => {
             try {
                 if (!user) return;
-                if (['owner', 'superAdmin', 'admin', 'agency', 'operator', 'coinSeller', 'customerSupport'].includes(user.role)) {
+                if (['owner', 'countryManager', 'stateManager', 'superAdmin', 'admin', 'agency', 'operator', 'coinSeller', 'customerSupport'].includes(user.role)) {
                     setAllowedMenus(['*']);
                     setAllowedPages(['*']);
                     setPermissionsLoaded(true);

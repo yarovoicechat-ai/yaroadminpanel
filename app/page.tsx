@@ -13,6 +13,7 @@ function RootContent() {
     useEffect(() => {
         const getTargetRoute = (role: string, ref: string) => {
             const query = ref ? `?referrer=${ref}` : '';
+            if (['country-manager', 'state-manager'].includes(role)) return `/apply/${role}${query}`;
             if (role === 'agency') return `/apply/agency${query}`;
             if (role === 'operator') return `/apply/operator${query}`;
             if (role === 'super-admin' || role === 'superadmin') return `/apply/super-admin${query}`;

@@ -9,6 +9,7 @@ function ApplyPageContent() {
     const roleParam = searchParams.get('role')?.toLowerCase();
     const refCode = searchParams.get('referrer') || searchParams.get('ref') || '';
 
+    if (['country-manager', 'state-manager'].includes(roleParam || '')) { if (typeof window !== 'undefined') window.location.href = `/apply/${roleParam}?ref=${encodeURIComponent(refCode)}`; return null; }
     // If role query parameter is passed, redirect view cleanly to dedicated route
     if (roleParam === 'agency') {
         if (typeof window !== 'undefined') {
@@ -70,6 +71,7 @@ function ApplyPageContent() {
     }
 
     const ROLES = [
+        ...['country', 'state'].map(region => ({ name: region === 'country' ? 'Country Manager Form' : 'State Manager Form', href: `/apply/${region}-manager?ref=${encodeURIComponent(refCode)}`, color: 'from-indigo-600 to-blue-600', desc: 'Apply for regional management with territory-based hiring' })),
         { name: 'BD Leader Form', href: `/apply/bd-leader${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-purple-600 to-indigo-700', desc: 'Apply as Regional Head / BD Leader' },
         { name: 'BD Officer Form', href: `/apply/bd${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-blue-600 to-cyan-600', desc: 'Apply for Business Development (BD) Officer' },
         { name: 'Seller Form', href: `/apply/seller${refCode ? `?referrer=${refCode}` : ''}`, color: 'from-amber-600 to-orange-600', desc: 'Apply to become a Coin Seller / Merchant' },

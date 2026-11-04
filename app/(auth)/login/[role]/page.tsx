@@ -158,6 +158,8 @@ const roleConfigs: Record<string, RoleLoginConfig> = {
     },
 };
 
+for (const role of ['country-manager', 'state-manager']) roleConfigs[role] = { ...roleConfigs.admin, title: role === 'country-manager' ? 'Country Manager Portal' : 'State Manager Portal', subtitle: 'Manage recruitment within your assigned territory.', badge: 'Regional Manager Access' };
+
 export default function RoleLoginPage({ params }: { params: Promise<{ role: string }> }) {
     const resolvedParams = use(params);
     const roleKey = resolvedParams.role.toLowerCase();

@@ -63,6 +63,7 @@ type ProfileData = {
   specialCode?: string;
   meethiId?: string;
   diamonds?: number;
+  hiringScope?: { country?: string; state?: string };
 };
 
 type Metric = {
@@ -78,6 +79,8 @@ const numberValue = (value: unknown) => Number(value || 0);
 const formatNumber = (value: number) => value.toLocaleString('en-IN', { maximumFractionDigits: 2 });
 
 const roleConfig = {
+  countryManager: { title: 'Country Manager', codeLabel: 'Country Manager Code', scope: 'Hiring and team management within your assigned country' },
+  stateManager: { title: 'State Manager', codeLabel: 'State Manager Code', scope: 'Hiring and team management within your assigned country and state' },
   superAdmin: {
     title: 'Super Admin',
     codeLabel: 'Super Admin Code',
@@ -242,6 +245,7 @@ export function RoleManagementDashboard() {
             </div>
             <h1 className="text-2xl font-black text-white sm:text-3xl tracking-tight">{displayName}</h1>
             <p className="max-w-2xl text-xs sm:text-sm text-slate-400">{config.scope}</p>
+            {profile.hiringScope?.country && <p className="text-sm text-indigo-300">Assigned territory: {profile.hiringScope.country}{profile.hiringScope.state ? ` / ${profile.hiringScope.state}` : ""}</p>}
           </div>
 
           <button
@@ -255,6 +259,7 @@ export function RoleManagementDashboard() {
           </button>
         </div>
 
+        {['countryManager', 'stateManager'].includes(normalizedRole) && <div className="flex flex-wrap gap-3 p-5">{['super-admin', 'admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service'].map(role => <a key={role} className="rounded-lg border border-indigo-500/30 px-3 py-2 text-sm text-indigo-200" href={`/apply/${role}?ref=${encodeURIComponent(code)}`}>Hire {role.replaceAll('-', ' ')}</a>)}<a className="px-3 py-2 text-sm text-indigo-200" href="/team">View team</a><a className="px-3 py-2 text-sm text-indigo-200" href="/employees">Manage employees</a></div>}
         {/* Profile Field Strip */}
         <div className="grid grid-cols-1 divide-y divide-white/5 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4 bg-black/20">
           <ProfileField icon={UserRound} label="Account Name" value={displayName} />

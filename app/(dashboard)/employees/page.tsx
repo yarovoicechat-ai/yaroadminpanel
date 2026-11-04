@@ -28,8 +28,9 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 
-const ROLE_HIERARCHY = ['operator', 'superAdmin', 'admin', 'agency', 'coinSeller'];
+const ROLE_HIERARCHY = ['operator', 'superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport', 'coinSeller'];
 const ROLE_LABELS: Record<string, string> = {
+    bdLeader: 'BD Leader', bd: 'BD', host: 'Host', customerSupport: 'Customer Support',
     operator: 'Operator',
     superAdmin: 'Super Admin',
     admin: 'Admin',
@@ -59,6 +60,7 @@ export default function EmployeesPage() {
         email: '',
         password: '',
         phoneNumber: '',
+        country: '', state: '',
         targetRole: 'admin',
         documents: [''],
     });
@@ -112,7 +114,7 @@ export default function EmployeesPage() {
     };
 
     const resetForm = () => {
-        setFormData({ name: '', email: '', password: '', phoneNumber: '', targetRole: 'admin', documents: [''] });
+        setFormData({ name: '', email: '', password: '', phoneNumber: '', country: '', state: '', targetRole: 'admin', documents: [''] });
         setShowPassword(false);
     };
 
@@ -314,6 +316,7 @@ export default function EmployeesPage() {
                     </DialogHeader>
 
                     <div className="space-y-4 mt-2">
+                        <div className="grid grid-cols-2 gap-4"><label className="text-sm">Country<Input value={formData.country} onChange={e => setFormData({ ...formData, country: e.target.value })} placeholder="Hiring country" /></label><label className="text-sm">State<Input value={formData.state} onChange={e => setFormData({ ...formData, state: e.target.value })} placeholder="Hiring state" /></label></div>
                         {/* Role selection */}
                         <div className="space-y-1.5">
                             <Label className="text-xs text-slate-400 font-semibold">Role *</Label>
