@@ -1,2 +1,5 @@
-import { ManagerApplication } from '@/components/role-create/ManagerApplication';
-export default function Page(){ return <ManagerApplication role="country-manager" />; }
+import CountryManagerApplyPage from '@/app/apply/country-manager/page';
+
+export default function CountryManagerCreatePage() {
+    return <CountryManagerApplyPage />;
+}

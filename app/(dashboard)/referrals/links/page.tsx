@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Copy, Check, Users, Link2, Share2, Award, Briefcase, Video, Key } from 'lucide-react';
+import { Copy, Check, Users, Link2, Share2, Award, Briefcase, Video, Key, Globe } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 
@@ -22,6 +22,20 @@ export default function ReferralLinks() {
   const referralCode = (user as any)?.referralCode || (user as any)?.employeeCode || (user as any)?.specialCode || (user as any)?.mithiId || user?.meethiId || (user?.role === 'owner' ? 'OS000001' : '');
 
   const links = [
+    {
+      role: 'Country Manager',
+      desc: 'Recruit Country Managers for national territory management and executive expansion.',
+      url: `${adminFormBaseUrl}/apply/country-manager?referrer=${referralCode}&role=country-manager`,
+      icon: Globe,
+      color: 'text-indigo-400 border-indigo-500/20 bg-indigo-500/5'
+    },
+    {
+      role: 'State Manager',
+      desc: 'Recruit State Managers for regional state territory and district operations.',
+      url: `${adminFormBaseUrl}/apply/state-manager?referrer=${referralCode}&role=state-manager`,
+      icon: Globe,
+      color: 'text-teal-400 border-teal-500/20 bg-teal-500/5'
+    },
     {
       role: 'Super Admin',
       desc: 'Recruit executive Super Administrators for board & platform governance.',
@@ -88,8 +102,10 @@ export default function ReferralLinks() {
   ];
 
   const roleAllowedLinksMap: Record<string, string[]> = {
-    owner: ['Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Operator', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
-    operator: ['Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
+    owner: ['Country Manager', 'State Manager', 'Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Operator', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
+    operator: ['Country Manager', 'State Manager', 'Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
+    countryManager: ['State Manager', 'Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
+    stateManager: ['Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
     superAdmin: ['Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
     admin: ['BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
     bdLeader: ['BD Officer', 'Agency', 'Host'],

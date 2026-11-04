@@ -1,2 +1,5 @@
-import { ManagerApplication } from '@/components/role-create/ManagerApplication';
-export default function Page(){ return <ManagerApplication role="state-manager" />; }
+import StateManagerApplyPage from '@/app/apply/state-manager/page';
+
+export default function StateManagerCreatePage() {
+    return <StateManagerApplyPage />;
+}
