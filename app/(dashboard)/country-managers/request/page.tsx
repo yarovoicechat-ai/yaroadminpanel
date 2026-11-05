@@ -1,2 +1,7 @@
-import { ManagerDirectory } from '@/components/dashboard/ManagerDirectory';
-export default function Page(){ return <ManagerDirectory region="country" requests />; }
+'use client';
+
+import RegionalManagerRequestPage from '@/components/dashboard/RegionalManagerRequestPage';
+
+export default function CountryManagerRequestsPage() {
+    return <RegionalManagerRequestPage region="country" />;
+}

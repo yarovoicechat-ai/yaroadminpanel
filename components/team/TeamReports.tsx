@@ -126,10 +126,10 @@ const calcPercent = (achieved: number, target: number | null | undefined) => {
   return Math.min(100, Math.round((achieved / target) * 100));
 };
 
-export default function TeamReports() {
+export default function TeamReports({ initialRootId = '' }: { initialRootId?: string } = {}) {
   const { user } = useAuth();
   const [month, setMonth] = useState(() => new Date(Date.now() + 330 * 60000).toISOString().slice(0, 7));
-  const [rootId, setRootId] = useState('');
+  const [rootId, setRootId] = useState(initialRootId);
   const [trail, setTrail] = useState<string[]>([]);
   const [roleFilter, setRoleFilter] = useState('');
   const [page, setPage] = useState(1);
