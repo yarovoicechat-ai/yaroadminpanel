@@ -69,6 +69,7 @@ const storeSubmenu: SubmenuItem[] = [
     { name: 'Entrance Effects', href: '/store/entries' },
     { name: 'Mic Waves', href: '/store/mic-waves' },
     { name: 'Profile Cards', href: '/store/profile-cards' },
+    { name: 'Medals', href: '/store/medals' },
     { name: 'Room Cards', href: '/store/room-cards' },
     { name: 'Profile Entries', href: '/store/profile-entries' },
 ];

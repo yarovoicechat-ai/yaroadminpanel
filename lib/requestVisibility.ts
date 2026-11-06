@@ -10,8 +10,7 @@ export const canViewRequestSecrets = (
     const viewer = normalizeRole(viewerRole);
 
     if (!viewer) return false;
-    if (viewer === 'superadmin') return false;
-    if (viewer === 'admin') return targetRole === 'admin';
+    if (['owner', 'operator', 'superadmin', 'admin'].includes(viewer)) return true;
     if (viewer === 'agency') return targetRole !== 'host';
     return true;
 };
