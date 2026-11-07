@@ -48,6 +48,15 @@ jobs:
             echo "GitHub Branch: ${{ github.ref_name }}"
             echo "Deployment started: $(date)"
 
+            # Ensure working tree on server is clean so deployment checks pass
+            for repo in /root/apps/Yaro/YaroAdminPanel /root/apps/Yaro/YaroAdmin /var/www/yaro-admin; do
+              if [ -d "$repo/.git" ]; then
+                echo "Cleaning server git worktree in $repo..."
+                git -C "$repo" reset --hard HEAD || true
+                git -C "$repo" clean -fd || true
+              fi
+            done
+
             /root/deployments/yaro-admin/deploy-yaro-admin.sh
 
             echo "========================================"
