@@ -33,7 +33,7 @@ export function ApprovalSuccessDialog({
 
     const copyAll = () => {
         if (!credentials) return;
-        const text = `${roleName} Account Details\nName: ${applicantName}\nEmail: ${credentials.email}${credentials.specialCode ? `\nEmployee Code: ${credentials.specialCode}` : ''}`;
+        const text = `${roleName} Account Details\nName: ${applicantName}\nEmail: ${credentials.email}${credentials.specialCode ? `\nEmployee Code: ${credentials.specialCode}` : ''}${credentials.password ? `\nPassword: ${credentials.password}` : ''}\nLogin URL: https://admin.yaroapp.in/login`;
         navigator.clipboard.writeText(text);
         toast.success('All credentials copied!');
     };
@@ -100,6 +100,24 @@ export function ApprovalSuccessDialog({
                                     title="Copy Code"
                                 >
                                     <Copy className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+                                </button>
+                            </div>
+                        )}
+
+                        {/* Password */}
+                        {credentials.password && (
+                            <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-500/10 rounded-xl px-4 py-3 border border-emerald-200 dark:border-emerald-700/40">
+                                <Key className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-emerald-600 dark:text-emerald-400">Assigned Password</p>
+                                    <p className="text-sm font-mono font-bold text-emerald-800 dark:text-emerald-200 truncate">{credentials.password}</p>
+                                </div>
+                                <button
+                                    onClick={() => copyText(credentials.password!, 'Password')}
+                                    className="p-1.5 rounded-lg hover:bg-emerald-100 dark:hover:bg-emerald-800/30 transition-colors shrink-0"
+                                    title="Copy Password"
+                                >
+                                    <Copy className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                                 </button>
                             </div>
                         )}

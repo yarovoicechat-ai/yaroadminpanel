@@ -65,6 +65,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 coinseller: ['coinseller', 'seller'],
                 customerservice: ['customersupport', 'customerservice', 'support'],
                 customersupport: ['customersupport', 'customerservice', 'support'],
+                countrymanager: ['countrymanager', 'owner', 'operator'],
+                statemanager: ['statemanager', 'countrymanager', 'owner', 'operator'],
             };
 
             const allowed = roleEquivalents[normalizedReq] || [normalizedReq];

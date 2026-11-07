@@ -85,6 +85,27 @@ interface RegionalManagerRequestPageProps {
     region: 'country' | 'state';
 }
 
+export const generateDefaultManagerPassword = (name?: string, phone?: string, email?: string): string => {
+    const cleanName = (name || 'User').replace(/[^a-zA-Z]/g, '');
+    const prefix = cleanName.length >= 3
+        ? cleanName.slice(0, 3).charAt(0).toUpperCase() + cleanName.slice(1, 3).toLowerCase()
+        : (cleanName.length > 0 ? cleanName.charAt(0).toUpperCase() + cleanName.slice(1).toLowerCase() : 'Mith');
+
+    const phoneDigits = (phone || '').replace(/\D/g, '');
+    let numPart = phoneDigits.length >= 4 ? phoneDigits.slice(-4) : '';
+
+    if (!numPart && email) {
+        const emailDigits = email.replace(/\D/g, '');
+        numPart = emailDigits.length >= 4 ? emailDigits.slice(-4) : '';
+    }
+
+    if (!numPart) {
+        numPart = '1234';
+    }
+
+    return `${prefix}@${numPart}!1`;
+};
+
 export default function RegionalManagerRequestPage({ region }: RegionalManagerRequestPageProps) {
     const isCountry = region === 'country';
     const roleTitle = isCountry ? 'Country Manager' : 'State Manager';
@@ -141,6 +162,7 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
 
     const [actionRemarks, setActionRemarks] = useState('');
     const [assignedCode, setAssignedCode] = useState('');
+    const [assignedPassword, setAssignedPassword] = useState('');
     const [selectedRejectReason, setSelectedRejectReason] = useState('Document Mismatch');
     const [isSubmittingAction, setIsSubmittingAction] = useState(false);
 
@@ -241,7 +263,7 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                         remarks: ownerRev.remarks || ownerRev.comments || 'Awaiting Owner decision.',
                         status: ownerRev.status || (item.status === 'approved' ? 'Approved' : 'Pending'),
                     },
-                    password: d.password || item.passwordBeforeApproval || (account ? '••••••••' : ''),
+                    password: d.password || item.passwordBeforeApproval || (account ? '••••••••' : '') || generateDefaultManagerPassword(d.name, d.mobile || d.phoneNumber, email),
                     status: item.status === 'approved' ? 'active' : item.status === 'rejected' ? 'rejected' : item.status === 'ready_for_interview' ? 'ready_for_interview' : 'pending',
                     managerCode: d.managerCode || d.specialCode || account?.specialCode || account?.employeeCode || '',
                     referralCode: d.referralCode || '',
@@ -308,7 +330,7 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                         remarks: app.reviewNotes?.[0]?.text || 'Application submitted',
                         status: app.status === 'approved' ? 'Approved' : 'Pending',
                     },
-                    password: app.generatedCredentials?.password || app.password || (account ? '••••••••' : ''),
+                    password: app.generatedCredentials?.password || app.password || app.roleData?.password || (account ? '••••••••' : '') || generateDefaultManagerPassword(applicant.name, applicant.phone, email),
                     status: app.status === 'approved' ? 'active' : app.status === 'rejected' ? 'rejected' : 'pending',
                     managerCode: account?.specialCode || account?.employeeCode || '',
                     referralCode: app.referralCode || '',
@@ -464,6 +486,10 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
         });
         setActionRemarks('');
         setAssignedCode(req.managerCode || `${codePrefix}-${(req.state || req.district || 'GEN').slice(0, 3).toUpperCase()}-00${req.srNo}`);
+        const defaultPass = req.password && !req.password.includes('••')
+            ? req.password
+            : generateDefaultManagerPassword(req.name, req.mobile, req.email);
+        setAssignedPassword(defaultPass);
     };
 
     const submitAction = async () => {
@@ -486,7 +512,7 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
             if (req.rawItem && req.rawItem.requestType) {
                 const endpoint = `/api/ems/requests/${req.id}/${isAccept ? 'approve' : 'reject'}`;
                 const payload = isAccept
-                    ? { comments: actionRemarks || 'Approved by Admin', specialCode: assignedCode }
+                    ? { comments: actionRemarks || 'Approved by Admin', specialCode: assignedCode, password: assignedPassword }
                     : { reason: (selectedRejectReason || actionRemarks || '').trim(), comments: actionRemarks || `Rejected: ${selectedRejectReason}` };
                 response = await apiClient.post(endpoint, payload);
             } else {
@@ -496,15 +522,20 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                     status: isAccept ? 'approved' : 'rejected',
                     note: actionRemarks || (isAccept ? 'Approved by Admin' : `Rejected: ${selectedRejectReason}`),
                     specialCode: assignedCode,
+                    password: assignedPassword,
                 });
             }
 
             if (response && response.success !== false) {
                 const credentials = response.data?.generatedCredentials || response.generatedCredentials || null;
-                if (isAccept && credentials) {
+                if (isAccept) {
                     setApprovalDialog({
                         isOpen: true,
-                        credentials,
+                        credentials: {
+                            email: credentials?.email || req.email,
+                            specialCode: credentials?.specialCode || assignedCode,
+                            password: credentials?.password || assignedPassword,
+                        },
                         applicantName: req.name,
                     });
                 }
@@ -515,6 +546,7 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                             return {
                                 ...item,
                                 status: isAccept ? 'active' : 'rejected',
+                                password: isAccept ? (assignedPassword || item.password) : item.password,
                                 managerCode: isAccept ? (assignedCode || item.managerCode) : item.managerCode,
                                 reviewByOwner: {
                                     reviewerName: currentUser?.name || 'Admin',
@@ -548,7 +580,8 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
     };
 
     const copyCredentials = (req: ManagerRequestData) => {
-        const text = `${roleTitle} Credentials\nEmail: ${req.email}\nPassword: ${req.password || 'Pass@1234'}\nCode: ${req.managerCode || 'N/A'}`;
+        const pass = req.password || generateDefaultManagerPassword(req.name, req.mobile, req.email);
+        const text = `${roleTitle} Credentials\nEmail: ${req.email}\nPassword: ${pass}\nCode: ${req.managerCode || 'N/A'}\nLogin URL: https://admin.yaroapp.in/login`;
         navigator.clipboard.writeText(text);
         toast.success(`${roleTitle} credentials copied to clipboard!`);
     };
@@ -807,7 +840,7 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                                         <td className="py-4 px-4">
                                             <div className="flex items-center gap-1.5">
                                                 <span className="font-mono text-xs bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-md">
-                                                    {showPasswords[req.id] ? (req.password || 'Pass@1234') : '••••••••'}
+                                                    {showPasswords[req.id] ? (req.password || generateDefaultManagerPassword(req.name, req.mobile, req.email)) : '••••••••'}
                                                 </span>
                                                 <button
                                                     onClick={() => togglePasswordVisibility(req.id)}
@@ -817,7 +850,7 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                                                     {showPasswords[req.id] ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
                                                 </button>
                                                 <button
-                                                    onClick={() => copyText(req.password || 'Pass@1234', 'Password')}
+                                                    onClick={() => copyText(req.password || generateDefaultManagerPassword(req.name, req.mobile, req.email), 'Password')}
                                                     className="p-1 hover:bg-slate-200 dark:hover:bg-slate-800 rounded text-slate-400 hover:text-slate-600"
                                                     title="Copy Password"
                                                 >
@@ -1011,13 +1044,13 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                                         <label className="text-xs text-slate-400 uppercase font-semibold">Password</label>
                                         <div className="flex items-center justify-between bg-slate-950 p-2.5 rounded-lg border border-slate-700 mt-1">
                                             <span className="font-mono text-sm">
-                                                {showPasswords[selectedReq.id] ? (selectedReq.password || 'Pass@1234') : '••••••••••••'}
+                                                {showPasswords[selectedReq.id] ? (selectedReq.password || generateDefaultManagerPassword(selectedReq.name, selectedReq.mobile, selectedReq.email)) : '••••••••••••'}
                                             </span>
                                             <div className="flex items-center gap-2">
                                                 <button onClick={() => togglePasswordVisibility(selectedReq.id)} className="text-slate-400 hover:text-white">
                                                     {showPasswords[selectedReq.id] ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                                 </button>
-                                                <button onClick={() => copyText(selectedReq.password || 'Pass@1234', 'Password')} className="text-cyan-400 hover:text-cyan-300">
+                                                <button onClick={() => copyText(selectedReq.password || generateDefaultManagerPassword(selectedReq.name, selectedReq.mobile, selectedReq.email), 'Password')} className="text-cyan-400 hover:text-cyan-300">
                                                     <Copy className="w-4 h-4" />
                                                 </button>
                                             </div>
@@ -1137,6 +1170,26 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                                         className="w-full mt-1 px-3.5 py-2 text-sm rounded-xl bg-slate-950 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
                                         placeholder="e.g. CM-DEL-001"
                                     />
+                                </div>
+                                <div>
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-xs text-slate-400 uppercase font-semibold">Assigned Login Password</label>
+                                        <button
+                                            type="button"
+                                            onClick={() => setAssignedPassword(generateDefaultManagerPassword(confirmModal.request?.name, confirmModal.request?.mobile, confirmModal.request?.email))}
+                                            className="text-xs text-cyan-400 hover:text-cyan-300 font-medium"
+                                        >
+                                            Reset to Default
+                                        </button>
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={assignedPassword}
+                                        onChange={(e) => setAssignedPassword(e.target.value)}
+                                        className="w-full mt-1 px-3.5 py-2 text-sm font-mono rounded-xl bg-slate-950 border border-slate-700 text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20"
+                                        placeholder="e.g. Cou@1234!1"
+                                    />
+                                    <p className="text-[11px] text-slate-500 mt-1">This password will be securely encrypted for country manager portal login.</p>
                                 </div>
                                 <div>
                                     <label className="text-xs text-slate-400 uppercase font-semibold">Approval Remarks (Optional)</label>
