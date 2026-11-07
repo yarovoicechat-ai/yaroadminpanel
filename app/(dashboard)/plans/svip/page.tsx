@@ -186,11 +186,12 @@ export default function SvipPlansPage() {
     try {
       const res = await apiClient.get<any>('/api/svip-plans/admin/all');
       if (res.data?.plans) {
-        setPlans(res.data.plans);
-        if (!previewPlan && res.data.plans.length > 0) {
-          setPreviewPlan(res.data.plans[0]);
+        const filtered = res.data.plans.filter((p: SvipPlanItem) => p.level <= 5);
+        setPlans(filtered);
+        if (!previewPlan && filtered.length > 0) {
+          setPreviewPlan(filtered[0]);
         } else if (previewPlan) {
-          const match = res.data.plans.find((p: SvipPlanItem) => p._id === previewPlan._id);
+          const match = filtered.find((p: SvipPlanItem) => p._id === previewPlan._id);
           if (match) setPreviewPlan(match);
         }
       }
@@ -433,11 +434,11 @@ export default function SvipPlansPage() {
             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white flex items-center gap-3">
               SVIP Tier Builder
               <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/40 text-xs font-mono">
-                13 TIERS (VIP+ & SVIP 1-12)
+                6 TIERS (SVIP+ to SVIP 5)
               </Badge>
             </h1>
             <p className="text-sm md:text-base text-slate-400 mt-2 max-w-3xl">
-              Create, configure, and manage VIP+ (Level 0) through SVIP 12 tiers: prices, duration, renewal behavior, Hero Badge/Tag/Bubble asset uploads, 30 hexagonal exclusive privileges, and real-time mobile simulator.
+              Create, configure, and manage SVIP+ (Level 0) through SVIP 5 tiers strictly matching the YaroApp mobile application: pricing, duration, Hero Badge/Tag/Bubble asset uploads, 29 exclusive privileges, and real-time mobile simulator.
             </p>
           </div>
 
@@ -887,14 +888,14 @@ export default function SvipPlansPage() {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div>
                     <label className="text-xs font-semibold text-slate-300 block mb-1">
-                      Tier Level (0 for VIP+, 1-12) *
+                      Tier Level (0 for SVIP+, 1 to 5) *
                     </label>
                     <Input
                       type="number"
                       min={0}
-                      max={99}
+                      max={5}
                       value={formData.level}
-                      onChange={(e) => setFormData({ ...formData, level: Number(e.target.value) })}
+                      onChange={(e) => setFormData({ ...formData, level: Math.min(5, Math.max(0, Number(e.target.value))) })}
                       className="bg-slate-800 border-white/10 text-xs"
                       required
                     />
@@ -905,7 +906,7 @@ export default function SvipPlansPage() {
                       Plan Name *
                     </label>
                     <Input
-                      placeholder="e.g. VIP+, SVIP 1 Knight, SVIP 12 Sovereign Emperor"
+                      placeholder="e.g. VIP+ Lynx, SVIP 1 Knight, SVIP 5 Sovereign Supreme"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                       className="bg-slate-800 border-white/10 text-xs"

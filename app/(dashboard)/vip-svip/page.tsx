@@ -224,7 +224,8 @@ export default function VipSvipManagementPage() {
                 setVipList(pkgs);
             }
             if (svipRes?.success) {
-                const tiers = svipRes.data?.tiers || (Array.isArray(svipRes.data) ? svipRes.data : []);
+                const rawTiers = svipRes.data?.tiers || (Array.isArray(svipRes.data) ? svipRes.data : []);
+                const tiers = rawTiers.filter((t: any) => (t.level ?? 1) <= 5);
                 setSvipList(tiers);
                 if (tiers.length > 0 && !previewSelectedTier) {
                     setPreviewSelectedTier(tiers[0]);
@@ -380,12 +381,13 @@ export default function VipSvipManagementPage() {
     // SVIP Create / Edit
     const handleOpenCreateSvip = () => {
         setEditingSvip(null);
+        const nextLevel = Math.min(5, svipList.length + 1);
         setSvipForm({
             name: '',
             slug: '',
-            level: svipList.length + 1,
+            level: nextLevel,
             description: '',
-            badge: '⚡ SVIP KING',
+            badge: `⚡ SVIP ${nextLevel}`,
             icon: 'crown',
             crown: '👑',
             price: 500000,
@@ -403,10 +405,10 @@ export default function VipSvipManagementPage() {
             enableParticles: true,
             enableAntiKick: true,
             enableInvisibleVisit: false,
-            entryTagText: '👑 KING OF KINGS HAS ARRIVED',
+            entryTagText: '👑 SVIP NOBILITY HAS ARRIVED',
             avatarFrameUrl: '',
             isActive: true,
-            sortOrder: svipList.length + 1,
+            sortOrder: nextLevel,
         });
         setIsSvipModalOpen(true);
     };
