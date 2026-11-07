@@ -12,10 +12,13 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
+import { extractRequestRecords, fetchRequestRecords } from '@/lib/requestRecords';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApprovalSuccessDialog, ApprovalCredentials } from '@/components/requests/ApprovalSuccessDialog';
 import { DeleteRequestButton } from '@/components/requests/DeleteRequestButton';
 import TeamReports from '@/components/team/TeamReports';
+import DocumentPreview from '@/components/requests/DocumentPreview';
+import { requestDocumentUrl } from '@/lib/documentFiles';
 import Link from 'next/link';
 
 export type StatusType = 'active' | 'pending' | 'ready_for_interview' | 'rejected';
@@ -163,28 +166,18 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
         setLoading(true);
         try {
             const [emsRes, appRes, accountsRes] = await Promise.allSettled([
-                apiClient.get('/api/ems/requests', { requestType }),
-                apiClient.get('/api/recruitment/admin/applications', { role: roleSlug, limit: 100 }),
-                apiClient.get('/api/admin/employees/list', { targetRole: targetEmployeeRole }),
+                fetchRequestRecords(apiClient.get.bind(apiClient), '/api/ems/requests', { requestType }),
+                fetchRequestRecords(apiClient.get.bind(apiClient), '/api/recruitment/admin/applications', { role: roleSlug }),
+                fetchRequestRecords(apiClient.get.bind(apiClient), '/api/admin/employees/list', { targetRole: targetEmployeeRole }),
             ]);
 
-            const extractArray = (res: any, preferredKeys: string[] = []): any[] => {
-                if (!res) return [];
-                const val = res.status === 'fulfilled' ? res.value : res;
-                if (!val || val.success === false) return [];
-                if (Array.isArray(val)) return val;
-                if (Array.isArray(val?.data)) return val.data;
-                if (Array.isArray(val?.data?.data)) return val.data.data;
-                for (const key of preferredKeys) {
-                    if (Array.isArray(val?.[key])) return val[key];
-                    if (Array.isArray(val?.data?.[key])) return val.data[key];
-                }
-                return [];
-            };
+            if (emsRes.status === 'rejected' && appRes.status === 'rejected') {
+                throw emsRes.reason;
+            }
 
-            const emsItems: any[] = extractArray(emsRes, ['requests', 'data']);
-            const appItems: any[] = extractArray(appRes, ['applications', 'data']);
-            const employeeAccounts: any[] = extractArray(accountsRes, ['data', 'employees', 'users']);
+            const emsItems = extractRequestRecords(emsRes);
+            const appItems = extractRequestRecords(appRes);
+            const employeeAccounts = extractRequestRecords(accountsRes);
 
             const emsMap = new Map<string, any>();
             if (Array.isArray(emsItems)) {
@@ -234,10 +227,10 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                     registrationDate: item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN') : '—',
                     aadhaarNo: d.aadhaarNo || '',
                     panNo: d.panNo || '',
-                    aadhaarFront: d.adharFront || d.aadhaarFront || item.documents?.find((doc: any) => doc.documentType === 'aadhaar_front' || doc.name?.includes('aadhaar_front'))?.url || d.documents?.find((doc: any) => doc.documentType === 'aadhaar_front' || doc.name?.includes('aadhaar_front'))?.url || '',
-                    aadhaarBack: d.adharBack || d.aadhaarBack || item.documents?.find((doc: any) => doc.documentType === 'aadhaar_back' || doc.name?.includes('aadhaar_back'))?.url || d.documents?.find((doc: any) => doc.documentType === 'aadhaar_back' || doc.name?.includes('aadhaar_back'))?.url || '',
-                    panCard: d.pan || d.panCard || item.documents?.find((doc: any) => doc.documentType === 'pan' || doc.name?.includes('pan'))?.url || d.documents?.find((doc: any) => doc.documentType === 'pan' || doc.name?.includes('pan'))?.url || '',
-                    resumeUrl: d.resumeUrl || d.resume || item.documents?.find((doc: any) => doc.documentType === 'resume' || doc.name?.includes('resume'))?.url || d.documents?.find((doc: any) => doc.documentType === 'resume' || doc.name?.includes('resume'))?.url || '',
+                    aadhaarFront: requestDocumentUrl(item, 'front'),
+                    aadhaarBack: requestDocumentUrl(item, 'back'),
+                    panCard: requestDocumentUrl(item, 'pan'),
+                    resumeUrl: requestDocumentUrl(item, 'resume'),
                     qualification: d.qualification || '',
                     experience: d.experience || '',
                     previousCompany: d.previousCompany || '',
@@ -966,9 +959,7 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                                     <div className="bg-slate-900/60 p-3.5 rounded-xl border border-slate-800/60">
                                         <p className="text-xs text-slate-500 uppercase">Resume / CV</p>
                                         {selectedReq.resumeUrl ? (
-                                            <a href={selectedReq.resumeUrl} target="_blank" rel="noreferrer" className="text-cyan-400 underline text-xs font-semibold mt-1 inline-flex items-center gap-1">
-                                                <File className="w-3.5 h-3.5" /> Open Resume
-                                            </a>
+                                            <DocumentPreview url={selectedReq.resumeUrl} title="Resume" className="mt-2" />
                                         ) : (
                                             <p className="text-slate-400 text-xs mt-1">Not Uploaded</p>
                                         )}
@@ -981,13 +972,14 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                                         { title: 'Aadhaar Card Front', url: selectedReq.aadhaarFront },
                                         { title: 'Aadhaar Card Back', url: selectedReq.aadhaarBack },
                                         { title: 'PAN Card', url: selectedReq.panCard },
+                                        { title: 'Selfie with ID', url: requestDocumentUrl(selectedReq.rawItem, 'selfie') },
                                     ].map((doc, idx) => (
                                         <div key={idx} className="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
                                             <p className="text-xs font-semibold text-slate-400 mb-2">{doc.title}</p>
                                             {doc.url ? (
                                                 <div className="relative group cursor-pointer" onClick={() => setImageZoom({ isOpen: true, url: doc.url, title: doc.title, zoom: 1, rotate: 0 })}>
-                                                    <img src={doc.url} alt={doc.title} className="w-full h-44 object-contain rounded-lg bg-black/40 border border-slate-700" />
-                                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-lg">
+                                                    <DocumentPreview url={doc.url} title={doc.title} className="w-full min-h-44 rounded-lg bg-black/40 border border-slate-700" />
+                                                    <div className="pointer-events-none absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-lg">
                                                         <ZoomIn className="w-6 h-6 text-white" />
                                                     </div>
                                                 </div>
@@ -1222,18 +1214,15 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                                 <button onClick={() => setImageZoom((prev) => ({ ...prev, rotate: (prev.rotate + 90) % 360 }))} className="p-1.5 hover:bg-white/20 rounded">
                                     <RotateCw className="w-5 h-5" />
                                 </button>
-                                <a href={imageZoom.url} download target="_blank" rel="noreferrer" className="p-1.5 hover:bg-white/20 rounded">
-                                    <Download className="w-5 h-5" />
-                                </a>
                                 <button onClick={() => setImageZoom({ isOpen: false, url: '', title: '', zoom: 1, rotate: 0 })} className="p-1.5 hover:bg-white/20 rounded">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
                         </div>
                         <div className="overflow-hidden max-h-[80vh] flex items-center justify-center">
-                            <img
-                                src={imageZoom.url}
-                                alt={imageZoom.title}
+                            <DocumentPreview
+                                url={imageZoom.url}
+                                title={imageZoom.title}
                                 style={{ transform: `scale(${imageZoom.zoom}) rotate(${imageZoom.rotate}deg)`, transition: 'transform 0.2s ease' }}
                                 className="max-h-[75vh] max-w-full object-contain rounded-lg shadow-2xl"
                             />

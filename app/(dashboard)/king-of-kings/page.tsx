@@ -57,7 +57,7 @@ interface KingPrivilegeItem {
 
 interface KingPlanItem {
   _id: string;
-  tierKey: 'knight' | 'count' | 'duke' | 'prince' | 'king';
+  tierKey: 'viscount' | 'count' | 'marquis' | 'duke' | 'king' | string;
   name: string;
   level: number;
   title: string;
@@ -110,7 +110,7 @@ export default function KingOfKingsAdminPage() {
   }, []);
 
   const handleReseed = async () => {
-    if (!confirm('Reseed all 5 Nobility tiers (Knight, Count, Duke, Prince, King) with 11 reward assets and 13 exclusive privileges?')) {
+    if (!confirm('Reseed all 5 Nobility tiers (Viscount, Count, Marquis, Duke, King) with 11 reward assets and 13 exclusive privileges?')) {
       return;
     }
     setLoading(true);
@@ -206,7 +206,7 @@ export default function KingOfKingsAdminPage() {
             </span>
           </h1>
           <p className="text-sm text-slate-400 mt-1 max-w-2xl">
-            Configure Knight, Count, Duke, Prince, and King nobility tiers. Manage pricing, daily coin rewards, 11 reward assets, and 13 exclusive privileges matching Screenshot 2.
+            Configure Viscount, Count, Marquis, Duke, and King nobility tiers. Manage pricing, daily coin rewards, 11 reward assets, and 13 exclusive privileges matching Screenshot 2.
           </p>
         </div>
 
@@ -408,7 +408,7 @@ export default function KingOfKingsAdminPage() {
 
             {/* Nobility Tabs */}
             <div className="flex items-center justify-around px-2 border-b border-amber-500/20 text-[11px] pb-2 font-bold">
-              {['Knight', 'Count', 'Duke', 'Prince', 'King'].map((rank) => {
+              {['Viscount', 'Count', 'Marquis', 'Duke', 'King'].map((rank) => {
                 const isActive = selectedPlan?.name.toLowerCase().includes(rank.toLowerCase());
                 return (
                   <span
@@ -428,11 +428,11 @@ export default function KingOfKingsAdminPage() {
               <div className="w-24 h-24 rounded-full border-2 border-yellow-400 bg-[#2A1705] flex items-center justify-center relative shadow-lg shadow-amber-500/30">
                 <Crown className="w-12 h-12 text-yellow-300" />
                 <div className="absolute -bottom-2 bg-gradient-to-r from-amber-600 to-yellow-600 px-3 py-0.5 rounded-full border border-yellow-300 text-[9px] font-black text-amber-950 uppercase">
-                  {selectedPlan?.name || 'KNIGHT'}
+                  {selectedPlan?.name || 'VISCOUNT'}
                 </div>
               </div>
               <div className="text-sm font-black text-yellow-200 mt-3">
-                {selectedPlan?.title || 'Imperial Knight'}
+                {selectedPlan?.title || 'Imperial Viscount'}
               </div>
               <div className="text-[10px] text-yellow-400/80">
                 Daily {selectedPlan?.dailyRewardCoins.toLocaleString()} Coins • {selectedPlan?.privileges?.filter(p => p.unlocked).length || 4} Unlocked Powers

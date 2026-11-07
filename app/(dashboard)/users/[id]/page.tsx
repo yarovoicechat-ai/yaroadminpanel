@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, Save, ShieldCheck, User as UserIcon, Coins, Award, Globe, Calendar, Ban, CheckCircle, Info, Mail, Phone, Lock, Edit3 } from 'lucide-react';
+import { ArrowLeft, Save, ShieldCheck, User as UserIcon, Coins, Award, Globe, Calendar, Ban, CheckCircle, Info, Mail, Phone, Lock, Edit3, Trash2, Sparkles, RefreshCw, CheckSquare, Square, AlertTriangle, Layers, Image as ImageIcon } from 'lucide-react';
 import type { User } from '@/types/models';
 import { getAdminAvatar } from '@/lib/avatar';
 
@@ -23,6 +23,17 @@ export default function UserDetailPage() {
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+
+    // Assets & Cosmetics Management States
+    const [userAssets, setUserAssets] = useState<{
+        storeInventory: any[];
+        equippedCosmetics: Record<string, string | null>;
+        officialIdActive: boolean;
+    } | null>(null);
+    const [loadingAssets, setLoadingAssets] = useState(false);
+    const [selectedAssetIds, setSelectedAssetIds] = useState<string[]>([]);
+    const [clearingCosmetics, setClearingCosmetics] = useState(false);
+    const [removingAssets, setRemovingAssets] = useState(false);
 
     // Edit form states
     const [name, setName] = useState('');
@@ -76,7 +87,99 @@ export default function UserDetailPage() {
             }
         };
         fetchUserDetails();
+        fetchUserAssets();
     }, [id]);
+
+    const fetchUserAssets = async () => {
+        if (!id) return;
+        try {
+            setLoadingAssets(true);
+            const res = await apiClient.get<any>(`/api/store/admin/user/${id}/assets`);
+            if (res.success && res.data) {
+                setUserAssets(res.data);
+            }
+        } catch (err: any) {
+            console.warn('Failed to load user assets:', err);
+        } finally {
+            setLoadingAssets(false);
+        }
+    };
+
+    const handleClearCosmetics = async () => {
+        if (!confirm('Are you sure you want to remove ALL equipped frames, entries, tags, chat bubbles, mic waves, and custom ID from this user?')) return;
+        try {
+            setClearingCosmetics(true);
+            const res = await apiClient.post<any>(`/api/store/admin/user/${id}/clear-cosmetics`, {});
+            if (res.success) {
+                toast.success('All equipped cosmetics (Frame, Entry, Tag, ID) cleared successfully!');
+                fetchUserAssets();
+            } else {
+                toast.error(res.message || 'Failed to clear cosmetics');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to clear cosmetics');
+        } finally {
+            setClearingCosmetics(false);
+        }
+    };
+
+    const handleRemoveSelectedAssets = async () => {
+        if (!selectedAssetIds.length) return;
+        if (!confirm(`Are you sure you want to remove ${selectedAssetIds.length} selected asset(s) from this user\'s inventory?`)) return;
+        try {
+            setRemovingAssets(true);
+            const res = await apiClient.post<any>(`/api/store/admin/user/${id}/remove-assets`, {
+                inventoryItemIds: selectedAssetIds,
+            });
+            if (res.success) {
+                toast.success(`${selectedAssetIds.length} asset(s) removed successfully!`);
+                setSelectedAssetIds([]);
+                fetchUserAssets();
+            } else {
+                toast.error(res.message || 'Failed to remove assets');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to remove assets');
+        } finally {
+            setRemovingAssets(false);
+        }
+    };
+
+    const handleRemoveAllAssets = async () => {
+        if (!confirm('CAUTION: Are you sure you want to completely remove ALL assets and empty this user\'s inventory? This action cannot be undone.')) return;
+        try {
+            setRemovingAssets(true);
+            const res = await apiClient.post<any>(`/api/store/admin/user/${id}/remove-assets`, {
+                removeAll: true,
+            });
+            if (res.success) {
+                toast.success('All inventory assets and cosmetics have been removed!');
+                setSelectedAssetIds([]);
+                fetchUserAssets();
+            } else {
+                toast.error(res.message || 'Failed to remove all assets');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to remove all assets');
+        } finally {
+            setRemovingAssets(false);
+        }
+    };
+
+    const handleToggleSelectAll = () => {
+        const inventory = userAssets?.storeInventory || [];
+        if (selectedAssetIds.length === inventory.length) {
+            setSelectedAssetIds([]);
+        } else {
+            setSelectedAssetIds(inventory.map((item: any) => String(item._id || item.itemId)));
+        }
+    };
+
+    const handleToggleAsset = (itemId: string) => {
+        setSelectedAssetIds(prev =>
+            prev.includes(itemId) ? prev.filter(i => i !== itemId) : [...prev, itemId]
+        );
+    };
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -459,6 +562,234 @@ export default function UserDetailPage() {
                     </Card>
                 </div>
             </div>
+
+            {/* User Cosmetics & Inventory Asset Management */}
+            <Card className="border-slate-800 bg-[#161520] shadow-xl mt-6">
+                <CardHeader className="border-b border-slate-800/80 pb-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <div className="flex items-center gap-2 text-xs font-semibold text-fuchsia-400 uppercase tracking-wider mb-1">
+                            <Sparkles className="w-4 h-4" /> Asset & Cosmetics Control Center
+                        </div>
+                        <CardTitle className="text-xl font-bold text-white flex items-center gap-2">
+                            Equipped Cosmetics & Inventory Assets
+                            <Badge className="bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30">
+                                {userAssets?.storeInventory?.length || 0} Assets
+                            </Badge>
+                        </CardTitle>
+                        <CardDescription className="text-slate-400 text-xs">
+                            View active equipped items (frames, entries, tags, ID), clear cosmetics, or select and delete inventory assets.
+                        </CardDescription>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <Button
+                            type="button"
+                            variant="outline"
+                            onClick={fetchUserAssets}
+                            disabled={loadingAssets}
+                            className="bg-slate-900 border-slate-800 hover:bg-slate-800 text-slate-300 text-xs"
+                        >
+                            <RefreshCw className={`w-3.5 h-3.5 mr-1.5 ${loadingAssets ? 'animate-spin' : ''}`} />
+                            Refresh
+                        </Button>
+
+                        <Button
+                            type="button"
+                            onClick={handleClearCosmetics}
+                            disabled={clearingCosmetics}
+                            className="bg-amber-600 hover:bg-amber-500 text-slate-950 font-bold text-xs"
+                        >
+                            <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                            {clearingCosmetics ? 'Clearing...' : 'Clear All Equipped Cosmetics (Frame, Entry, Tag, ID)'}
+                        </Button>
+                    </div>
+                </CardHeader>
+
+                <CardContent className="p-6 space-y-6">
+                    {/* Currently Equipped Summary */}
+                    <div className="rounded-xl border border-slate-800/80 bg-slate-950/60 p-4">
+                        <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider mb-3">
+                            Currently Equipped Status
+                        </h4>
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3 text-xs">
+                            <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                                <span className="text-slate-400 block text-[11px] mb-1">Equipped Frame</span>
+                                <span className="font-bold text-white truncate block">
+                                    {userAssets?.equippedCosmetics?.equippedFrame || <span className="text-slate-500 font-normal">None</span>}
+                                </span>
+                            </div>
+                            <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                                <span className="text-slate-400 block text-[11px] mb-1">Equipped Entry</span>
+                                <span className="font-bold text-white truncate block">
+                                    {userAssets?.equippedCosmetics?.equippedEntry || <span className="text-slate-500 font-normal">None</span>}
+                                </span>
+                            </div>
+                            <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                                <span className="text-slate-400 block text-[11px] mb-1">Equipped Tag</span>
+                                <span className="font-bold text-white truncate block">
+                                    {userAssets?.equippedCosmetics?.equippedTag || <span className="text-slate-500 font-normal">None</span>}
+                                </span>
+                            </div>
+                            <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                                <span className="text-slate-400 block text-[11px] mb-1">Equipped Bubble</span>
+                                <span className="font-bold text-white truncate block">
+                                    {userAssets?.equippedCosmetics?.equippedChatBubble || <span className="text-slate-500 font-normal">None</span>}
+                                </span>
+                            </div>
+                            <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                                <span className="text-slate-400 block text-[11px] mb-1">Equipped Mic Wave</span>
+                                <span className="font-bold text-white truncate block">
+                                    {userAssets?.equippedCosmetics?.equippedMicWave || <span className="text-slate-500 font-normal">None</span>}
+                                </span>
+                            </div>
+                            <div className="p-2.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                                <span className="text-slate-400 block text-[11px] mb-1">Vanity Custom ID</span>
+                                <span className="font-bold text-cyan-400 font-mono truncate block">
+                                    {userAssets?.equippedCosmetics?.equippedCustomId || <span className="text-slate-500 font-normal">None</span>}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Batch Selection Controls */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2">
+                        <div className="flex items-center gap-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={handleToggleSelectAll}
+                                className="bg-slate-900 border-slate-800 text-xs text-slate-300 hover:text-white"
+                            >
+                                {userAssets?.storeInventory?.length && selectedAssetIds.length === userAssets.storeInventory.length ? (
+                                    <><CheckSquare className="w-3.5 h-3.5 mr-1.5 text-fuchsia-400" /> Deselect All</>
+                                ) : (
+                                    <><Square className="w-3.5 h-3.5 mr-1.5" /> Select All ({userAssets?.storeInventory?.length || 0})</>
+                                )}
+                            </Button>
+                            {selectedAssetIds.length > 0 && (
+                                <span className="text-xs text-fuchsia-400 font-bold">
+                                    {selectedAssetIds.length} item(s) selected
+                                </span>
+                            )}
+                        </div>
+
+                        <div className="flex items-center gap-3">
+                            <Button
+                                type="button"
+                                onClick={handleRemoveSelectedAssets}
+                                disabled={selectedAssetIds.length === 0 || removingAssets}
+                                className="bg-red-600 hover:bg-red-500 text-white font-bold text-xs"
+                            >
+                                <Trash2 className="w-3.5 h-3.5 mr-1.5" />
+                                {removingAssets ? 'Removing...' : `Remove Selected (${selectedAssetIds.length})`}
+                            </Button>
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={handleRemoveAllAssets}
+                                disabled={!userAssets?.storeInventory?.length || removingAssets}
+                                className="bg-red-950/40 border-red-800/60 text-red-300 hover:bg-red-900/50 text-xs font-bold"
+                            >
+                                <AlertTriangle className="w-3.5 h-3.5 mr-1.5 text-red-400" />
+                                Remove All Assets
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Inventory Items List */}
+                    {loadingAssets ? (
+                        <div className="py-12 text-center text-slate-400 text-xs">
+                            <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-fuchsia-400" />
+                            Loading user inventory assets...
+                        </div>
+                    ) : !userAssets?.storeInventory?.length ? (
+                        <div className="py-8 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
+                            No store inventory assets found for this user.
+                        </div>
+                    ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                            {userAssets.storeInventory.map((item: any, idx: number) => {
+                                const itemKey = String(item._id || item.itemId || idx);
+                                const isSelected = selectedAssetIds.includes(itemKey);
+                                const isExpired = item.expiresAt && new Date(item.expiresAt).getTime() < Date.now();
+
+                                return (
+                                    <div
+                                        key={itemKey}
+                                        onClick={() => handleToggleAsset(itemKey)}
+                                        className={`p-3 rounded-xl border cursor-pointer transition-all flex items-start gap-3 select-none ${
+                                            isSelected
+                                                ? 'bg-fuchsia-950/40 border-fuchsia-500 shadow-lg shadow-fuchsia-950/30'
+                                                : 'bg-slate-900/70 border-slate-800 hover:border-slate-700'
+                                        }`}
+                                    >
+                                        <div className="mt-0.5">
+                                            {isSelected ? (
+                                                <CheckSquare className="w-4 h-4 text-fuchsia-400" />
+                                            ) : (
+                                                <Square className="w-4 h-4 text-slate-600" />
+                                            )}
+                                        </div>
+
+                                        <div className="w-10 h-10 rounded-lg bg-slate-950 border border-slate-800 flex items-center justify-center overflow-hidden shrink-0">
+                                            {item.imageUrl || item.animationUrl ? (
+                                                <img
+                                                    src={item.imageUrl || item.animationUrl}
+                                                    alt={item.name}
+                                                    className="w-full h-full object-contain"
+                                                    onError={(e: any) => { e.currentTarget.style.display = 'none'; }}
+                                                />
+                                            ) : (
+                                                <ImageIcon className="w-4 h-4 text-slate-600" />
+                                            )}
+                                        </div>
+
+                                        <div className="flex-1 min-w-0">
+                                            <div className="font-bold text-white text-xs truncate">
+                                                {item.name}
+                                            </div>
+                                            <div className="flex items-center gap-1.5 mt-0.5">
+                                                <span className="text-[10px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded font-medium">
+                                                    {item.category || 'Asset'}
+                                                </span>
+                                                {isExpired && (
+                                                    <span className="text-[10px] bg-red-950/80 text-red-400 px-1.5 py-0.5 rounded">
+                                                        Expired
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 mt-1 truncate">
+                                                {item.expiresAt ? `Expires: ${new Date(item.expiresAt).toLocaleDateString()}` : 'Permanent'}
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm(`Remove "${item.name}" from user inventory?`)) {
+                                                    apiClient.post(`/api/store/admin/user/${id}/remove-assets`, {
+                                                        inventoryItemIds: [itemKey],
+                                                    }).then(() => {
+                                                        toast.success(`Removed "${item.name}"`);
+                                                        fetchUserAssets();
+                                                    });
+                                                }
+                                            }}
+                                            className="p-1 rounded text-slate-500 hover:text-red-400 hover:bg-slate-800/80 transition-colors"
+                                            title="Delete asset"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
         </div>
     );
 }

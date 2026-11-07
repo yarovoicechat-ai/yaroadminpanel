@@ -12,6 +12,9 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
+import { fetchRequestRecords } from '@/lib/requestRecords';
+import DocumentPreview from '@/components/requests/DocumentPreview';
+import { requestDocumentUrl } from '@/lib/documentFiles';
 import { useAuth } from '@/contexts/AuthContext';
 import { ApprovalSuccessDialog, ApprovalCredentials } from '@/components/requests/ApprovalSuccessDialog';
 import { DeleteRequestButton } from '@/components/requests/DeleteRequestButton';
@@ -81,7 +84,7 @@ const isValidImageUrl = (url?: string | null): boolean => {
     if (!url || typeof url !== 'string') return false;
     const trimmed = url.trim();
     if (trimmed === '' || trimmed === 'Upload' || trimmed === 'undefined' || trimmed === 'null' || trimmed === '—') return false;
-    return trimmed.startsWith('http://') || trimmed.startsWith('https://') || trimmed.startsWith('data:image/') || trimmed.startsWith('/');
+    return trimmed.startsWith('http://') || trimmed.startsWith('https://') || /^data:(image\/|application\/)/i.test(trimmed) || trimmed.startsWith('/');
 };
 
 // Initial Mock Data Fallback for Admin Requests
@@ -161,9 +164,8 @@ export default function AdminRequestsPage() {
     const fetchRequests = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await apiClient.get('/api/ems/requests', { requestType: 'Admin Request' });
-            const items: any[] = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : Array.isArray(res?.data?.requests) ? res.data.requests : (res?.data?.data ?? []);
-            if (res && res.success !== false) {
+            const items = await fetchRequestRecords(apiClient.get.bind(apiClient), '/api/ems/requests', { requestType: 'Admin Request', role: 'admin' });
+            {
                 const apiData: AdminRequestData[] = items.map((item: any, idx: number) => {
                     const d = item.data || {};
                     const opRev = item.approvedBy?.find((a: any) => a.role === 'operator') || item.reviewByOperator || {};
@@ -200,9 +202,10 @@ export default function AdminRequestsPage() {
                         registrationDate: item.createdAt ? new Date(item.createdAt).toLocaleString('en-IN') : '—',
                         aadhaarNo: d.aadhaarNo || '',
                         panNo: d.panNo || '',
-                        aadhaarFront: canViewSecrets ? d.adharFront || d.aadhaarFront || item.documents?.find((doc: any) => doc.documentType === 'aadhaar_front' || doc.name?.includes('aadhaar_front'))?.url || d.documents?.find((doc: any) => doc.documentType === 'aadhaar_front' || doc.name?.includes('aadhaar_front'))?.url || '' : '',
-                        aadhaarBack: canViewSecrets ? d.adharBack || d.aadhaarBack || item.documents?.find((doc: any) => doc.documentType === 'aadhaar_back' || doc.name?.includes('aadhaar_back'))?.url || d.documents?.find((doc: any) => doc.documentType === 'aadhaar_back' || doc.name?.includes('aadhaar_back'))?.url || '' : '',
-                        panCard: canViewSecrets ? d.pan || d.panCard || item.documents?.find((doc: any) => doc.documentType === 'pan' || doc.name?.includes('pan'))?.url || d.documents?.find((doc: any) => doc.documentType === 'pan' || doc.name?.includes('pan'))?.url || '' : '',
+                        aadhaarFront: canViewSecrets ? requestDocumentUrl(item, 'front') : '',
+                        aadhaarBack: canViewSecrets ? requestDocumentUrl(item, 'back') : '',
+                        panCard: canViewSecrets ? requestDocumentUrl(item, 'pan') : '',
+                        resumeUrl: canViewSecrets ? requestDocumentUrl(item, 'resume') : '',
                         qualification: d.qualification || '',
                         experience: d.experience || '',
                         previousCompany: d.previousCompany || '',
@@ -229,8 +232,6 @@ export default function AdminRequestsPage() {
                     };
                 });
                 setRequests(apiData);
-            } else {
-                setRequests([]);
             }
         } catch (err: any) {
             console.error('Failed to load admin requests:', err);
@@ -1080,7 +1081,7 @@ export default function AdminRequestsPage() {
                                                             onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarFront, title: `${req.name} - Aadhaar Front`, zoom: 1, rotate: 0 })}
                                                             className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-blue-500 transition-all"
                                                         >
-                                                            <img src={req.aadhaarFront} alt="Aadhaar Front" className="w-12 h-8 object-cover" />
+                                                            <DocumentPreview url={req.aadhaarFront} title="Aadhaar Front" className="w-24 min-h-12" />
                                                             <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
                                                                 <Eye className="w-3.5 h-3.5" />
                                                             </div>
@@ -1107,7 +1108,7 @@ export default function AdminRequestsPage() {
                                                             onClick={() => setImageZoom({ isOpen: true, url: req.aadhaarBack, title: `${req.name} - Aadhaar Back`, zoom: 1, rotate: 0 })}
                                                             className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-blue-500 transition-all"
                                                         >
-                                                            <img src={req.aadhaarBack} alt="Aadhaar Back" className="w-12 h-8 object-cover" />
+                                                            <DocumentPreview url={req.aadhaarBack} title="Aadhaar Back" className="w-24 min-h-12" />
                                                             <div className="absolute inset-0 bg-blue-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
                                                                 <Eye className="w-3.5 h-3.5" />
                                                             </div>
@@ -1134,7 +1135,7 @@ export default function AdminRequestsPage() {
                                                             onClick={() => setImageZoom({ isOpen: true, url: req.panCard, title: `${req.name} - PAN Card`, zoom: 1, rotate: 0 })}
                                                             className="relative group/img overflow-hidden rounded-lg border border-slate-300 dark:border-slate-700 shadow-xs hover:border-emerald-500 transition-all"
                                                         >
-                                                            <img src={req.panCard} alt="PAN Card" className="w-12 h-8 object-cover" />
+                                                            <DocumentPreview url={req.panCard} title="PAN Card" className="w-24 min-h-12" />
                                                             <div className="absolute inset-0 bg-emerald-900/40 opacity-0 group-hover/img:opacity-100 flex items-center justify-center text-white transition-opacity">
                                                                 <Eye className="w-3.5 h-3.5" />
                                                             </div>
@@ -1155,14 +1156,7 @@ export default function AdminRequestsPage() {
                                         {/* 17. Resume / CV */}
                                         <td className="p-3.5 text-center whitespace-nowrap">
                                             {req.resumeUrl && isValidImageUrl(req.resumeUrl) ? (
-                                                <a
-                                                    href={req.resumeUrl}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-700 font-semibold text-[11px] hover:underline"
-                                                >
-                                                    <FileText className="w-3.5 h-3.5" /> View CV
-                                                </a>
+                                                <DocumentPreview url={req.resumeUrl} title="Resume" />
                                             ) : (
                                                 <span className="text-slate-400 text-xs font-mono">—</span>
                                             )}
@@ -1582,7 +1576,7 @@ export default function AdminRequestsPage() {
                                                     className="relative group rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 cursor-pointer shadow-xs"
                                                 >
                                                     {selectedReq.aadhaarFront ? (
-                                                        <img src={selectedReq.aadhaarFront} alt="Aadhaar Front" className="w-full h-36 object-cover" />
+                                                        <DocumentPreview url={selectedReq.aadhaarFront} title="Aadhaar Front" className="w-full min-h-36" />
                                                     ) : (
                                                         <div className="w-full h-36 bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center text-xs">No Image Uploaded</div>
                                                     )}
@@ -1604,7 +1598,7 @@ export default function AdminRequestsPage() {
                                                     className="relative group rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 cursor-pointer shadow-xs"
                                                 >
                                                     {selectedReq.aadhaarBack ? (
-                                                        <img src={selectedReq.aadhaarBack} alt="Aadhaar Back" className="w-full h-36 object-cover" />
+                                                        <DocumentPreview url={selectedReq.aadhaarBack} title="Aadhaar Back" className="w-full min-h-36" />
                                                     ) : (
                                                         <div className="w-full h-36 bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center text-xs">No Image Uploaded</div>
                                                     )}
@@ -1626,7 +1620,7 @@ export default function AdminRequestsPage() {
                                                     className="relative group rounded-lg overflow-hidden border border-slate-300 dark:border-slate-700 cursor-pointer shadow-xs"
                                                 >
                                                     {selectedReq.panCard ? (
-                                                        <img src={selectedReq.panCard} alt="PAN Card" className="w-full h-36 object-cover" />
+                                                        <DocumentPreview url={selectedReq.panCard} title="PAN Card" className="w-full min-h-36" />
                                                     ) : (
                                                         <div className="w-full h-36 bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center text-xs">No Image Uploaded</div>
                                                     )}
@@ -1788,14 +1782,6 @@ export default function AdminRequestsPage() {
                                     >
                                         <RotateCw className="w-4 h-4" />
                                     </button>
-                                    <a
-                                        href={imageZoom.url}
-                                        download="document-preview.png"
-                                        className="p-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition-colors"
-                                        title="Download Document"
-                                    >
-                                        <Download className="w-4 h-4" />
-                                    </a>
                                     <button
                                         onClick={() => setImageZoom({ isOpen: false, url: '', title: '', zoom: 1, rotate: 0 })}
                                         className="p-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white transition-colors ml-2"
@@ -1808,9 +1794,9 @@ export default function AdminRequestsPage() {
                             {/* Image Container */}
                             <div className="p-8 flex items-center justify-center min-h-[420px] max-h-[75vh] overflow-auto bg-slate-950">
                                 {imageZoom.url ? (
-                                    <img
-                                        src={imageZoom.url}
-                                        alt="Document Full View"
+                                    <DocumentPreview
+                                        url={imageZoom.url}
+                                        title={imageZoom.title}
                                         style={{
                                             transform: `scale(${imageZoom.zoom}) rotate(${imageZoom.rotate}deg)`,
                                             transition: 'transform 0.2s ease-in-out'
