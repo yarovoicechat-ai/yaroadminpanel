@@ -292,12 +292,12 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                     pincode: applicant.pincode || '',
                     fullAddress: applicant.address || '',
                     registrationDate: app.createdAt ? new Date(app.createdAt).toLocaleString('en-IN') : '—',
-                    aadhaarNo: app.roleData?.aadhaarNo || '',
-                    panNo: app.roleData?.panNo || '',
-                    aadhaarFront: adharFront,
-                    aadhaarBack: adharBack,
-                    panCard: panCard,
-                    resumeUrl: resumeDoc,
+                    aadhaarNo: app.roleData?.aadhaarNo || app.roleData?.aadhaarNumber || applicant.aadhaarNo || applicant.aadhaar || app.aadhaarNo || app.data?.aadhaarNo || '',
+                    panNo: app.roleData?.panNo || app.roleData?.panNumber || applicant.panNo || applicant.pan || app.panNo || app.data?.panNo || '',
+                    aadhaarFront: requestDocumentUrl(app, 'front') || adharFront,
+                    aadhaarBack: requestDocumentUrl(app, 'back') || adharBack,
+                    panCard: requestDocumentUrl(app, 'pan') || panCard,
+                    resumeUrl: requestDocumentUrl(app, 'resume') || resumeDoc,
                     qualification: app.roleData?.qualification || '',
                     experience: app.roleData?.experience || '',
                     previousCompany: app.roleData?.previousCompany || '',
@@ -969,9 +969,9 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                                 {/* Document Images Grid */}
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     {[
-                                        { title: 'Aadhaar Card Front', url: selectedReq.aadhaarFront },
-                                        { title: 'Aadhaar Card Back', url: selectedReq.aadhaarBack },
-                                        { title: 'PAN Card', url: selectedReq.panCard },
+                                        { title: 'Aadhaar Card Front', url: selectedReq.aadhaarFront || requestDocumentUrl(selectedReq.rawItem, 'front') },
+                                        { title: 'Aadhaar Card Back', url: selectedReq.aadhaarBack || requestDocumentUrl(selectedReq.rawItem, 'back') },
+                                        { title: 'PAN Card', url: selectedReq.panCard || requestDocumentUrl(selectedReq.rawItem, 'pan') },
                                         { title: 'Selfie with ID', url: requestDocumentUrl(selectedReq.rawItem, 'selfie') },
                                     ].map((doc, idx) => (
                                         <div key={idx} className="bg-slate-900 p-4 rounded-xl border border-slate-800 text-center">
