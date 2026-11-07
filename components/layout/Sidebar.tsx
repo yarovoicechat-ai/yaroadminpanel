@@ -41,12 +41,20 @@ interface SidebarSection {
 
 export const roleConfig: Record<string, { label: string; color: string; bg: string; border: string; icon: any }> = {
     countryManager: { label: 'Country Manager', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', icon: Globe },
+    'country-manager': { label: 'Country Manager', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', icon: Globe },
+    countrymanager: { label: 'Country Manager', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', icon: Globe },
     stateManager: { label: 'State Manager', color: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/30', icon: Globe },
+    'state-manager': { label: 'State Manager', color: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/30', icon: Globe },
+    statemanager: { label: 'State Manager', color: 'text-teal-400', bg: 'bg-teal-500/10', border: 'border-teal-500/30', icon: Globe },
+    'super-admin': { label: 'Super Admin', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/30', icon: ShieldCheck },
+    superadmin: { label: 'Super Admin', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/30', icon: ShieldCheck },
+    bdLeader: { label: 'BD Leader', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', icon: Shield },
+    'bd-leader': { label: 'BD Leader', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', icon: Shield },
+    bdleader: { label: 'BD Leader', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', icon: Shield },
     owner: { label: 'Owner', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', icon: Crown },
     operator: { label: 'Operator', color: 'text-cyan-400', bg: 'bg-cyan-500/10', border: 'border-cyan-500/30', icon: UserCheck },
     superAdmin: { label: 'Super Admin', color: 'text-violet-400', bg: 'bg-violet-500/10', border: 'border-violet-500/30', icon: ShieldCheck },
     admin: { label: 'Admin', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/30', icon: ShieldCheck },
-    bdLeader: { label: 'BD Leader', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/30', icon: Shield },
     bd: { label: 'BD', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/30', icon: Award },
     agency: { label: 'Agency', color: 'text-sky-400', bg: 'bg-sky-500/10', border: 'border-sky-500/30', icon: Briefcase },
     coinSeller: { label: 'Coin Seller', color: 'text-yellow-400', bg: 'bg-yellow-500/10', border: 'border-yellow-500/30', icon: Coins },
@@ -285,9 +293,9 @@ const adminSidebarSections: SidebarSection[] = [
                 ]
             },
             {
-                name: 'Country Manager', icon: Globe, category: 'Users', submenu: [{ name: 'Create', href: '/country-managers/create' }, { name: 'Requests', href: '/country-managers/request' }, { name: 'List', href: '/country-managers' }]
+                name: 'Country Manager', icon: Globe, category: 'Users', submenu: [{ name: 'Create', href: '/country-managers/create' }, { name: 'Requests', href: '/country-managers/request' }, { name: 'List', href: '/country-managers' }, { name: 'Referral Links', href: '/referrals/links' }]
             },
-            { name: 'State Manager', icon: Globe, category: 'Users', submenu: [{ name: 'Create', href: '/state-managers/create' }, { name: 'Requests', href: '/state-managers/request' }, { name: 'List', href: '/state-managers' }]
+            { name: 'State Manager', icon: Globe, category: 'Users', submenu: [{ name: 'Create', href: '/state-managers/create' }, { name: 'Requests', href: '/state-managers/request' }, { name: 'List', href: '/state-managers' }, { name: 'Referral Links', href: '/referrals/links' }]
             },
             {
                 name: 'Operator',
@@ -539,7 +547,8 @@ export default function Sidebar() {
         const fetchPermissions = async () => {
             try {
                 if (!user) return;
-                if (['owner', 'countryManager', 'stateManager', 'superAdmin', 'admin', 'agency', 'operator', 'coinSeller', 'customerSupport'].includes(user.role)) {
+                const normalizedUserRole = (user.role || '').toLowerCase().replace(/[-_\s]/g, '');
+                if (['owner', 'countrymanager', 'statemanager', 'superadmin', 'admin', 'agency', 'operator', 'coinseller', 'customersupport'].includes(normalizedUserRole) || ['owner', 'countryManager', 'country-manager', 'stateManager', 'state-manager', 'superAdmin', 'super-admin', 'admin', 'agency', 'operator', 'coinSeller', 'customerSupport'].includes(user.role)) {
                     setAllowedMenus(['*']);
                     setAllowedPages(['*']);
                     setPermissionsLoaded(true);

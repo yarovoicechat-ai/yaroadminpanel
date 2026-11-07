@@ -28,8 +28,10 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 
-const ROLE_HIERARCHY = ['operator', 'superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport', 'coinSeller'];
+const ROLE_HIERARCHY = ['countryManager', 'stateManager', 'operator', 'superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport', 'coinSeller'];
 const ROLE_LABELS: Record<string, string> = {
+    countryManager: 'Country Manager',
+    stateManager: 'State Manager',
     bdLeader: 'BD Leader', bd: 'BD', host: 'Host', customerSupport: 'Customer Support',
     operator: 'Operator',
     superAdmin: 'Super Admin',
@@ -38,6 +40,8 @@ const ROLE_LABELS: Record<string, string> = {
     coinSeller: 'Diamond Seller',
 };
 const ROLE_COLORS: Record<string, string> = {
+    countryManager: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+    stateManager: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
     operator: 'bg-violet-500/20 text-violet-300 border-violet-500/30',
     superAdmin: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
     admin: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
@@ -172,13 +176,24 @@ export default function EmployeesPage() {
                         Manage your team hierarchy — Operator → Super Admin → Admin → Agency → Diamond Seller
                     </p>
                 </div>
-                <Button
-                    onClick={() => setCreateOpen(true)}
-                    className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white font-bold"
-                >
-                    <UserPlus size={16} />
-                    Add Employee
-                </Button>
+                <div className="flex items-center gap-3">
+                    <Link href="/referrals/links">
+                        <Button
+                            variant="outline"
+                            className="flex items-center gap-2 border-indigo-500/40 text-indigo-300 hover:bg-indigo-500/10 font-bold"
+                        >
+                            <Users size={16} />
+                            Referral Links
+                        </Button>
+                    </Link>
+                    <Button
+                        onClick={() => setCreateOpen(true)}
+                        className="flex items-center gap-2 bg-primary hover:bg-primary/80 text-white font-bold"
+                    >
+                        <UserPlus size={16} />
+                        Add Employee
+                    </Button>
+                </div>
             </div>
 
             {/* Role Filter Tabs */}

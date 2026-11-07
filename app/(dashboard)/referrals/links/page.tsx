@@ -19,7 +19,7 @@ export default function ReferralLinks() {
 
   const adminFormBaseUrl = localOrigin || 'https://admin.yaroapp.in';
 
-  const referralCode = (user as any)?.referralCode || (user as any)?.employeeCode || (user as any)?.specialCode || (user as any)?.mithiId || user?.meethiId || (user?.role === 'owner' ? 'OS000001' : '');
+  const referralCode = (user as any)?.referralCode || (user as any)?.employeeCode || (user as any)?.specialCode || (user as any)?.mithiId || user?.meethiId || (user as any)?.userId || (user?.role === 'owner' ? 'OS000001' : '');
 
   const links = [
     {
@@ -105,10 +105,18 @@ export default function ReferralLinks() {
     owner: ['Country Manager', 'State Manager', 'Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Operator', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
     operator: ['Country Manager', 'State Manager', 'Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support', 'Coin Seller'],
     countryManager: ['State Manager', 'Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
+    'country-manager': ['State Manager', 'Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
+    countrymanager: ['State Manager', 'Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
     stateManager: ['Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
+    'state-manager': ['Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
+    statemanager: ['Super Admin', 'Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
     superAdmin: ['Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
+    'super-admin': ['Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
+    superadmin: ['Admin', 'BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
     admin: ['BD Leader', 'BD Officer', 'Agency', 'Host', 'Customer Service Support'],
     bdLeader: ['BD Officer', 'Agency', 'Host'],
+    'bd-leader': ['BD Officer', 'Agency', 'Host'],
+    bdleader: ['BD Officer', 'Agency', 'Host'],
     bd: ['Agency', 'Host'],
     agency: ['Host'],
     coinSeller: [],
@@ -116,7 +124,8 @@ export default function ReferralLinks() {
   };
 
   const userRole = user?.role || 'user';
-  const allowedRoleNames = roleAllowedLinksMap[userRole] || ['Admin', 'Agency', 'Host', 'Customer Service Support'];
+  const normalizedRole = userRole.toLowerCase().replace(/[-_\s]/g, '');
+  const allowedRoleNames = roleAllowedLinksMap[normalizedRole] || roleAllowedLinksMap[userRole] || ['Admin', 'Agency', 'Host', 'Customer Service Support'];
 
   const visibleLinks = links.filter(link => allowedRoleNames.includes(link.role));
 
