@@ -168,30 +168,39 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                 apiClient.get('/api/admin/employees/list', { targetRole: targetEmployeeRole }),
             ]);
 
-            const emsItems: any[] = emsRes.status === 'fulfilled' && emsRes.value?.success !== false
-                ? (Array.isArray(emsRes.value) ? emsRes.value : (emsRes.value?.data?.requests || emsRes.value?.data || []))
-                : [];
+            const extractArray = (res: any, preferredKeys: string[] = []): any[] => {
+                if (!res) return [];
+                const val = res.status === 'fulfilled' ? res.value : res;
+                if (!val || val.success === false) return [];
+                if (Array.isArray(val)) return val;
+                if (Array.isArray(val?.data)) return val.data;
+                if (Array.isArray(val?.data?.data)) return val.data.data;
+                for (const key of preferredKeys) {
+                    if (Array.isArray(val?.[key])) return val[key];
+                    if (Array.isArray(val?.data?.[key])) return val.data[key];
+                }
+                return [];
+            };
 
-            const appItems: any[] = appRes.status === 'fulfilled' && appRes.value?.success !== false
-                ? (appRes.value?.data?.applications || appRes.value?.data || [])
-                : [];
-
-            const employeeAccounts: any[] = accountsRes.status === 'fulfilled' && accountsRes.value?.success !== false
-                ? (Array.isArray(accountsRes.value?.data) ? accountsRes.value.data : [])
-                : [];
+            const emsItems: any[] = extractArray(emsRes, ['requests', 'data']);
+            const appItems: any[] = extractArray(appRes, ['applications', 'data']);
+            const employeeAccounts: any[] = extractArray(accountsRes, ['data', 'employees', 'users']);
 
             const emsMap = new Map<string, any>();
-            emsItems.forEach((item) => {
-                const email = (item?.data?.email || item?.email || '').toLowerCase().trim();
-                if (email) emsMap.set(email, item);
-                if (item._id) emsMap.set(String(item._id), item);
-            });
+            if (Array.isArray(emsItems)) {
+                emsItems.forEach((item) => {
+                    const email = (item?.data?.email || item?.email || '').toLowerCase().trim();
+                    if (email) emsMap.set(email, item);
+                    if (item._id) emsMap.set(String(item._id), item);
+                });
+            }
 
             const mergedList: ManagerRequestData[] = [];
             const seenKeys = new Set<string>();
 
             // 1. Process EMS items first
-            emsItems.forEach((item: any, idx: number) => {
+            if (Array.isArray(emsItems)) {
+                emsItems.forEach((item: any, idx: number) => {
                 const d = item.data || {};
                 const email = (d.email || item.email || '').toLowerCase().trim();
                 const key = email || String(item._id);
@@ -250,9 +259,11 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                     accountDoc: account,
                 });
             });
+        }
 
             // 2. Add any recruitment application items not already in EMS
-            appItems.forEach((app: any) => {
+            if (Array.isArray(appItems)) {
+                appItems.forEach((app: any) => {
                 const applicant = app.applicant || {};
                 const email = (applicant.email || '').toLowerCase().trim();
                 const key = email || String(app._id);
@@ -315,8 +326,9 @@ export default function RegionalManagerRequestPage({ region }: RegionalManagerRe
                     accountDoc: account,
                 });
             });
+        }
 
-            setRequests(mergedList);
+        setRequests(mergedList);
         } catch (err: any) {
             console.error(`Failed to load ${roleTitle} requests:`, err);
             toast.error(err?.message || `Failed to load ${roleTitle} requests`);
