@@ -1,3 +1,4 @@
+import { cacheAdminUser, clearAdminUserCache } from './adminUserCache';
 import { apiClient } from './apiClient';
 import { API_ENDPOINTS } from './apiEndpoints';
 
@@ -38,9 +39,10 @@ export async function login(email: string, password: string): Promise<{ user: Us
             const { user, token, refreshToken } = response.data;
 
             // Store token and user in localStorage
+            clearAdminUserCache();
             localStorage.setItem('admin_token', token);
             localStorage.setItem('admin_refresh_token', refreshToken);
-            localStorage.setItem('admin_user', JSON.stringify(user));
+            cacheAdminUser(user);
 
             return {
                 user: normalizeUser(user),
@@ -77,7 +79,7 @@ export async function getUser(token: string): Promise<User | null> {
         const response = await apiClient.get(API_ENDPOINTS.ADMIN.PROFILE);
         if (response.success && response.data) {
             const user = response.data;
-            localStorage.setItem('admin_user', JSON.stringify(user));
+            cacheAdminUser(user);
             return normalizeUser(user);
         }
 

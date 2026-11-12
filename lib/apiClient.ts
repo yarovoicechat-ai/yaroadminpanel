@@ -32,9 +32,18 @@ class ApiClient {
 
     private getEffectiveBaseUrl(): string {
         if (typeof window !== 'undefined' && ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
-            return process.env.NEXT_PUBLIC_LOCAL_API_BASE_URL || 'http://localhost:3001';
+            return process.env.NEXT_PUBLIC_LOCAL_API_BASE_URL || 'http://localhost:3101';
         }
         return process.env.NEXT_PUBLIC_API_BASE_URL || this.baseURL || 'http://localhost:3001';
+    }
+
+    private getRequestUrl(endpoint: string): string {
+        // Public application forms use the admin site's proxy so mobile
+        // browsers do not need a separate cross-origin API connection.
+        if (typeof window !== 'undefined' && /^\/api\/recruitment(?:\/|\?|$)/.test(endpoint)) {
+            return `${window.location.origin}${endpoint}`;
+        }
+        return `${this.getEffectiveBaseUrl()}${endpoint}`;
     }
 
     private getHeaders(): HeadersInit {
@@ -54,6 +63,12 @@ class ApiClient {
     }
 
     private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
+        if (response.status === 413) {
+            throw { success: false, message: 'The attached documents are too large. Please choose smaller files and submit again.' };
+        }
+        if ([502, 503, 504].includes(response.status)) {
+            throw { success: false, message: 'The application service is temporarily unavailable. Please try again shortly.' };
+        }
         let data: any;
         const contentType = response.headers.get('content-type');
 
@@ -104,10 +119,10 @@ class ApiClient {
     }
 
     private catchNetworkError(error: any): never {
-        if (error instanceof TypeError && error.message === 'Failed to fetch') {
+        if (error instanceof TypeError && /fetch|network|load failed/i.test(error.message)) {
             throw {
                 success: false,
-                message: `Backend server connection failed (${this.getEffectiveBaseUrl()}). Please check if the server is running.`,
+                message: 'Could not connect. Please check your internet connection and try again.',
             };
         }
         throw error;
@@ -115,8 +130,7 @@ class ApiClient {
 
     async get<T = any>(endpoint: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
         try {
-            const baseUrl = this.getEffectiveBaseUrl();
-            const url = new URL(`${baseUrl}${endpoint}`);
+            const url = new URL(this.getRequestUrl(endpoint));
             if (params) {
                 const actualParams: Record<string, any> = (params.params && typeof params.params === 'object' && !Array.isArray(params.params))
                     ? (params.params as Record<string, any>)
@@ -141,8 +155,7 @@ class ApiClient {
 
     async post<T = any>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
         try {
-            const baseUrl = this.getEffectiveBaseUrl();
-            const response = await fetch(`${baseUrl}${endpoint}`, {
+            const response = await fetch(this.getRequestUrl(endpoint), {
                 method: 'POST',
                 headers: this.getHeaders(),
                 body: JSON.stringify(body),
@@ -156,8 +169,7 @@ class ApiClient {
 
     async patch<T = any>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
         try {
-            const baseUrl = this.getEffectiveBaseUrl();
-            const response = await fetch(`${baseUrl}${endpoint}`, {
+            const response = await fetch(this.getRequestUrl(endpoint), {
                 method: 'PATCH',
                 headers: this.getHeaders(),
                 body: JSON.stringify(body),
@@ -171,8 +183,7 @@ class ApiClient {
 
     async put<T = any>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
         try {
-            const baseUrl = this.getEffectiveBaseUrl();
-            const response = await fetch(`${baseUrl}${endpoint}`, {
+            const response = await fetch(this.getRequestUrl(endpoint), {
                 method: 'PUT',
                 headers: this.getHeaders(),
                 body: JSON.stringify(body),
@@ -186,8 +197,7 @@ class ApiClient {
 
     async delete<T = any>(endpoint: string): Promise<ApiResponse<T>> {
         try {
-            const baseUrl = this.getEffectiveBaseUrl();
-            const response = await fetch(`${baseUrl}${endpoint}`, {
+            const response = await fetch(this.getRequestUrl(endpoint), {
                 method: 'DELETE',
                 headers: this.getHeaders(),
             });
@@ -200,7 +210,6 @@ class ApiClient {
 
     async uploadFile<T = any>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
         try {
-            const baseUrl = this.getEffectiveBaseUrl();
             const headers: HeadersInit = {};
 
             if (typeof window !== 'undefined') {
@@ -210,7 +219,7 @@ class ApiClient {
                 }
             }
 
-            const response = await fetch(`${baseUrl}${endpoint}`, {
+            const response = await fetch(this.getRequestUrl(endpoint), {
                 method: 'POST',
                 headers,
                 body: formData,

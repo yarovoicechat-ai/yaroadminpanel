@@ -1,1 +1,5 @@
-export { default } from '@/components/team/TeamReports';
+import TeamReports from '@/components/team/TeamReports';
+
+export default function TeamPage() {
+    return <TeamReports />;
+}

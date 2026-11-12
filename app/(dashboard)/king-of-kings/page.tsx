@@ -47,7 +47,7 @@ import { apiClient } from '@/lib/apiClient';
 import { suggestAssetName } from '@/lib/aiAssetName';
 
 // 15 Official Royal Privileges strictly matching KingOfKingsScreen in the App
-export const APP_ROYAL_PRIVILEGES = [
+const APP_ROYAL_PRIVILEGES = [
   { key: 'kings_badge', name: 'Aristocracy Badge', icon: 'ribbon', desc: 'Exclusive nobility badge on your profile.', level: 1 },
   { key: 'exclusive_gifts', name: 'Aristocracy Gifts', icon: 'gift', desc: 'Exclusive gifts for nobility members.', level: 1 },
   { key: 'room_list_badge', name: 'Room List Badge', icon: 'home', desc: 'Nobility badge on the room list.', level: 1 },
@@ -65,7 +65,7 @@ export const APP_ROYAL_PRIVILEGES = [
   { key: 'store_discount', name: 'Store Discount', icon: 'pricetags', desc: 'Member discounts in the store.', level: 5 },
 ];
 
-export const FALLBACK_APP_KING_TIERS: KingPlanItem[] = [
+const FALLBACK_APP_KING_TIERS: KingPlanItem[] = [
   {
     _id: 'viscount_fallback',
     tierKey: 'viscount',

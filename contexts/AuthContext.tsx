@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { cacheAdminUser } from '@/lib/adminUserCache';
 import { User, getUser, login as apiLogin, logout as apiLogout } from '@/lib/auth';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -81,8 +82,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }
         }
 
-        localStorage.setItem('admin_token', data.token);
-        localStorage.setItem('admin_refresh_token', data.refreshToken);
         // Set cookie for middleware with SameSite=Lax for seamless route transitions
         document.cookie = `admin_token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
         document.cookie = `admin_refresh_token=${data.refreshToken}; path=/; max-age=86400; SameSite=Lax`;
@@ -117,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (user) {
             const updated = { ...user, profilePhoto: newDPUrl, avatar: newDPUrl };
             setUser(updated as any);
-            localStorage.setItem('admin_user', JSON.stringify(updated));
+            cacheAdminUser(updated);
         }
     };
 
@@ -125,7 +124,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (user) {
             const updated = { ...user, phone: newPhone, phoneNumber: newPhone, whatsappNumber: newPhone };
             setUser(updated as any);
-            localStorage.setItem('admin_user', JSON.stringify(updated));
+            cacheAdminUser(updated);
         }
     };
 
