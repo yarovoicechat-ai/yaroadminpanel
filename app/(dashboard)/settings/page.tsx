@@ -216,28 +216,10 @@ export default function SettingsPage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-slate-200">
                             <Radio size={20} className="text-primary" />
-                            Streaming & Call Configs
+                            Live & Chat Configuration
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-300">Video/Voice Call Rate (Coins/Minute)</label>
-                            <Input
-                                type="number"
-                                value={settings.callRatePerMinute}
-                                onChange={(e) => handleChange('callRatePerMinute', parseInt(e.target.value))}
-                                required
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-slate-300">Host Earning Rate Share (Coins/Minute)</label>
-                            <Input
-                                type="number"
-                                value={settings.hostSharePerMinute}
-                                onChange={(e) => handleChange('hostSharePerMinute', parseInt(e.target.value))}
-                                required
-                            />
-                        </div>
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-slate-300">Default 1 Chat Message Cost (Coins)</label>
                             <Input

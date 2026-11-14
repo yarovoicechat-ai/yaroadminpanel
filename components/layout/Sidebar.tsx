@@ -110,10 +110,11 @@ const managementSidebarSections: SidebarSection[] = [
         items: [
             { name: 'Team & Hosting Targets', href: '/team', icon: Users, category: 'Dashboard' },
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
-            { name: 'Live Rooms (Pin)', href: '/rooms', icon: Radio, category: 'Dashboard' },
+            { name: 'Party Rooms (Pin)', href: '/rooms', icon: Radio, category: 'Dashboard' },
             { name: 'Asset Distribution', href: '/store/distribute', icon: Sparkles, category: 'Dashboard' },
             { name: 'App Releases (APK)', href: '/app-releases', icon: Download, category: 'Dashboard' },
             { name: 'Screen Security & Code', href: '/screen-security', icon: ShieldCheck, category: 'Dashboard' },
+            { name: 'Video Live Rooms', href: '/live/rooms', icon: Radio, category: 'Dashboard' },
             { name: 'App Settings', href: '/settings', icon: Settings, category: 'Settings' },
             { name: 'Agora RTC Status', href: '/settings/communication/agora', icon: Radio, category: 'Settings' },
             { name: 'System Logs', href: '/logs', icon: Terminal, category: 'Developer' }
@@ -472,6 +473,7 @@ const adminSidebarSections: SidebarSection[] = [
         title: 'Live Analytics & Health',
         category: 'Reports',
         items: [
+            { name: 'Video Live Rooms', href: '/live/rooms', icon: Radio, category: 'Reports' },
             { name: 'Live User Map', href: '/analytics/live-map', icon: Globe, category: 'Reports' },
             { name: 'System Health Monitor', href: '/health', icon: Terminal, category: 'Reports' }
         ]
@@ -632,7 +634,7 @@ export default function Sidebar() {
                 const itemName = (item.name || '').toLowerCase();
                 const itemHref = (item.href || '').toLowerCase();
                 if (
-                    itemHref === '/rooms' || itemHref.startsWith('/rooms/') ||
+                    itemHref === '/live/rooms' || itemHref === '/rooms' || itemHref.startsWith('/rooms/') ||
                     itemHref === '/store/distribute' || itemHref.startsWith('/store/distribute') ||
                     itemHref === '/referrals' || itemHref.startsWith('/referrals') ||
                     itemHref === '/users' || itemHref.startsWith('/users') ||

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/apiClient';
-import { RevenueChart, EarningsChart, CallChart, DistributionChart } from '@/components/dashboard/Charts';
+import { RevenueChart, EarningsChart, LiveChart, DistributionChart } from '@/components/dashboard/Charts';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 import { toast } from 'sonner';
 import { User, Clock, Bell, Gem, Calendar, Users, TrendingUp, Sparkles, Phone, Mail, Award, ShieldCheck, Camera, Edit2, Check, DollarSign, Activity, AlertTriangle, Smartphone, Coins, Heart } from 'lucide-react';
@@ -30,7 +30,7 @@ export function MeethiChatStyleDashboard() {
           apiClient.get<any>(API_ENDPOINTS.ADMIN.PROFILE).catch(() => null),
           apiClient.get<any>(API_ENDPOINTS.DASHBOARD.REVENUE_CHART, { days: 7 }).catch(() => null),
           apiClient.get<any>(API_ENDPOINTS.DASHBOARD.EARNINGS_CHART, { days: 7 }).catch(() => null),
-          apiClient.get<any>(API_ENDPOINTS.DASHBOARD.CALL_TRENDS, { days: 7 }).catch(() => null),
+          apiClient.get<any>(API_ENDPOINTS.DASHBOARD.LIVE_TRENDS, { days: 7 }).catch(() => null),
           apiClient.get<any>(API_ENDPOINTS.DASHBOARD.COIN_DISTRIBUTION).catch(() => null)
         ]);
 
@@ -191,7 +191,7 @@ export function MeethiChatStyleDashboard() {
             </div>
             <div className="mt-3">
               <div className="text-2xl font-black text-white font-mono">{stats?.stats?.activeHosts || 0}</div>
-              <div className="text-[10px] text-teal-400 font-semibold mt-1">↪ Busy in calls</div>
+              <div className="text-[10px] text-teal-400 font-semibold mt-1">↪ Host activity</div>
             </div>
           </div>
 
@@ -258,9 +258,9 @@ export function MeethiChatStyleDashboard() {
         {/* Analytics Charts Grid 2 (2 Columns) */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-[#0d1527] border border-slate-800/80 rounded-2xl p-6 space-y-4 shadow-xl">
-            <h3 className="text-sm font-bold text-white tracking-wide">Call Trends</h3>
+            <h3 className="text-sm font-bold text-white tracking-wide">Live Trends</h3>
             <div className="h-64">
-              <CallChart data={callData} />
+              <LiveChart data={callData} />
             </div>
           </div>
 

@@ -1,4 +1,5 @@
 'use client';
+import LiveBroadcastManager from '@/components/LiveBroadcastManager';
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
@@ -53,13 +54,13 @@ export default function UserHistoryPage() {
     const userId = params.userId as string;
 
     const [user, setUser] = useState<User | null>(null);
-    const [activeTab, setActiveTab] = useState<'coins' | 'recharges' | 'calls'>('coins');
+    const [activeTab, setActiveTab] = useState<'coins' | 'recharges' | 'live'>('coins');
     const [loading, setLoading] = useState(true);
 
     // History data states
     const [coinHistory, setCoinHistory] = useState<CoinTransaction[]>([]);
     const [rechargeHistory, setRechargeHistory] = useState<RechargeRecord[]>([]);
-    const [callHistory, setCallHistory] = useState<CallRecord[]>([]);
+    const [liveSessions, setLiveSessions] = useState<any[]>([]);
 
     useEffect(() => {
         if (!userId) return;
@@ -88,9 +89,9 @@ export default function UserHistoryPage() {
                 }
 
                 // 4. Fetch Call history
-                const callRes = await apiClient.get(`/api/admin/calls/history?targetUserId=${userId}&limit=100`);
-                if (callRes.success && callRes.data && callRes.data.calls) {
-                    setCallHistory(callRes.data.calls);
+                const callRes = await apiClient.get(`/api/live/admin/rooms?hostId=${userId}&limit=100`);
+                if (callRes.success && Array.isArray(callRes.data)) {
+                    setLiveSessions(callRes.data);
                 }
 
             } catch (err: any) {
@@ -132,7 +133,7 @@ export default function UserHistoryPage() {
                     </Button>
                     <div>
                         <h2 className="text-2xl font-bold text-slate-100">User History Ledger</h2>
-                        <p className="text-xs text-slate-400">Viewing call, coin usage, and recharge ledger for <span className="text-fuchsia-400 font-bold">{user.name}</span> (UID: #{user.userId})</p>
+                        <p className="text-xs text-slate-400">Viewing live activity, coin usage, and recharge ledger for <span className="text-fuchsia-400 font-bold">{user.name}</span> (UID: #{user.userId})</p>
                     </div>
                 </div>
             </div>
@@ -159,8 +160,8 @@ export default function UserHistoryPage() {
                 </Card>
                 <Card className="bg-[#161520] border-slate-800">
                     <CardContent className="pt-4 pb-4">
-                        <div className="text-xs text-slate-400 font-semibold">Calls Logged</div>
-                        <div className="text-xl font-bold text-violet-400 mt-1">📞 {callHistory.length} calls</div>
+                        <div className="text-xs text-slate-400 font-semibold">Live Sessions</div>
+                        <div className="text-xl font-bold text-violet-400 mt-1">📞 {liveSessions.length} sessions</div>
                     </CardContent>
                 </Card>
             </div>
@@ -188,14 +189,14 @@ export default function UserHistoryPage() {
                     {activeTab === 'recharges' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-fuchsia-500 rounded" />}
                 </button>
                 <button
-                    onClick={() => setActiveTab('calls')}
-                    className={`pb-3 font-semibold text-sm transition-colors relative ${activeTab === 'calls' ? 'text-fuchsia-400' : 'text-slate-400 hover:text-slate-200'}`}
+                    onClick={() => setActiveTab('live')}
+                    className={`pb-3 font-semibold text-sm transition-colors relative ${activeTab === 'live' ? 'text-fuchsia-400' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                     <div className="flex items-center gap-2">
                         <PhoneCall className="h-4 w-4" />
-                        <span>Calls & Gifts</span>
+                        <span>Live Sessions</span>
                     </div>
-                    {activeTab === 'calls' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-fuchsia-500 rounded" />}
+                    {activeTab === 'live' && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-fuchsia-500 rounded" />}
                 </button>
             </div>
 
@@ -205,7 +206,7 @@ export default function UserHistoryPage() {
                     <Card className="bg-[#161520] border-slate-800 shadow-xl">
                         <CardHeader>
                             <CardTitle className="text-base text-slate-200">Coin Receiving Ledger</CardTitle>
-                            <CardDescription className="text-slate-400">Detailed coin receiving entries — amounts received by host via calls and gifts.</CardDescription>
+                            <CardDescription className="text-slate-400">Detailed coin receiving entries — amounts received by host via gifts.</CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Table>
@@ -288,51 +289,7 @@ export default function UserHistoryPage() {
                     </Card>
                 )}
 
-                {activeTab === 'calls' && (
-                    <Card className="bg-[#161520] border-slate-800 shadow-xl">
-                        <CardHeader>
-                            <CardTitle className="text-base text-slate-200">Calls & Gifts History</CardTitle>
-                            <CardDescription className="text-slate-400">Details for voice, video, and gift transactions during calls.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <Table>
-                                <TableHeader>
-                                    <TableRow className="border-slate-800 hover:bg-transparent">
-                                        <TableHead>Date</TableHead>
-                                        <TableHead>Caller</TableHead>
-                                        <TableHead>Host</TableHead>
-                                        <TableHead>Type</TableHead>
-                                        <TableHead>🪙 Coin Receiving</TableHead>
-                                        <TableHead>💎 Diamond Sending</TableHead>
-                                        <TableHead>Call Duration</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {callHistory.map((call) => (
-                                        <TableRow key={call.id} className="border-slate-800/50 hover:bg-slate-900/20 text-slate-300">
-                                            <TableCell className="text-xs">{new Date(call.date).toLocaleString()}</TableCell>
-                                            <TableCell className="font-medium">{call.callerName}</TableCell>
-                                            <TableCell className="font-medium text-fuchsia-400">{call.hostName}</TableCell>
-                                            <TableCell className="capitalize text-xs">
-                                                <Badge variant="outline" className={call.type === 'GIFT' ? 'border-pink-500/30 text-pink-400 bg-pink-500/5' : 'border-indigo-500/30 text-indigo-400 bg-indigo-500/5'}>
-                                                    {call.type === 'VOICE_CALL' ? 'Voice Call' : call.type}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell className="font-bold text-yellow-400">🪙 {(call.voice || call.gift || 0).toLocaleString()}</TableCell>
-                                            <TableCell className="font-bold text-sky-400">💎 {(call.hostEarning || 0).toLocaleString()}</TableCell>
-                                            <TableCell className="text-xs text-slate-400 font-mono">{call.duration || '-'}</TableCell>
-                                        </TableRow>
-                                    ))}
-                                    {callHistory.length === 0 && (
-                                        <TableRow>
-                                            <TableCell colSpan={7} className="text-center py-8 text-slate-500">No calls or gift logs found.</TableCell>
-                                        </TableRow>
-                                    )}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
-                )}
+                {activeTab === 'live' && <LiveBroadcastManager hostId={userId} />}
             </div>
         </div>
     );

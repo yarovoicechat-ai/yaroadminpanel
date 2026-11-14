@@ -97,7 +97,7 @@ type Report = {
 };
 
 const ALL_ROLES = ['owner', 'operator', 'superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host'] as const;
-const CHANNELS: Channel[] = ['voice', 'video', 'room'];
+const CHANNELS: Channel[] = ['room'];
 
 const ROLE_CONFIG: Record<string, { label: string; color: string; bg: string; border: string; icon: any }> = {
   owner: { label: 'Platform Owner', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/30', icon: Crown },
@@ -547,58 +547,6 @@ export default function TeamReports({ initialRootId = '' }: { initialRootId?: st
               </div>
             </div>
 
-            {/* 2. Voice Calling Target (1-on-1 Voice) */}
-            <div className="bg-gradient-to-br from-slate-900 to-emerald-950/30 p-5 rounded-2xl border border-emerald-500/20 shadow-lg">
-              <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-                <span className="font-semibold uppercase tracking-wider flex items-center gap-1.5 text-emerald-300">
-                  <Phone className="h-4 w-4 text-emerald-400" />
-                  Voice Calls
-                </span>
-                <span className="text-xs font-bold text-emerald-400">
-                  {calcPercent(voiceSummary?.achieved || 0, voiceSummary?.target)}%
-                </span>
-              </div>
-              <div className="text-xl font-bold text-white">
-                {formatNumber(voiceSummary?.achieved)} <span className="text-xs text-slate-400">/ {formatNumber(voiceSummary?.target)} Beans</span>
-              </div>
-              <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                <div
-                  className="bg-emerald-500 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${calcPercent(voiceSummary?.achieved || 0, voiceSummary?.target)}%` }}
-                />
-              </div>
-              <div className="mt-2.5 text-[11px] flex justify-between text-slate-400">
-                <span className="text-rose-400">Pending: {formatNumber(voiceSummary?.pending)} Beans</span>
-                <span>{voiceSummary?.unassignedHosts || 0} unassigned</span>
-              </div>
-            </div>
-
-            {/* 3. Video Calling Target (1-on-1 Video) */}
-            <div className="bg-gradient-to-br from-slate-900 to-cyan-950/30 p-5 rounded-2xl border border-cyan-500/20 shadow-lg">
-              <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
-                <span className="font-semibold uppercase tracking-wider flex items-center gap-1.5 text-cyan-300">
-                  <Video className="h-4 w-4 text-cyan-400" />
-                  Video Calls
-                </span>
-                <span className="text-xs font-bold text-cyan-400">
-                  {calcPercent(videoSummary?.achieved || 0, videoSummary?.target)}%
-                </span>
-              </div>
-              <div className="text-xl font-bold text-white">
-                {formatNumber(videoSummary?.achieved)} <span className="text-xs text-slate-400">/ {formatNumber(videoSummary?.target)} Beans</span>
-              </div>
-              <div className="w-full bg-slate-800 h-1.5 rounded-full mt-2 overflow-hidden">
-                <div
-                  className="bg-cyan-500 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${calcPercent(videoSummary?.achieved || 0, videoSummary?.target)}%` }}
-                />
-              </div>
-              <div className="mt-2.5 text-[11px] flex justify-between text-slate-400">
-                <span className="text-rose-400">Pending: {formatNumber(videoSummary?.pending)} Beans</span>
-                <span>{videoSummary?.unassignedHosts || 0} unassigned</span>
-              </div>
-            </div>
-
             {/* 4. Room Hosting Target (Party Room) */}
             <div className="bg-gradient-to-br from-slate-900 to-purple-950/30 p-5 rounded-2xl border border-purple-500/20 shadow-lg">
               <div className="flex items-center justify-between text-slate-400 text-xs mb-2">
@@ -628,17 +576,6 @@ export default function TeamReports({ initialRootId = '' }: { initialRootId?: st
 
           {/* Combined Performance Strip */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-900/40 p-4 rounded-2xl border border-slate-800 text-xs">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                <Phone className="h-4 w-4" />
-              </div>
-              <div>
-                <span className="text-slate-400 block">Total 1-on-1 Calls (Voice + Video):</span>
-                <span className="font-bold text-white text-sm">
-                  {formatNumber(totalCallsAchieved)} Beans achieved · {formatNumber(totalCallsPending)} pending of {formatNumber(totalCallsTarget)}
-                </span>
-              </div>
-            </div>
 
             <div className="flex items-center gap-3">
               <div className="p-2.5 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">

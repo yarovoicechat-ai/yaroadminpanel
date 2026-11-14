@@ -1,18 +1,2 @@
-'use client';
-
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-
-export default function CallsPage() {
-    const router = useRouter();
-
-    useEffect(() => {
-        router.replace('/live/rooms');
-    }, [router]);
-
-    return (
-        <div className="flex h-96 items-center justify-center text-zinc-400">
-            Redirecting to Voice Party Rooms...
-        </div>
-    );
-}
+import { redirect } from 'next/navigation';
+export default function Page() { redirect('/live/rooms'); }

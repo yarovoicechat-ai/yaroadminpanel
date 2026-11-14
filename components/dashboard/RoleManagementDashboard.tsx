@@ -22,7 +22,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
-import { CallChart, DistributionChart, EarningsChart, RevenueChart } from './Charts';
+import { LiveChart, DistributionChart, EarningsChart, RevenueChart } from './Charts';
 
 type DashboardStats = {
   totalUsers?: number;
@@ -129,7 +129,7 @@ export function RoleManagementDashboard() {
       apiClient.get<ProfileData>(API_ENDPOINTS.ADMIN.PROFILE).catch(() => null),
       apiClient.get<any[]>(API_ENDPOINTS.DASHBOARD.REVENUE_CHART, { days: 7 }).catch(() => null),
       apiClient.get<any[]>(API_ENDPOINTS.DASHBOARD.EARNINGS_CHART, { days: 60 }).catch(() => null),
-      apiClient.get<any[]>(API_ENDPOINTS.DASHBOARD.CALL_TRENDS, { days: 7 }).catch(() => null),
+      apiClient.get<any[]>(API_ENDPOINTS.DASHBOARD.LIVE_TRENDS, { days: 7 }).catch(() => null),
       apiClient.get<any[]>(API_ENDPOINTS.DASHBOARD.COIN_DISTRIBUTION).catch(() => null),
     ]);
 
@@ -198,8 +198,8 @@ export function RoleManagementDashboard() {
     } else if (normalizedRole === 'agency') {
       base.push(
         { label: 'Active Hosts', value: numberValue(stats.activeHosts), hint: 'Approved hosts', gradient: 'from-indigo-500/20 to-violet-500/5', glow: 'text-indigo-400 border-indigo-500/30', icon: BadgeCheck },
-        { label: 'Hosts Active Today', value: numberValue(stats.stats?.uniqueHostsActiveToday), hint: 'Call activity today', gradient: 'from-teal-500/20 to-emerald-500/5', glow: 'text-teal-400 border-teal-500/30', icon: Activity },
-        { label: 'Calls Today', value: numberValue(stats.stats?.callsToday), hint: `${formatNumber(numberValue(stats.stats?.minutesToday))} total minutes`, gradient: 'from-pink-500/20 to-rose-500/5', glow: 'text-pink-400 border-pink-500/30', icon: Phone },
+        { label: 'Hosts Active Today', value: numberValue(stats.stats?.uniqueHostsActiveToday), hint: 'Hosting activity today', gradient: 'from-teal-500/20 to-emerald-500/5', glow: 'text-teal-400 border-teal-500/30', icon: Activity },
+        { label: 'Live Sessions (7 days)', value: callData.reduce((sum, row) => sum + numberValue(row.sessions), 0), hint: `${callData.reduce((sum, row) => sum + numberValue(row.duration), 0)} live minutes`, gradient: 'from-pink-500/20 to-rose-500/5', glow: 'text-pink-400 border-pink-500/30', icon: Phone },
       );
     }
 
@@ -355,8 +355,8 @@ export function RoleManagementDashboard() {
         <ChartPanel title="Host Earnings Velocity" subtitle="Disbursed earnings recorded across the last 60 days">
           <EarningsChart data={earningsData} />
         </ChartPanel>
-        <ChartPanel title="Call Traffic & Duration" subtitle="Live voice call frequency and aggregate minutes">
-          <CallChart data={callData} />
+        <ChartPanel title="Live Sessions & Duration" subtitle="Video broadcasts and total live minutes">
+          <LiveChart data={callData} />
         </ChartPanel>
         <ChartPanel title="In-App Currency Distribution" subtitle="Active coin distribution across the hierarchy">
           <DistributionChart data={distributionData} />

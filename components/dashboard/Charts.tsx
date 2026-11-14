@@ -70,8 +70,8 @@ export function EarningsChart({ data = [] }: ChartProps) {
     );
 }
 
-export function CallChart({ data = [] }: ChartProps) {
-    if (!data || data.length === 0) return <div className="flex items-center justify-center h-full text-slate-500 text-xs font-medium">No call activity data</div>;
+export function LiveChart({ data = [] }: ChartProps) {
+    if (!data || data.length === 0) return <div className="flex items-center justify-center h-full text-slate-500 text-xs font-medium">No live activity data</div>;
     return (
         <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
@@ -81,7 +81,7 @@ export function CallChart({ data = [] }: ChartProps) {
                 <Tooltip
                     contentStyle={tooltipStyle}
                 />
-                <Line type="monotone" dataKey="calls" stroke="#38bdf8" strokeWidth={2.5} dot={{ r: 3, fill: '#38bdf8' }} activeDot={{ r: 5 }} name="Calls" />
+                <Line type="monotone" dataKey="sessions" stroke="#38bdf8" strokeWidth={2.5} dot={{ r: 3, fill: '#38bdf8' }} activeDot={{ r: 5 }} name="Live sessions" />
                 <Line type="monotone" dataKey="duration" stroke="#f59e0b" strokeWidth={2.5} dot={{ r: 3, fill: '#f59e0b' }} activeDot={{ r: 5 }} name="Duration (min)" />
             </LineChart>
         </ResponsiveContainer>
