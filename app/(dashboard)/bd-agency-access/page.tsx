@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/Table";
 import { 
     Search, User, Award, Briefcase, ShieldCheck, 
-    RefreshCw, CheckCircle2, XCircle, Loader2, UserCheck, ShieldAlert
+    RefreshCw, CheckCircle2, XCircle, Loader2, UserCheck, ShieldAlert, Lock
 } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
@@ -33,12 +33,13 @@ interface AppAccessUser {
     role: string;
     isAgency: boolean;
     isBd: boolean;
+    canPrivateLive?: boolean;
     createdAt?: string;
 }
 
 export default function BdAgencyAccessPage() {
     const [searchQuery, setSearchQuery] = useState('');
-    const [filterType, setFilterType] = useState<'all' | 'agency' | 'bd'>('all');
+    const [filterType, setFilterType] = useState<'all' | 'agency' | 'bd' | 'privateLive'>('all');
     const [loading, setLoading] = useState(false);
     const [users, setUsers] = useState<AppAccessUser[]>([]);
 
@@ -108,7 +109,7 @@ export default function BdAgencyAccessPage() {
         }
     };
 
-    const handleToggleAccess = async (userId: number | string, type: 'agency' | 'bd', currentStatus: boolean) => {
+    const handleToggleAccess = async (userId: number | string, type: 'agency' | 'bd' | 'privateLive', currentStatus: boolean) => {
         const nextStatus = !currentStatus;
         const key = `${userId}-${type}`;
         setTogglingType(key);
@@ -121,13 +122,13 @@ export default function BdAgencyAccessPage() {
             });
 
             if (res?.success || res?.data?.success) {
-                toast.success(res?.message || res?.data?.message || `App ${type.toUpperCase()} access updated`);
+                toast.success(res?.message || res?.data?.message || `App ${type === 'privateLive' ? 'Private Live' : type.toUpperCase()} access updated`);
                 
                 // Update selectedUser if matched
                 if (selectedUser && String(selectedUser.userId) === String(userId)) {
                     setSelectedUser({
                         ...selectedUser,
-                        [type === 'agency' ? 'isAgency' : 'isBd']: nextStatus,
+                        [type === 'agency' ? 'isAgency' : (type === 'bd' ? 'isBd' : 'canPrivateLive')]: nextStatus,
                     });
                 }
 
@@ -137,7 +138,7 @@ export default function BdAgencyAccessPage() {
                         if (String(u.userId) === String(userId)) {
                             return {
                                 ...u,
-                                [type === 'agency' ? 'isAgency' : 'isBd']: nextStatus,
+                                [type === 'agency' ? 'isAgency' : (type === 'bd' ? 'isBd' : 'canPrivateLive')]: nextStatus,
                             };
                         }
                         return u;
@@ -297,6 +298,40 @@ export default function BdAgencyAccessPage() {
                                         )}
                                     </Button>
                                 </div>
+
+                                {/* Private Live Toggle */}
+                                <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-900 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-800">
+                                    <div className="text-left">
+                                        <div className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                                            <Lock className="h-3.5 w-3.5 text-purple-500" />
+                                            Private Live
+                                        </div>
+                                        <div className="text-[10px] text-slate-400">
+                                            {selectedUser.canPrivateLive ? 'Access Enabled' : 'No Access'}
+                                        </div>
+                                    </div>
+                                    <Button
+                                        size="sm"
+                                        variant={selectedUser.canPrivateLive ? 'destructive' : 'default'}
+                                        disabled={togglingType === `${selectedUser.userId}-privateLive`}
+                                        onClick={() => handleToggleAccess(selectedUser.userId, 'privateLive', !!selectedUser.canPrivateLive)}
+                                        className="h-8 text-xs gap-1.5"
+                                    >
+                                        {togglingType === `${selectedUser.userId}-privateLive` ? (
+                                            <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : selectedUser.canPrivateLive ? (
+                                            <>
+                                                <XCircle className="h-3 w-3" />
+                                                Revoke
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CheckCircle2 className="h-3 w-3" />
+                                                Grant
+                                            </>
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     )}
@@ -346,6 +381,16 @@ export default function BdAgencyAccessPage() {
                             >
                                 BD
                             </button>
+                            <button
+                                onClick={() => { setFilterType('privateLive'); fetchUsers(searchQuery, 'privateLive'); }}
+                                className={`px-2.5 py-1 text-xs rounded-md font-medium transition-colors ${
+                                    filterType === 'privateLive'
+                                        ? 'bg-white dark:bg-slate-800 text-purple-600 dark:text-purple-400 shadow-sm'
+                                        : 'text-slate-500 hover:text-slate-900 dark:hover:text-slate-100'
+                                }`}
+                            >
+                                Private Live
+                            </button>
                         </div>
 
                         <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 flex-1 sm:flex-none">
@@ -371,20 +416,21 @@ export default function BdAgencyAccessPage() {
                                 <TableHead className="font-semibold">Base Role</TableHead>
                                 <TableHead className="font-semibold">Agency Access</TableHead>
                                 <TableHead className="font-semibold">BD Access</TableHead>
+                                <TableHead className="font-semibold">Private Live</TableHead>
                                 <TableHead className="text-right font-semibold">Quick Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loading ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-10 text-slate-500">
+                                    <TableCell colSpan={7} className="text-center py-10 text-slate-500">
                                         <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2 text-indigo-500" />
                                         Loading privileges...
                                     </TableCell>
                                 </TableRow>
                             ) : users.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-10 text-slate-500">
+                                    <TableCell colSpan={7} className="text-center py-10 text-slate-500">
                                         {filterType === 'agency'
                                             ? 'No users found with active Agency app access.'
                                             : filterType === 'bd'
@@ -453,6 +499,18 @@ export default function BdAgencyAccessPage() {
                                                 </Badge>
                                             )}
                                         </TableCell>
+                                        <TableCell>
+                                            {u.canPrivateLive ? (
+                                                <Badge className="bg-purple-500/15 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-800 gap-1 font-semibold">
+                                                    <Lock className="h-3 w-3 text-purple-600" />
+                                                    Allowed
+                                                </Badge>
+                                            ) : (
+                                                <Badge variant="outline" className="text-slate-400">
+                                                    Disabled
+                                                </Badge>
+                                            )}
+                                        </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex items-center justify-end gap-1.5">
                                                 <Button
@@ -472,6 +530,15 @@ export default function BdAgencyAccessPage() {
                                                     className="h-7 text-xs px-2"
                                                 >
                                                     {u.isBd ? 'Remove BD' : '+ BD'}
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    variant={u.canPrivateLive ? 'ghost' : 'outline'}
+                                                    disabled={togglingType === `${u.userId}-privateLive`}
+                                                    onClick={() => handleToggleAccess(u.userId, 'privateLive', !!u.canPrivateLive)}
+                                                    className="h-7 text-xs px-2"
+                                                >
+                                                    {u.canPrivateLive ? 'Revoke Lock' : '+ Private Live'}
                                                 </Button>
                                             </div>
                                         </TableCell>
