@@ -45,7 +45,8 @@ import {
     ExternalLink,
     Layers,
     Plus,
-    Boxes
+    Boxes,
+    ShoppingBag
 } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
@@ -101,6 +102,7 @@ interface GrantHistoryItem {
         durationDays?: number;
         expiresAt?: string;
         remainingQuantity?: number;
+        grants?: any[];
         message?: string;
     };
     createdAt: string;
@@ -130,6 +132,22 @@ interface OperatorQuota {
     notes?: string;
     createdAt: string;
     updatedAt: string;
+}
+
+// Multi-Grant Cart Item
+interface GrantCartItem {
+    id: string; // unique key
+    asset: AssetOption;
+    quota?: OperatorQuota;
+    durationDays: number;
+    autoEquip: boolean;
+}
+
+// Multi-Asset Allocation Batch Item (Owner -> Operator)
+interface AllocationBatchItem {
+    id: string;
+    asset: AssetOption;
+    tiers: Array<{ days: number; quantity: number }>;
 }
 
 const CATEGORY_TABS = [
@@ -174,39 +192,27 @@ export default function AssetDistributionPage() {
     const [quotas, setQuotas] = useState<OperatorQuota[]>([]);
     const [loadingQuotas, setLoadingQuotas] = useState(false);
 
-    // Selected Asset for Granting
-    const [selectedAsset, setSelectedAsset] = useState<AssetOption | null>(null);
-    const [selectedQuota, setSelectedQuota] = useState<OperatorQuota | null>(null);
-    const [directUniqueIdInput, setDirectUniqueIdInput] = useState('');
-
     // User Search State
     const [userQuery, setUserQuery] = useState('');
     const [userLookupResults, setUserLookupResults] = useState<TargetUser[]>([]);
     const [selectedUser, setSelectedUser] = useState<TargetUser | null>(null);
     const [isSearchingUser, setIsSearchingUser] = useState(false);
 
-    // Grant Form Config
-    const [durationDays, setDurationDays] = useState<number>(30);
-    const [customDaysInput, setCustomDaysInput] = useState('30');
+    // MULTI-GRANT CART (Multi Gift to User)
+    const [grantCart, setGrantCart] = useState<GrantCartItem[]>([]);
     const [customMessage, setCustomMessage] = useState('');
-    const [autoEquip, setAutoEquip] = useState(true);
     const [submitting, setSubmitting] = useState(false);
-
-    // History & Modals
-    const [history, setHistory] = useState<GrantHistoryItem[]>([]);
-    const [loadingHistory, setLoadingHistory] = useState(true);
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
 
-    // Owner Allocation Modal / Form State
+    // History
+    const [history, setHistory] = useState<GrantHistoryItem[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(true);
+
+    // OWNER MULTI-ASSET ALLOCATION BATCH STATE (Owner -> Operator)
     const [operatorSearchQuery, setOperatorSearchQuery] = useState('');
     const [operatorLookupResults, setOperatorLookupResults] = useState<any[]>([]);
     const [selectedOperator, setSelectedOperator] = useState<any | null>(null);
-    const [selectedAssetForAllocation, setSelectedAssetForAllocation] = useState<AssetOption | null>(null);
-    const [allocationTiers, setAllocationTiers] = useState<Array<{ days: number; quantity: number }>>([
-        { days: 30, quantity: 1 },
-        { days: 15, quantity: 2 },
-        { days: 7, quantity: 2 }
-    ]);
+    const [allocationBatch, setAllocationBatch] = useState<AllocationBatchItem[]>([]);
     const [allocationNotes, setAllocationNotes] = useState('');
     const [allocating, setAllocating] = useState(false);
 
@@ -307,7 +313,6 @@ export default function AssetDistributionPage() {
         try {
             const res = await apiClient.get<any>(`/api/store/user-lookup?query=${encodeURIComponent(val.trim())}`);
             if (res.success && res.data) {
-                // Filter users with operator or admin roles
                 const ops = (res.data.users || []).filter((u: any) =>
                     ['operator', 'superadmin', 'super-admin', 'admin'].includes(String(u.role).toLowerCase())
                 );
@@ -325,50 +330,98 @@ export default function AssetDistributionPage() {
         setUserLookupResults([]);
     };
 
-    // Select Asset from Catalog
-    const handleSelectAsset = (asset: AssetOption) => {
-        setSelectedAsset(asset);
-        setDirectUniqueIdInput(asset.uniqueId || '');
-        setSelectedQuota(null);
-
-        // If Operator has quota for this asset, match it
-        if (!isOwner) {
-            const matched = quotas.find(q =>
-                q.assetName.toLowerCase() === asset.name.toLowerCase()
-            );
-            if (matched) {
-                setSelectedQuota(matched);
-                const firstAvailable = (matched.availablePackages || matched.packages || []).find(p => p.remainingQuantity > 0);
-                if (firstAvailable) {
-                    setDurationDays(firstAvailable.days);
-                    setCustomDaysInput(String(firstAvailable.days));
-                }
-            }
+    // Add Asset to Grant Cart (Multi-Gift Support!)
+    const handleToggleAssetInGrantCart = (asset: AssetOption, quota?: OperatorQuota) => {
+        const existingIdx = grantCart.findIndex(item => item.asset._id === asset._id);
+        if (existingIdx >= 0) {
+            // Remove from cart
+            setGrantCart(prev => prev.filter((_, i) => i !== existingIdx));
+            return;
         }
+
+        // Determine default duration
+        let defaultDuration = 30;
+        if (!isOwner && quota) {
+            const validPkgs = quota.availablePackages || quota.packages.filter(p => p.remainingQuantity > 0);
+            if (validPkgs.length > 0) defaultDuration = validPkgs[0].days;
+        }
+
+        setGrantCart(prev => [
+            ...prev,
+            {
+                id: `${asset._id}-${Date.now()}`,
+                asset,
+                quota,
+                durationDays: defaultDuration,
+                autoEquip: true,
+            }
+        ]);
     };
 
-    // Select Asset from Operator Quota
-    const handleSelectQuota = (quota: OperatorQuota) => {
-        setSelectedQuota(quota);
-        const matchingAsset = assets.find(a => a.name.toLowerCase() === quota.assetName.toLowerCase());
-        if (matchingAsset) {
-            setSelectedAsset(matchingAsset);
-            setDirectUniqueIdInput(matchingAsset.uniqueId || '');
-        } else {
-            setSelectedAsset({
-                _id: quota._id,
-                uniqueId: '',
-                name: quota.assetName,
-                category: quota.assetCategory,
-                imageUrl: quota.imageUrl
-            });
-        }
+    // Update duration or autoEquip for a specific cart item
+    const handleUpdateCartItem = (id: string, field: 'durationDays' | 'autoEquip', val: any) => {
+        setGrantCart(prev => prev.map(item => item.id === id ? { ...item, [field]: val } : item));
+    };
 
-        const validPackages = quota.availablePackages || quota.packages.filter(p => p.remainingQuantity > 0);
-        if (validPackages.length > 0) {
-            setDurationDays(validPackages[0].days);
-            setCustomDaysInput(String(validPackages[0].days));
+    // Remove from Grant Cart
+    const handleRemoveCartItem = (id: string) => {
+        setGrantCart(prev => prev.filter(item => item.id !== id));
+    };
+
+    // Add Asset to Owner Allocation Batch (Multi-Asset Allocation!)
+    const handleAddAssetToAllocationBatch = (asset: AssetOption) => {
+        if (allocationBatch.some(b => b.asset._id === asset._id)) {
+            toast.info(`"${asset.name}" is already in the allocation batch`);
+            return;
         }
+        setAllocationBatch(prev => [
+            ...prev,
+            {
+                id: `${asset._id}-${Date.now()}`,
+                asset,
+                tiers: [
+                    { days: 30, quantity: 1 },
+                    { days: 15, quantity: 2 },
+                    { days: 7, quantity: 2 },
+                ]
+            }
+        ]);
+    };
+
+    // Remove Asset from Allocation Batch
+    const handleRemoveAssetFromAllocationBatch = (batchId: string) => {
+        setAllocationBatch(prev => prev.filter(b => b.id !== batchId));
+    };
+
+    // Update Tiers for a Batch Item
+    const handleAddTierToBatchItem = (batchId: string) => {
+        setAllocationBatch(prev => prev.map(b => {
+            if (b.id !== batchId) return b;
+            return {
+                ...b,
+                tiers: [...b.tiers, { days: 7, quantity: 1 }]
+            };
+        }));
+    };
+
+    const handleRemoveTierFromBatchItem = (batchId: string, tierIdx: number) => {
+        setAllocationBatch(prev => prev.map(b => {
+            if (b.id !== batchId) return b;
+            return {
+                ...b,
+                tiers: b.tiers.filter((_, i) => i !== tierIdx)
+            };
+        }));
+    };
+
+    const handleUpdateTierInBatchItem = (batchId: string, tierIdx: number, field: 'days' | 'quantity', val: number) => {
+        setAllocationBatch(prev => prev.map(b => {
+            if (b.id !== batchId) return b;
+            return {
+                ...b,
+                tiers: b.tiers.map((t, i) => i === tierIdx ? { ...t, [field]: val } : t)
+            };
+        }));
     };
 
     // Filter Assets by Category & Search Query
@@ -394,59 +447,38 @@ export default function AssetDistributionPage() {
         });
     }, [assets, selectedCategoryTab, assetSearchQuery]);
 
-    // Handle Preset Duration Click
-    const handleDurationPreset = (days: number) => {
-        setDurationDays(days);
-        setCustomDaysInput(String(days));
-    };
-
-    // Add Tier row for Owner Allocation
-    const handleAddTier = () => {
-        setAllocationTiers(prev => [...prev, { days: 7, quantity: 1 }]);
-    };
-
-    // Remove Tier row
-    const handleRemoveTier = (idx: number) => {
-        setAllocationTiers(prev => prev.filter((_, i) => i !== idx));
-    };
-
-    // Update Tier row
-    const handleUpdateTier = (idx: number, field: 'days' | 'quantity', val: number) => {
-        setAllocationTiers(prev => prev.map((item, i) => i === idx ? { ...item, [field]: val } : item));
-    };
-
-    // Submit Stock Allocation (Owner -> Operator)
+    // Submit Multi-Asset Stock Allocation (Owner -> Operator)
     const handleExecuteAllocation = async () => {
         if (!selectedOperator) {
             toast.error('Please select a target Operator');
             return;
         }
-        if (!selectedAssetForAllocation) {
-            toast.error('Please select an Asset to allocate');
-            return;
-        }
-        if (allocationTiers.length === 0) {
-            toast.error('Please add at least one duration package tier');
+        if (allocationBatch.length === 0) {
+            toast.error('Please add at least one asset to the allocation batch');
             return;
         }
 
         try {
             setAllocating(true);
-            const payload = {
-                operatorId: selectedOperator._id || selectedOperator.userId,
-                assetQuery: selectedAssetForAllocation.name || selectedAssetForAllocation.uniqueId,
-                packages: allocationTiers.map(t => ({
+            const allocationsPayload = allocationBatch.map(item => ({
+                assetQuery: item.asset.name || item.asset.uniqueId,
+                packages: item.tiers.map(t => ({
                     days: Number(t.days),
                     quantity: Math.max(1, Number(t.quantity))
-                })),
+                }))
+            }));
+
+            const payload = {
+                operatorId: selectedOperator._id || selectedOperator.userId,
+                allocations: allocationsPayload,
                 notes: allocationNotes.trim()
             };
 
             const res = await apiClient.post<any>('/api/admin/asset-quota/allocate', payload);
             if (res.success) {
-                toast.success(res.message || 'Asset stock allocated successfully to Operator!');
+                toast.success(res.message || 'All selected assets allocated successfully to Operator!');
                 setSelectedOperator(null);
-                setSelectedAssetForAllocation(null);
+                setAllocationBatch([]);
                 setAllocationNotes('');
                 fetchQuotas();
                 setActiveTab('quotas');
@@ -476,51 +508,51 @@ export default function AssetDistributionPage() {
         }
     };
 
-    // Execute Asset Grant (Supports both Owner direct grant and Operator quota grant)
+    // Execute Multi-Gift Asset Grant (Supports both Owner direct grant and Operator quota grant)
     const handleExecuteGrant = async () => {
         if (!selectedUser && !userQuery.trim()) {
             toast.error('Please specify a target user (User ID, phone or email)');
             return;
         }
-        if (!selectedAsset && !directUniqueIdInput.trim()) {
-            toast.error('Please select an asset or enter a Unique Asset ID');
+        if (grantCart.length === 0) {
+            toast.error('Please select at least one gift/asset to grant');
             return;
         }
 
         try {
             setSubmitting(true);
             const userIdentifier = selectedUser ? String(selectedUser.userId || selectedUser._id) : userQuery.trim();
-            const assetIdentifier = selectedAsset ? (selectedAsset.uniqueId || selectedAsset.name || selectedAsset._id) : directUniqueIdInput.trim();
+
+            const grantsPayload = grantCart.map(item => ({
+                assetQuery: item.asset.uniqueId || item.asset.name || item.asset._id,
+                durationDays: Number(item.durationDays),
+                autoEquip: item.autoEquip,
+            }));
 
             const payload = {
                 userQuery: userIdentifier,
-                assetQuery: assetIdentifier,
-                durationDays: Number(durationDays),
+                grants: grantsPayload,
                 message: customMessage.trim(),
-                autoEquip,
             };
 
-            // Use quota grant endpoint (works for both Operator and Owner)
             const res = await apiClient.post<any>('/api/admin/asset-quota/grant', payload);
 
             if (res.success) {
-                toast.success(res.message || 'Asset granted successfully!');
+                toast.success(res.message || 'All gifts granted successfully!');
                 setConfirmModalOpen(false);
                 setSelectedUser(null);
                 setUserQuery('');
                 setUserLookupResults([]);
-                setSelectedAsset(null);
-                setSelectedQuota(null);
-                setDirectUniqueIdInput('');
+                setGrantCart([]);
                 setCustomMessage('');
                 fetchHistory();
                 fetchQuotas();
                 fetchCatalog();
             } else {
-                toast.error(res.message || 'Failed to grant asset');
+                toast.error(res.message || 'Failed to grant assets');
             }
         } catch (err: any) {
-            toast.error(err.message || 'Error occurred while granting asset');
+            toast.error(err.message || 'Error occurred while granting assets');
         } finally {
             setSubmitting(false);
         }
@@ -538,7 +570,7 @@ export default function AssetDistributionPage() {
                         <div>
                             <div className="flex items-center gap-2">
                                 <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
-                                    Asset Allocation & Granting
+                                    Asset Allocation & Multi-Gift Granting
                                 </h1>
                                 <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/40 uppercase text-[10px] tracking-wider">
                                     {isOwner ? '👑 Platform Owner Panel' : '⚡ Operator Console'}
@@ -546,7 +578,7 @@ export default function AssetDistributionPage() {
                             </div>
                             <p className="text-slate-400 text-sm mt-0.5 font-medium">
                                 {isOwner
-                                    ? 'Allocate asset stock quotas to Operators with custom duration tiers, or directly grant assets to users.'
+                                    ? 'Allocate multi-gift batches to Operators with custom duration tiers, or directly grant multiple assets to users.'
                                     : 'Grant exclusive Frames, Entry Effects, Badges and Tags to users using your allocated stock inventory.'}
                             </p>
                         </div>
@@ -575,7 +607,7 @@ export default function AssetDistributionPage() {
                     className={`gap-1.5 text-xs font-semibold ${activeTab === 'grant' ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'text-slate-400 hover:text-slate-200'}`}
                 >
                     <Gift className="h-4 w-4" />
-                    <span>Grant Asset to User</span>
+                    <span>Grant Assets to User ({grantCart.length} Selected)</span>
                 </Button>
 
                 {isOwner && (
@@ -587,7 +619,7 @@ export default function AssetDistributionPage() {
                             className={`gap-1.5 text-xs font-semibold ${activeTab === 'allocate' ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'text-slate-400 hover:text-slate-200'}`}
                         >
                             <Boxes className="h-4 w-4" />
-                            <span>Allocate Stock to Operators (Owner)</span>
+                            <span>Allocate Stock to Operators (Owner) {allocationBatch.length > 0 && `(${allocationBatch.length})`}</span>
                         </Button>
 
                         <Button
@@ -613,10 +645,10 @@ export default function AssetDistributionPage() {
                 </Button>
             </div>
 
-            {/* TAB 1: GRANT ASSET TO USER */}
+            {/* TAB 1: GRANT ASSET TO USER (Supports Multi-Gift Selection!) */}
             {activeTab === 'grant' && (
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                    {/* Left 7 Columns: Grant Action Engine */}
+                    {/* Left 7 Columns: Selection Engine */}
                     <div className="lg:col-span-7 space-y-6">
                         {/* Step 1: Target User Search */}
                         <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
@@ -710,21 +742,19 @@ export default function AssetDistributionPage() {
                             </CardContent>
                         </Card>
 
-                        {/* Step 2: Select Asset */}
+                        {/* Step 2: Select Assets / Multi-Gifts */}
                         <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
                             <CardHeader className="pb-3 border-b border-slate-800/80">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-2">
                                         <span className="h-6 w-6 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 font-black text-xs flex items-center justify-center">2</span>
                                         <CardTitle className="text-base font-bold text-slate-100">
-                                            {isOwner ? 'Select Asset from Catalog' : 'Select Asset from My Quota'}
+                                            {isOwner ? 'Select Gifts / Assets (Multi-Select Allowed)' : 'Select Gifts from My Quota (Multi-Select)'}
                                         </CardTitle>
                                     </div>
-                                    {!isOwner && (
-                                        <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px]">
-                                            Allocated by Owner
-                                        </Badge>
-                                    )}
+                                    <Badge className="bg-purple-500/20 text-purple-300 text-[10px]">
+                                        {grantCart.length} Selected in Cart
+                                    </Badge>
                                 </div>
                             </CardHeader>
                             <CardContent className="pt-4 space-y-4">
@@ -732,41 +762,51 @@ export default function AssetDistributionPage() {
                                 {!isOwner && (
                                     <div className="space-y-3">
                                         <p className="text-xs text-slate-400 font-medium">
-                                            Your Available Stock Quotas (click to select):
+                                            Click any asset to add / remove from your grant batch:
                                         </p>
                                         {quotas.length === 0 ? (
                                             <div className="p-6 bg-slate-950/60 border border-slate-800 rounded-xl text-center space-y-2">
                                                 <AlertCircle className="h-8 w-8 text-amber-400 mx-auto" />
                                                 <p className="text-xs text-slate-300 font-semibold">No Asset Stock Allocated Yet</p>
                                                 <p className="text-[11px] text-slate-500">
-                                                    You do not have any asset stock allocated by the Owner. Please contact the Platform Owner to allocate frames, badges, entry effects or tags to your inventory.
+                                                    You do not have any asset stock allocated by the Owner. Please contact the Platform Owner to allocate frames, badges, entry effects or tags.
                                                 </p>
                                             </div>
                                         ) : (
                                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto p-1">
                                                 {quotas.map((q) => {
-                                                    const isSelected = selectedQuota?._id === q._id;
+                                                    const matchingAsset = assets.find(a => a.name.toLowerCase() === q.assetName.toLowerCase()) || {
+                                                        _id: q._id,
+                                                        uniqueId: '',
+                                                        name: q.assetName,
+                                                        category: q.assetCategory,
+                                                        imageUrl: q.imageUrl
+                                                    };
+                                                    const isInCart = grantCart.some(item => item.asset.name.toLowerCase() === q.assetName.toLowerCase());
                                                     const validPkgs = q.availablePackages || q.packages.filter(p => p.remainingQuantity > 0);
 
                                                     return (
                                                         <div
                                                             key={q._id}
-                                                            onClick={() => handleSelectQuota(q)}
-                                                            className={`p-3 rounded-xl border cursor-pointer transition-all ${isSelected
-                                                                ? 'bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/30'
-                                                                : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40'}`}
+                                                            onClick={() => handleToggleAssetInGrantCart(matchingAsset as AssetOption, q)}
+                                                            className={`p-3 rounded-xl border cursor-pointer transition-all ${isInCart
+                                                                ? 'bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/40'
+                                                                : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}`}
                                                         >
-                                                            <div className="flex items-center justify-between mb-2">
-                                                                <span className="font-bold text-xs text-slate-100">{q.assetName}</span>
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <span className="font-bold text-xs text-slate-100 flex items-center gap-1.5">
+                                                                    {isInCart && <Check className="h-3.5 w-3.5 text-purple-400" />}
+                                                                    {q.assetName}
+                                                                </span>
                                                                 <Badge className="bg-purple-500/20 text-purple-300 text-[9px]">
                                                                     {q.assetCategory}
                                                                 </Badge>
                                                             </div>
-                                                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                                            <div className="flex flex-wrap gap-1 mt-2">
                                                                 {validPkgs.map((p, idx) => (
                                                                     <span
                                                                         key={idx}
-                                                                        className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded font-mono font-bold"
+                                                                        className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[9px] px-1.5 py-0.5 rounded font-mono font-bold"
                                                                     >
                                                                         {p.days}d: {p.remainingQuantity} left
                                                                     </span>
@@ -780,7 +820,7 @@ export default function AssetDistributionPage() {
                                     </div>
                                 )}
 
-                                {/* Owner View: Full Asset Catalog Grid */}
+                                {/* Owner View: Full Catalog Grid */}
                                 {isOwner && (
                                     <>
                                         <div className="flex flex-wrap gap-1.5 pb-2 border-b border-slate-800">
@@ -791,8 +831,7 @@ export default function AssetDistributionPage() {
                                                     onClick={() => setSelectedCategoryTab(cat.value)}
                                                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${selectedCategoryTab === cat.value
                                                         ? 'bg-purple-600 text-white shadow-md'
-                                                        : 'bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-slate-800'
-                                                        }`}
+                                                        : 'bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-slate-800'}`}
                                                 >
                                                     {cat.label}
                                                 </button>
@@ -802,192 +841,196 @@ export default function AssetDistributionPage() {
                                         <div className="relative">
                                             <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
                                             <Input
-                                                placeholder="Search assets by name or unique ID..."
+                                                placeholder="Search gifts/assets by name..."
                                                 value={assetSearchQuery}
                                                 onChange={(e) => setAssetSearchQuery(e.target.value)}
-                                                className="pl-9 h-8 text-xs bg-slate-950 border-slate-800 text-slate-200 placeholder:text-slate-500"
+                                                className="pl-9 h-8 text-xs bg-slate-950 border-slate-800 text-slate-200"
                                             />
                                         </div>
 
                                         <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto p-1">
                                             {filteredAssets.map((asset) => {
-                                                const isSelected = selectedAsset?._id === asset._id;
+                                                const isInCart = grantCart.some(item => item.asset._id === asset._id);
                                                 return (
                                                     <div
                                                         key={asset._id}
-                                                        onClick={() => handleSelectAsset(asset)}
-                                                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${isSelected
-                                                            ? 'bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/30'
-                                                            : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700 hover:bg-slate-800/50'
-                                                            }`}
+                                                        onClick={() => handleToggleAssetInGrantCart(asset)}
+                                                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${isInCart
+                                                            ? 'bg-purple-950/50 border-purple-500 ring-2 ring-purple-500/40'
+                                                            : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700 hover:bg-slate-800/50'}`}
                                                     >
-                                                        <div className="flex items-center justify-between gap-1 mb-1.5">
+                                                        <div className="flex items-center justify-between gap-1 mb-1">
                                                             <span className="font-bold text-xs text-slate-200 truncate">{asset.name}</span>
-                                                            {isSelected && <Check className="h-3.5 w-3.5 text-purple-400 shrink-0" />}
+                                                            {isInCart && <Check className="h-3.5 w-3.5 text-purple-400 shrink-0" />}
                                                         </div>
-                                                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                                                            <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-300 font-mono">
-                                                                {asset.category}
-                                                            </span>
-                                                        </div>
+                                                        <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400 text-[10px] font-mono">
+                                                            {asset.category}
+                                                        </span>
                                                     </div>
                                                 );
                                             })}
                                         </div>
                                     </>
                                 )}
+                            </CardContent>
+                        </Card>
 
-                                {/* Selected Asset Summary */}
-                                {selectedAsset && (
-                                    <div className="p-3 bg-purple-950/30 border border-purple-500/40 rounded-xl flex items-center justify-between">
-                                        <div>
-                                            <p className="font-bold text-sm text-purple-200 flex items-center gap-2">
-                                                {selectedAsset.name}
-                                                <Badge className="bg-purple-500/20 text-purple-300 text-[10px]">
-                                                    {selectedAsset.category}
-                                                </Badge>
-                                            </p>
-                                            {selectedQuota && (
-                                                <p className="text-xs text-emerald-400 font-medium mt-1">
-                                                    Stock available from Operator Quota
-                                                </p>
-                                            )}
+                        {/* Step 3: Configure Multi-Gift Batch Details */}
+                        {grantCart.length > 0 && (
+                            <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
+                                <CardHeader className="pb-3 border-b border-slate-800/80">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <span className="h-6 w-6 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 font-black text-xs flex items-center justify-center">3</span>
+                                            <CardTitle className="text-base font-bold text-slate-100">
+                                                Selected Gifts to Grant ({grantCart.length})
+                                            </CardTitle>
                                         </div>
                                         <Button
                                             size="sm"
                                             variant="ghost"
-                                            onClick={() => { setSelectedAsset(null); setSelectedQuota(null); }}
-                                            className="text-slate-400 hover:text-red-400 h-7 w-7 p-0"
+                                            onClick={() => setGrantCart([])}
+                                            className="text-slate-500 hover:text-red-400 text-xs h-7"
                                         >
-                                            <X size={15} />
+                                            Clear Cart
                                         </Button>
                                     </div>
-                                )}
-                            </CardContent>
-                        </Card>
+                                </CardHeader>
+                                <CardContent className="pt-4 space-y-3">
+                                    <div className="space-y-2.5 max-h-72 overflow-y-auto p-1">
+                                        {grantCart.map((item) => {
+                                            const availablePkgs = item.quota
+                                                ? (item.quota.availablePackages || item.quota.packages.filter(p => p.remainingQuantity > 0))
+                                                : null;
 
-                        {/* Step 3: Duration & Execution */}
-                        <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
-                            <CardHeader className="pb-3 border-b border-slate-800/80">
-                                <div className="flex items-center gap-2">
-                                    <span className="h-6 w-6 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 font-black text-xs flex items-center justify-center">3</span>
-                                    <CardTitle className="text-base font-bold text-slate-100">Validity Duration & Grant</CardTitle>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="pt-4 space-y-4">
-                                {/* If Operator with Quota: Show available duration pills */}
-                                {!isOwner && selectedQuota ? (
-                                    <div className="space-y-2">
-                                        <p className="text-xs text-slate-400 font-medium">Select Duration from Your Allocated Stock:</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {(selectedQuota.availablePackages || selectedQuota.packages.filter(p => p.remainingQuantity > 0)).map((p, idx) => (
-                                                <button
-                                                    key={idx}
-                                                    type="button"
-                                                    onClick={() => { setDurationDays(p.days); setCustomDaysInput(String(p.days)); }}
-                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${durationDays === p.days
-                                                        ? 'bg-purple-600 text-white border-purple-500 ring-2 ring-purple-500/30'
-                                                        : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'}`}
-                                                >
-                                                    {p.days} Days ({p.remainingQuantity} in stock)
-                                                </button>
-                                            ))}
-                                        </div>
+                                            return (
+                                                <div key={item.id} className="p-3 bg-slate-950/80 border border-slate-800 rounded-xl space-y-2">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-xs text-purple-300">{item.asset.name}</span>
+                                                            <Badge className="bg-slate-800 text-slate-400 text-[9px]">{item.asset.category}</Badge>
+                                                        </div>
+                                                        <Button
+                                                            size="sm"
+                                                            variant="ghost"
+                                                            onClick={() => handleRemoveCartItem(item.id)}
+                                                            className="h-6 w-6 p-0 text-slate-500 hover:text-red-400"
+                                                        >
+                                                            <X size={14} />
+                                                        </Button>
+                                                    </div>
+
+                                                    {/* Duration selector */}
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="text-[11px] text-slate-400">Duration:</span>
+                                                        {availablePkgs ? (
+                                                            // Operator choices restricted to quota
+                                                            availablePkgs.map((p, pIdx) => (
+                                                                <button
+                                                                    key={pIdx}
+                                                                    type="button"
+                                                                    onClick={() => handleUpdateCartItem(item.id, 'durationDays', p.days)}
+                                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors ${item.durationDays === p.days
+                                                                        ? 'bg-purple-600 text-white border-purple-500'
+                                                                        : 'bg-slate-900 text-slate-300 border-slate-700'}`}
+                                                                >
+                                                                    {p.days}d ({p.remainingQuantity} left)
+                                                                </button>
+                                                            ))
+                                                        ) : (
+                                                            // Owner presets
+                                                            [7, 15, 30, 90, 0].map((d) => (
+                                                                <button
+                                                                    key={d}
+                                                                    type="button"
+                                                                    onClick={() => handleUpdateCartItem(item.id, 'durationDays', d)}
+                                                                    className={`px-2 py-0.5 rounded text-[10px] font-bold border transition-colors ${item.durationDays === d
+                                                                        ? 'bg-purple-600 text-white border-purple-500'
+                                                                        : 'bg-slate-900 text-slate-300 border-slate-700'}`}
+                                                                >
+                                                                    {d > 0 ? `${d}d` : 'Permanent'}
+                                                                </button>
+                                                            ))
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex items-center gap-2">
+                                                        <input
+                                                            type="checkbox"
+                                                            id={`autoEquip-${item.id}`}
+                                                            checked={item.autoEquip}
+                                                            onChange={(e) => handleUpdateCartItem(item.id, 'autoEquip', e.target.checked)}
+                                                            className="rounded border-slate-700 bg-slate-950 text-purple-600 focus:ring-purple-500"
+                                                        />
+                                                        <label htmlFor={`autoEquip-${item.id}`} className="text-[11px] text-slate-400 cursor-pointer">
+                                                            Auto-equip on profile
+                                                        </label>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
-                                ) : (
-                                    /* Owner: Presets */
-                                    <div className="space-y-2">
-                                        <p className="text-xs text-slate-400 font-medium">Duration Presets:</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {DURATION_PRESETS.map((preset) => (
-                                                <button
-                                                    key={preset.days}
-                                                    type="button"
-                                                    onClick={() => handleDurationPreset(preset.days)}
-                                                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${durationDays === preset.days
-                                                        ? 'bg-purple-600 text-white border-purple-500 ring-2 ring-purple-500/30'
-                                                        : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'}`}
-                                                >
-                                                    {preset.label}
-                                                </button>
-                                            ))}
-                                        </div>
+
+                                    {/* Custom Message */}
+                                    <div className="space-y-1 pt-2 border-t border-slate-800">
+                                        <label className="text-xs text-slate-400 font-medium">Notification Message (Optional):</label>
+                                        <Input
+                                            placeholder="e.g. Special festive gift combo from management!"
+                                            value={customMessage}
+                                            onChange={(e) => setCustomMessage(e.target.value)}
+                                            className="h-8 text-xs bg-slate-950 border-slate-800 text-slate-200"
+                                        />
                                     </div>
-                                )}
 
-                                {/* Auto-Equip Option */}
-                                <div className="flex items-center gap-2 pt-2">
-                                    <input
-                                        type="checkbox"
-                                        id="autoEquip"
-                                        checked={autoEquip}
-                                        onChange={(e) => setAutoEquip(e.target.checked)}
-                                        className="rounded border-slate-700 bg-slate-950 text-purple-600 focus:ring-purple-500"
-                                    />
-                                    <label htmlFor="autoEquip" className="text-xs text-slate-300 font-medium cursor-pointer">
-                                        Automatically equip this asset on the user&apos;s active profile immediately
-                                    </label>
-                                </div>
-
-                                {/* Custom Message */}
-                                <div className="space-y-1">
-                                    <label className="text-xs text-slate-400 font-medium">Custom In-App Notification Message (Optional):</label>
-                                    <Input
-                                        placeholder="e.g. Special reward from management for outstanding hosting!"
-                                        value={customMessage}
-                                        onChange={(e) => setCustomMessage(e.target.value)}
-                                        className="h-8 text-xs bg-slate-950 border-slate-800 text-slate-200"
-                                    />
-                                </div>
-
-                                {/* Grant Trigger Button */}
-                                <Button
-                                    onClick={() => setConfirmModalOpen(true)}
-                                    disabled={!selectedUser || (!selectedAsset && !directUniqueIdInput)}
-                                    className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-600 hover:from-purple-500 hover:to-amber-500 text-white font-bold h-11 text-sm shadow-xl shadow-purple-900/20 gap-2"
-                                >
-                                    <Send className="h-4 w-4" />
-                                    <span>Grant Asset to User Now</span>
-                                </Button>
-                            </CardContent>
-                        </Card>
+                                    {/* Grant Button */}
+                                    <Button
+                                        onClick={() => setConfirmModalOpen(true)}
+                                        disabled={!selectedUser || grantCart.length === 0}
+                                        className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-600 hover:from-purple-500 hover:to-amber-500 text-white font-bold h-11 text-sm shadow-xl shadow-purple-900/20 gap-2"
+                                    >
+                                        <Send className="h-4 w-4" />
+                                        <span>Grant All {grantCart.length} Gifts to User Now</span>
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        )}
                     </div>
 
-                    {/* Right 5 Columns: Live Preview Card */}
+                    {/* Right 5 Columns: Summary & Preview */}
                     <div className="lg:col-span-5 space-y-6">
                         <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg sticky top-6">
                             <CardHeader className="pb-3 border-b border-slate-800/80">
                                 <CardTitle className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                                    <Sparkles className="h-4 w-4 text-amber-400" />
-                                    <span>Live In-App Message Preview</span>
+                                    <ShoppingBag className="h-4 w-4 text-amber-400" />
+                                    <span>Gift Grant Cart Summary</span>
                                 </CardTitle>
                                 <CardDescription className="text-xs text-slate-400">
-                                    How the push notification will appear in the user&apos;s app inbox.
+                                    Review the gifts ready to be awarded to recipient.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="pt-4 space-y-4">
                                 <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-950 to-purple-950/20 border border-purple-500/30 space-y-3">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300 font-bold text-lg">
-                                            🎁
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-slate-200">
-                                                {selectedAsset?.name || 'Exclusive Reward'} Received!
-                                            </p>
-                                            <p className="text-[10px] text-slate-400">Official System Message • Just Now</p>
-                                        </div>
+                                    <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                                        <span className="text-xs text-slate-400">Recipient:</span>
+                                        <span className="font-bold text-xs text-slate-200">
+                                            {selectedUser ? `${selectedUser.name} (${selectedUser.userId})` : 'Not Selected'}
+                                        </span>
                                     </div>
 
-                                    <p className="text-xs text-slate-300 leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-slate-800">
-                                        {customMessage.trim() || `Congratulations! You have received ${selectedAsset?.name || 'an exclusive asset'} (${durationDays > 0 ? `${durationDays} Days` : 'Permanent Lifetime'}) from ${isOwner ? 'Platform Owner' : 'Operator'}. Tap View to equip in My Items.`}
-                                    </p>
-
-                                    <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                                        <span className="text-[10px] text-slate-500 font-mono">Status: Ready to deliver</span>
-                                        <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded font-bold">
-                                            {durationDays > 0 ? `${durationDays} Days Validity` : 'Permanent'}
-                                        </span>
+                                    <div className="space-y-1.5">
+                                        <span className="text-xs text-slate-400">Selected Gifts ({grantCart.length}):</span>
+                                        {grantCart.length === 0 ? (
+                                            <p className="text-xs text-slate-500 italic">No gifts selected yet. Click gifts from the catalog to add them.</p>
+                                        ) : (
+                                            <div className="space-y-1">
+                                                {grantCart.map((c, i) => (
+                                                    <div key={i} className="flex items-center justify-between text-xs py-1 px-2 rounded bg-slate-900/60">
+                                                        <span className="font-semibold text-purple-300 truncate">{c.asset.name}</span>
+                                                        <span className="text-[10px] text-amber-400 font-bold">{c.durationDays > 0 ? `${c.durationDays}d` : 'Permanent'}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </CardContent>
@@ -996,21 +1039,21 @@ export default function AssetDistributionPage() {
                 </div>
             )}
 
-            {/* TAB 2: OWNER ALLOCATE STOCK TO OPERATORS */}
+            {/* TAB 2: OWNER ALLOCATE MULTI-ASSET STOCK TO OPERATORS */}
             {activeTab === 'allocate' && isOwner && (
                 <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
                     <CardHeader className="border-b border-slate-800/80 pb-4">
                         <div className="flex items-center gap-2">
                             <Boxes className="h-5 w-5 text-amber-400" />
                             <CardTitle className="text-lg font-bold text-slate-100">
-                                Allocate Asset Stock Quota to Operator
+                                Allocate Multi-Gift Stock Quota to Operator
                             </CardTitle>
                         </div>
                         <CardDescription className="text-xs text-slate-400">
-                            Distribute stock of Frames, Entry Effects, Badges, or Tags to Operators broken down by duration buckets (e.g. 5x Super Admin Frame: 1 for 30 days, 2 for 15 days, 2 for 7 days).
+                            Allocate multiple assets simultaneously to Operators (e.g. 5x Super Admin Frame with 1x 30d, 2x 15d, 2x 7d + 3x Dragon Ride + 10x Badges in one single batch).
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="pt-6 space-y-6 max-w-3xl">
+                    <CardContent className="pt-6 space-y-6 max-w-4xl">
                         {/* 1. Select Operator */}
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-slate-200">1. Select Target Operator</label>
@@ -1069,103 +1112,117 @@ export default function AssetDistributionPage() {
                             )}
                         </div>
 
-                        {/* 2. Select Asset */}
+                        {/* 2. Pick Assets to Add to Allocation Batch */}
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-200">2. Select Asset to Allocate</label>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-44 overflow-y-auto p-1">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-bold text-slate-200">
+                                    2. Pick Assets to Allocate (Click to add to batch)
+                                </label>
+                                <span className="text-[11px] text-amber-400 font-bold">
+                                    {allocationBatch.length} Asset Types in Batch
+                                </span>
+                            </div>
+
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1">
                                 {assets.map((a) => {
-                                    const isSel = selectedAssetForAllocation?._id === a._id;
+                                    const isAdded = allocationBatch.some(b => b.asset._id === a._id);
                                     return (
                                         <div
                                             key={a._id}
-                                            onClick={() => setSelectedAssetForAllocation(a)}
-                                            className={`p-2 rounded-xl border text-left cursor-pointer transition-all ${isSel
-                                                ? 'bg-amber-950/40 border-amber-500 ring-2 ring-amber-500/30'
+                                            onClick={() => handleAddAssetToAllocationBatch(a)}
+                                            className={`p-2 rounded-xl border text-left cursor-pointer transition-all ${isAdded
+                                                ? 'bg-amber-950/50 border-amber-500 ring-2 ring-amber-500/30'
                                                 : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}`}
                                         >
-                                            <p className="font-bold text-xs text-slate-200 truncate">{a.name}</p>
+                                            <div className="flex items-center justify-between">
+                                                <p className="font-bold text-xs text-slate-200 truncate">{a.name}</p>
+                                                {isAdded && <Check className="h-3 w-3 text-amber-400" />}
+                                            </div>
                                             <p className="text-[10px] text-slate-500">{a.category}</p>
                                         </div>
                                     );
                                 })}
                             </div>
-                            {selectedAssetForAllocation && (
-                                <div className="p-2.5 bg-amber-950/30 border border-amber-500/40 rounded-xl flex items-center justify-between">
-                                    <span className="text-xs font-bold text-amber-200">
-                                        Selected: {selectedAssetForAllocation.name} ({selectedAssetForAllocation.category})
-                                    </span>
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => setSelectedAssetForAllocation(null)}
-                                        className="h-6 w-6 p-0 text-slate-400 hover:text-red-400"
-                                    >
-                                        <X size={14} />
-                                    </Button>
-                                </div>
-                            )}
                         </div>
 
-                        {/* 3. Tiered Duration Packages */}
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between">
+                        {/* 3. Configure Tiers for Each Asset in Batch */}
+                        {allocationBatch.length > 0 && (
+                            <div className="space-y-4">
                                 <label className="text-xs font-bold text-slate-200">
-                                    3. Configure Tiered Duration Packages
+                                    3. Configure Tiered Duration Packages for Each Asset
                                 </label>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={handleAddTier}
-                                    className="h-7 text-xs border-slate-700 text-slate-300 gap-1"
-                                >
-                                    <Plus size={13} /> Add Tier
-                                </Button>
-                            </div>
 
-                            <div className="space-y-2">
-                                {allocationTiers.map((tier, idx) => (
-                                    <div key={idx} className="flex items-center gap-3 p-3 bg-slate-950/80 border border-slate-800 rounded-xl">
-                                        <div className="flex-1">
-                                            <label className="text-[10px] text-slate-400 block mb-1">Validity (Days)</label>
-                                            <Input
-                                                type="number"
-                                                min={1}
-                                                value={tier.days}
-                                                onChange={(e) => handleUpdateTier(idx, 'days', Number(e.target.value))}
-                                                className="h-8 text-xs bg-slate-900 border-slate-700 text-slate-200"
-                                            />
-                                        </div>
-                                        <div className="flex-1">
-                                            <label className="text-[10px] text-slate-400 block mb-1">Quantity (Stock count)</label>
-                                            <Input
-                                                type="number"
-                                                min={1}
-                                                value={tier.quantity}
-                                                onChange={(e) => handleUpdateTier(idx, 'quantity', Number(e.target.value))}
-                                                className="h-8 text-xs bg-slate-900 border-slate-700 text-slate-200"
-                                            />
-                                        </div>
-                                        <div className="pt-4">
-                                            <Button
-                                                size="sm"
-                                                variant="ghost"
-                                                onClick={() => handleRemoveTier(idx)}
-                                                disabled={allocationTiers.length === 1}
-                                                className="h-8 w-8 p-0 text-slate-500 hover:text-red-400"
-                                            >
-                                                <Trash2 size={15} />
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
+                                <div className="space-y-4">
+                                    {allocationBatch.map((batchItem) => (
+                                        <div key={batchItem.id} className="p-4 bg-slate-950/80 border border-slate-800 rounded-2xl space-y-3">
+                                            <div className="flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="font-bold text-sm text-amber-300">{batchItem.asset.name}</span>
+                                                    <Badge className="bg-slate-800 text-slate-300 text-[10px]">{batchItem.asset.category}</Badge>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        onClick={() => handleAddTierToBatchItem(batchItem.id)}
+                                                        className="h-6 text-[10px] border-slate-700 text-slate-300 gap-1"
+                                                    >
+                                                        <Plus size={11} /> Add Tier
+                                                    </Button>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => handleRemoveAssetFromAllocationBatch(batchItem.id)}
+                                                        className="h-6 w-6 p-0 text-slate-500 hover:text-red-400"
+                                                    >
+                                                        <Trash2 size={13} />
+                                                    </Button>
+                                                </div>
+                                            </div>
 
-                            <p className="text-[11px] text-slate-500">
-                                Total stock to allocate: <span className="font-bold text-amber-300">
-                                    {allocationTiers.reduce((acc, t) => acc + (Number(t.quantity) || 0), 0)} items
-                                </span>
-                            </p>
-                        </div>
+                                            {/* Tier Rows */}
+                                            <div className="space-y-2">
+                                                {batchItem.tiers.map((tier, tIdx) => (
+                                                    <div key={tIdx} className="flex items-center gap-3 bg-slate-900/60 p-2 rounded-xl border border-slate-800/80">
+                                                        <div className="flex-1">
+                                                            <label className="text-[9px] text-slate-400 block">Validity (Days)</label>
+                                                            <Input
+                                                                type="number"
+                                                                min={1}
+                                                                value={tier.days}
+                                                                onChange={(e) => handleUpdateTierInBatchItem(batchItem.id, tIdx, 'days', Number(e.target.value))}
+                                                                className="h-7 text-xs bg-slate-950 border-slate-700 text-slate-200"
+                                                            />
+                                                        </div>
+                                                        <div className="flex-1">
+                                                            <label className="text-[9px] text-slate-400 block">Quantity (Count)</label>
+                                                            <Input
+                                                                type="number"
+                                                                min={1}
+                                                                value={tier.quantity}
+                                                                onChange={(e) => handleUpdateTierInBatchItem(batchItem.id, tIdx, 'quantity', Number(e.target.value))}
+                                                                className="h-7 text-xs bg-slate-950 border-slate-700 text-slate-200"
+                                                            />
+                                                        </div>
+                                                        <div className="pt-3">
+                                                            <Button
+                                                                size="sm"
+                                                                variant="ghost"
+                                                                onClick={() => handleRemoveTierFromBatchItem(batchItem.id, tIdx)}
+                                                                disabled={batchItem.tiers.length === 1}
+                                                                className="h-6 w-6 p-0 text-slate-500 hover:text-red-400"
+                                                            >
+                                                                <Trash2 size={12} />
+                                                            </Button>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Notes */}
                         <div className="space-y-1">
@@ -1181,11 +1238,11 @@ export default function AssetDistributionPage() {
                         {/* Submit Button */}
                         <Button
                             onClick={handleExecuteAllocation}
-                            disabled={allocating || !selectedOperator || !selectedAssetForAllocation}
+                            disabled={allocating || !selectedOperator || allocationBatch.length === 0}
                             className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold h-11 text-sm shadow-xl shadow-amber-900/20 gap-2"
                         >
                             {allocating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Boxes className="h-4 w-4" />}
-                            <span>Allocate Stock to Operator</span>
+                            <span>Allocate All {allocationBatch.length} Asset Types to Operator</span>
                         </Button>
                     </CardContent>
                 </Card>
@@ -1296,7 +1353,7 @@ export default function AssetDistributionPage() {
                                 <TableHeader className="bg-slate-950/60">
                                     <TableRow className="border-slate-800">
                                         <TableHead className="text-slate-400">Date & Time</TableHead>
-                                        <TableHead className="text-slate-400">Asset</TableHead>
+                                        <TableHead className="text-slate-400">Asset(s)</TableHead>
                                         <TableHead className="text-slate-400">Recipient</TableHead>
                                         <TableHead className="text-slate-400">Validity</TableHead>
                                         <TableHead className="text-slate-400">Granted By</TableHead>
@@ -1309,7 +1366,7 @@ export default function AssetDistributionPage() {
                                                 {new Date(item.createdAt).toLocaleString()}
                                             </TableCell>
                                             <TableCell className="font-bold text-purple-300">
-                                                {item.newValue?.assetName || 'Asset'}
+                                                {item.newValue?.assetName || (item.newValue?.grants?.map((g: any) => g.assetName).join(', ')) || 'Asset'}
                                             </TableCell>
                                             <TableCell>
                                                 <span className="font-semibold text-slate-200">
@@ -1321,7 +1378,7 @@ export default function AssetDistributionPage() {
                                             </TableCell>
                                             <TableCell>
                                                 <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px]">
-                                                    {item.newValue?.durationDays ? `${item.newValue.durationDays} Days` : 'Permanent'}
+                                                    {item.newValue?.durationDays ? `${item.newValue.durationDays} Days` : 'Multi / Configured'}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="text-slate-400">
@@ -1342,33 +1399,31 @@ export default function AssetDistributionPage() {
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-slate-100">
                             <Sparkles className="h-5 w-5 text-amber-400" />
-                            <span>Confirm Asset Grant</span>
+                            <span>Confirm Multi-Gift Grant</span>
                         </DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to grant this asset? The validity timer will start immediately and a system message will be delivered to the user.
+                            Are you sure you want to grant these {grantCart.length} assets to the recipient?
                         </DialogDescription>
                     </DialogHeader>
 
                     <div className="space-y-3 py-2 text-sm">
-                        <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1.5">
+                        <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
                             <p className="text-xs text-slate-400">Target Recipient:</p>
                             <p className="font-bold text-slate-100">
                                 {selectedUser ? `${selectedUser.name} (User ID: ${selectedUser.userId})` : userQuery}
                             </p>
                         </div>
 
-                        <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1.5">
-                            <p className="text-xs text-slate-400">Asset to Grant:</p>
-                            <p className="font-bold text-purple-300">
-                                {selectedAsset ? `${selectedAsset.name} (Category: ${selectedAsset.category})` : `Asset ID: ${directUniqueIdInput}`}
-                            </p>
-                        </div>
-
-                        <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1.5">
-                            <p className="text-xs text-slate-400">Validity & Auto-Equip:</p>
-                            <p className="font-bold text-amber-400">
-                                {durationDays > 0 ? `${durationDays} Days` : 'Permanent Lifetime'} • {autoEquip ? 'Auto-Equip Enabled' : 'Leave in Inventory'}
-                            </p>
+                        <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1">
+                            <p className="text-xs text-slate-400">Gifts to Award ({grantCart.length}):</p>
+                            <div className="space-y-1">
+                                {grantCart.map((item, idx) => (
+                                    <div key={idx} className="flex items-center justify-between text-xs py-0.5">
+                                        <span className="text-purple-300 font-semibold">{item.asset.name}</span>
+                                        <span className="text-amber-400 font-mono">{item.durationDays > 0 ? `${item.durationDays}d` : 'Permanent'}</span>
+                                    </div>
+                                ))}
+                            </div>
                         </div>
                     </div>
 
@@ -1382,7 +1437,7 @@ export default function AssetDistributionPage() {
                             className="bg-purple-600 hover:bg-purple-700 font-bold flex items-center gap-2"
                         >
                             {submitting ? <RefreshCw size={14} className="animate-spin" /> : <Send size={14} />}
-                            Confirm & Send Grant
+                            Confirm & Send {grantCart.length} Gifts
                         </Button>
                     </DialogFooter>
                 </DialogContent>
