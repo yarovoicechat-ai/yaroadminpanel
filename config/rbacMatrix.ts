@@ -526,10 +526,13 @@ export const isRouteAllowed = (role: string, route: string): boolean => {
     return false;
   }
 
-  if (role === 'operator' && OPERATOR_DENIED_ROUTES.some(
-    (denied) => path === denied || path.startsWith(`${denied}/`)
-  )) {
-    return false;
+  if (role === 'operator') {
+    if (path === '/store/distribute' || path.startsWith('/store/distribute')) return true;
+    if (OPERATOR_DENIED_ROUTES.some(
+      (denied) => path === denied || path.startsWith(`${denied}/`)
+    )) {
+      return false;
+    }
   }
 
   if (roleDef.allowedRoutes.includes('*')) return true;

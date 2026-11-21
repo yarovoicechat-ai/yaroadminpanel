@@ -42,11 +42,13 @@ import {
     Check,
     RefreshCw,
     X,
-    ExternalLink
+    ExternalLink,
+    Layers,
+    Plus,
+    Boxes
 } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
-import { getAdminAvatar } from '@/lib/avatar';
 
 interface AssetOption {
     _id: string;
@@ -98,9 +100,36 @@ interface GrantHistoryItem {
         userName?: string;
         durationDays?: number;
         expiresAt?: string;
+        remainingQuantity?: number;
         message?: string;
     };
     createdAt: string;
+}
+
+interface DurationPackage {
+    days: number;
+    allocatedQuantity: number;
+    remainingQuantity: number;
+}
+
+interface OperatorQuota {
+    _id: string;
+    operatorId: {
+        _id?: string;
+        userId?: number;
+        name?: string;
+        email?: string;
+        role?: string;
+    } | string;
+    operatorName: string;
+    assetName: string;
+    assetCategory: string;
+    imageUrl?: string;
+    packages: DurationPackage[];
+    availablePackages?: DurationPackage[];
+    notes?: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 const CATEGORY_TABS = [
@@ -127,14 +156,27 @@ const DURATION_PRESETS = [
 ];
 
 export default function AssetDistributionPage() {
-    // Search & Data State
+    // Current User Role
+    const [currentRole, setCurrentRole] = useState<string>('owner');
+    const isOwner = currentRole === 'owner';
+    const isOperator = ['operator', 'superAdmin', 'super-admin'].includes(currentRole);
+
+    // Active Navigation Sub-Tab
+    const [activeTab, setActiveTab] = useState<'grant' | 'allocate' | 'quotas' | 'history'>('grant');
+
+    // Catalog & Quota State
     const [assets, setAssets] = useState<AssetOption[]>([]);
     const [loadingAssets, setLoadingAssets] = useState(true);
     const [selectedCategoryTab, setSelectedCategoryTab] = useState('All');
     const [assetSearchQuery, setAssetSearchQuery] = useState('');
 
-    // Selected Asset
+    // Quotas State (For Owner & Operator)
+    const [quotas, setQuotas] = useState<OperatorQuota[]>([]);
+    const [loadingQuotas, setLoadingQuotas] = useState(false);
+
+    // Selected Asset for Granting
     const [selectedAsset, setSelectedAsset] = useState<AssetOption | null>(null);
+    const [selectedQuota, setSelectedQuota] = useState<OperatorQuota | null>(null);
     const [directUniqueIdInput, setDirectUniqueIdInput] = useState('');
 
     // User Search State
@@ -143,7 +185,7 @@ export default function AssetDistributionPage() {
     const [selectedUser, setSelectedUser] = useState<TargetUser | null>(null);
     const [isSearchingUser, setIsSearchingUser] = useState(false);
 
-    // Form Config
+    // Grant Form Config
     const [durationDays, setDurationDays] = useState<number>(30);
     const [customDaysInput, setCustomDaysInput] = useState('30');
     const [customMessage, setCustomMessage] = useState('');
@@ -154,6 +196,34 @@ export default function AssetDistributionPage() {
     const [history, setHistory] = useState<GrantHistoryItem[]>([]);
     const [loadingHistory, setLoadingHistory] = useState(true);
     const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+
+    // Owner Allocation Modal / Form State
+    const [operatorSearchQuery, setOperatorSearchQuery] = useState('');
+    const [operatorLookupResults, setOperatorLookupResults] = useState<any[]>([]);
+    const [selectedOperator, setSelectedOperator] = useState<any | null>(null);
+    const [selectedAssetForAllocation, setSelectedAssetForAllocation] = useState<AssetOption | null>(null);
+    const [allocationTiers, setAllocationTiers] = useState<Array<{ days: number; quantity: number }>>([
+        { days: 30, quantity: 1 },
+        { days: 15, quantity: 2 },
+        { days: 7, quantity: 2 }
+    ]);
+    const [allocationNotes, setAllocationNotes] = useState('');
+    const [allocating, setAllocating] = useState(false);
+
+    // Detect user role on mount
+    useEffect(() => {
+        try {
+            const rawUser = localStorage.getItem('admin_user');
+            if (rawUser) {
+                const parsed = JSON.parse(rawUser);
+                if (parsed.role) {
+                    setCurrentRole(parsed.role.toLowerCase());
+                }
+            }
+        } catch {
+            // fallback
+        }
+    }, []);
 
     // Fetch Assets Catalog
     const fetchCatalog = useCallback(async () => {
@@ -169,6 +239,22 @@ export default function AssetDistributionPage() {
             setLoadingAssets(false);
         }
     }, []);
+
+    // Fetch Quotas (available stock for operator, all quotas for owner)
+    const fetchQuotas = useCallback(async () => {
+        try {
+            setLoadingQuotas(true);
+            const url = isOwner ? '/api/admin/asset-quota' : '/api/admin/asset-quota/available';
+            const res = await apiClient.get<any>(url);
+            if (res.success && res.data) {
+                setQuotas(res.data || []);
+            }
+        } catch (err: any) {
+            console.warn('Quota fetch notice:', err.message);
+        } finally {
+            setLoadingQuotas(false);
+        }
+    }, [isOwner]);
 
     // Fetch Grant History
     const fetchHistory = useCallback(async () => {
@@ -187,8 +273,9 @@ export default function AssetDistributionPage() {
 
     useEffect(() => {
         fetchCatalog();
+        fetchQuotas();
         fetchHistory();
-    }, [fetchCatalog, fetchHistory]);
+    }, [fetchCatalog, fetchQuotas, fetchHistory]);
 
     // Lookup User by ID / Phone / Name
     const handleSearchUser = async (val: string) => {
@@ -199,54 +286,110 @@ export default function AssetDistributionPage() {
         }
         try {
             setIsSearchingUser(true);
-            const res = await apiClient.get<any>('/api/store/user-lookup', { query: val.trim() });
+            const res = await apiClient.get<any>(`/api/store/user-lookup?query=${encodeURIComponent(val.trim())}`);
             if (res.success && res.data) {
                 setUserLookupResults(res.data.users || []);
             }
-        } catch (err) {
-            console.warn('User search notice:', err);
+        } catch {
+            setUserLookupResults([]);
         } finally {
             setIsSearchingUser(false);
         }
     };
 
-    // Quick Asset Lookup by Unique ID
-    const handleQuickUniqueIdLookup = (uniqueIdToFind: string) => {
-        const clean = uniqueIdToFind.trim();
-        setDirectUniqueIdInput(clean);
-        if (!clean) return;
-        const found = assets.find(a => 
-            String(a.uniqueId).toLowerCase() === clean.toLowerCase() ||
-            String(a.number || '').toLowerCase() === clean.toLowerCase() ||
-            String(a._id) === clean
-        );
-        if (found) {
-            setSelectedAsset(found);
-            toast.success(`Selected asset: ${found.name} (ID: ${found.uniqueId})`);
-        } else {
-            toast.info(`No loaded asset with ID "${clean}". You can still type it manually.`);
+    // Lookup Operators (for Owner)
+    const handleSearchOperators = async (val: string) => {
+        setOperatorSearchQuery(val);
+        if (!val.trim()) {
+            setOperatorLookupResults([]);
+            return;
+        }
+        try {
+            const res = await apiClient.get<any>(`/api/store/user-lookup?query=${encodeURIComponent(val.trim())}`);
+            if (res.success && res.data) {
+                // Filter users with operator or admin roles
+                const ops = (res.data.users || []).filter((u: any) =>
+                    ['operator', 'superadmin', 'super-admin', 'admin'].includes(String(u.role).toLowerCase())
+                );
+                setOperatorLookupResults(ops);
+            }
+        } catch {
+            setOperatorLookupResults([]);
         }
     };
 
-    // Filtered Assets List
+    // Select Target User
+    const handleSelectUser = (user: TargetUser) => {
+        setSelectedUser(user);
+        setUserQuery(String(user.userId || user._id));
+        setUserLookupResults([]);
+    };
+
+    // Select Asset from Catalog
+    const handleSelectAsset = (asset: AssetOption) => {
+        setSelectedAsset(asset);
+        setDirectUniqueIdInput(asset.uniqueId || '');
+        setSelectedQuota(null);
+
+        // If Operator has quota for this asset, match it
+        if (!isOwner) {
+            const matched = quotas.find(q =>
+                q.assetName.toLowerCase() === asset.name.toLowerCase()
+            );
+            if (matched) {
+                setSelectedQuota(matched);
+                const firstAvailable = (matched.availablePackages || matched.packages || []).find(p => p.remainingQuantity > 0);
+                if (firstAvailable) {
+                    setDurationDays(firstAvailable.days);
+                    setCustomDaysInput(String(firstAvailable.days));
+                }
+            }
+        }
+    };
+
+    // Select Asset from Operator Quota
+    const handleSelectQuota = (quota: OperatorQuota) => {
+        setSelectedQuota(quota);
+        const matchingAsset = assets.find(a => a.name.toLowerCase() === quota.assetName.toLowerCase());
+        if (matchingAsset) {
+            setSelectedAsset(matchingAsset);
+            setDirectUniqueIdInput(matchingAsset.uniqueId || '');
+        } else {
+            setSelectedAsset({
+                _id: quota._id,
+                uniqueId: '',
+                name: quota.assetName,
+                category: quota.assetCategory,
+                imageUrl: quota.imageUrl
+            });
+        }
+
+        const validPackages = quota.availablePackages || quota.packages.filter(p => p.remainingQuantity > 0);
+        if (validPackages.length > 0) {
+            setDurationDays(validPackages[0].days);
+            setCustomDaysInput(String(validPackages[0].days));
+        }
+    };
+
+    // Filter Assets by Category & Search Query
     const filteredAssets = useMemo(() => {
-        return assets.filter(item => {
-            // Category filter
-            if (selectedCategoryTab === 'Employee') {
-                if (item.audience !== 'employee' && !item.isStaffOnly) return false;
-            } else if (selectedCategoryTab !== 'All') {
-                if (item.category !== selectedCategoryTab) return false;
+        return assets.filter((asset) => {
+            const matchesCat =
+                selectedCategoryTab === 'All'
+                    ? true
+                    : selectedCategoryTab === 'Employee'
+                        ? asset.isStaffOnly || asset.audience === 'employee'
+                        : asset.category.toLowerCase().includes(selectedCategoryTab.toLowerCase());
+
+            if (!matchesCat) return false;
+
+            if (assetSearchQuery.trim()) {
+                const q = assetSearchQuery.trim().toLowerCase();
+                const matchesName = asset.name?.toLowerCase().includes(q);
+                const matchesUnique = asset.uniqueId?.toLowerCase().includes(q);
+                return matchesName || matchesUnique;
             }
 
-            // Search query filter (matches name, uniqueId, category)
-            if (assetSearchQuery.trim()) {
-                const q = assetSearchQuery.toLowerCase();
-                const matchName = item.name.toLowerCase().includes(q);
-                const matchId = String(item.uniqueId || '').toLowerCase().includes(q);
-                const matchDisplayId = String(item.number || '').toLowerCase().includes(q);
-                const matchCat = String(item.category || '').toLowerCase().includes(q);
-                return matchName || matchId || matchDisplayId || matchCat;
-            }
             return true;
         });
     }, [assets, selectedCategoryTab, assetSearchQuery]);
@@ -257,30 +400,97 @@ export default function AssetDistributionPage() {
         setCustomDaysInput(String(days));
     };
 
-    // Handle Custom Days Input
-    const handleCustomDaysChange = (val: string) => {
-        setCustomDaysInput(val);
-        const parsed = parseInt(val, 10);
-        if (!isNaN(parsed) && parsed >= 0) {
-            setDurationDays(parsed);
+    // Add Tier row for Owner Allocation
+    const handleAddTier = () => {
+        setAllocationTiers(prev => [...prev, { days: 7, quantity: 1 }]);
+    };
+
+    // Remove Tier row
+    const handleRemoveTier = (idx: number) => {
+        setAllocationTiers(prev => prev.filter((_, i) => i !== idx));
+    };
+
+    // Update Tier row
+    const handleUpdateTier = (idx: number, field: 'days' | 'quantity', val: number) => {
+        setAllocationTiers(prev => prev.map((item, i) => i === idx ? { ...item, [field]: val } : item));
+    };
+
+    // Submit Stock Allocation (Owner -> Operator)
+    const handleExecuteAllocation = async () => {
+        if (!selectedOperator) {
+            toast.error('Please select a target Operator');
+            return;
+        }
+        if (!selectedAssetForAllocation) {
+            toast.error('Please select an Asset to allocate');
+            return;
+        }
+        if (allocationTiers.length === 0) {
+            toast.error('Please add at least one duration package tier');
+            return;
+        }
+
+        try {
+            setAllocating(true);
+            const payload = {
+                operatorId: selectedOperator._id || selectedOperator.userId,
+                assetQuery: selectedAssetForAllocation.name || selectedAssetForAllocation.uniqueId,
+                packages: allocationTiers.map(t => ({
+                    days: Number(t.days),
+                    quantity: Math.max(1, Number(t.quantity))
+                })),
+                notes: allocationNotes.trim()
+            };
+
+            const res = await apiClient.post<any>('/api/admin/asset-quota/allocate', payload);
+            if (res.success) {
+                toast.success(res.message || 'Asset stock allocated successfully to Operator!');
+                setSelectedOperator(null);
+                setSelectedAssetForAllocation(null);
+                setAllocationNotes('');
+                fetchQuotas();
+                setActiveTab('quotas');
+            } else {
+                toast.error(res.message || 'Allocation failed');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to allocate asset stock');
+        } finally {
+            setAllocating(false);
         }
     };
 
-    // Execute Asset Grant
+    // Delete Quota (Owner)
+    const handleDeleteQuota = async (quotaId: string) => {
+        if (!confirm('Are you sure you want to delete this operator asset quota?')) return;
+        try {
+            const res = await apiClient.delete<any>(`/api/admin/asset-quota/${quotaId}`);
+            if (res.success) {
+                toast.success('Quota removed successfully');
+                fetchQuotas();
+            } else {
+                toast.error(res.message || 'Failed to remove quota');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Failed to remove quota');
+        }
+    };
+
+    // Execute Asset Grant (Supports both Owner direct grant and Operator quota grant)
     const handleExecuteGrant = async () => {
         if (!selectedUser && !userQuery.trim()) {
             toast.error('Please specify a target user (User ID, phone or email)');
             return;
         }
         if (!selectedAsset && !directUniqueIdInput.trim()) {
-            toast.error('Please select an asset or enter a Unique Asset ID (e.g. 555)');
+            toast.error('Please select an asset or enter a Unique Asset ID');
             return;
         }
 
         try {
             setSubmitting(true);
             const userIdentifier = selectedUser ? String(selectedUser.userId || selectedUser._id) : userQuery.trim();
-            const assetIdentifier = selectedAsset ? (selectedAsset.uniqueId || selectedAsset._id) : directUniqueIdInput.trim();
+            const assetIdentifier = selectedAsset ? (selectedAsset.uniqueId || selectedAsset.name || selectedAsset._id) : directUniqueIdInput.trim();
 
             const payload = {
                 userQuery: userIdentifier,
@@ -290,20 +500,21 @@ export default function AssetDistributionPage() {
                 autoEquip,
             };
 
-            const res = await apiClient.post<any>('/api/store/grant-asset', payload);
+            // Use quota grant endpoint (works for both Operator and Owner)
+            const res = await apiClient.post<any>('/api/admin/asset-quota/grant', payload);
 
             if (res.success) {
                 toast.success(res.message || 'Asset granted successfully!');
                 setConfirmModalOpen(false);
-                // Clear selection
                 setSelectedUser(null);
                 setUserQuery('');
                 setUserLookupResults([]);
                 setSelectedAsset(null);
+                setSelectedQuota(null);
                 setDirectUniqueIdInput('');
                 setCustomMessage('');
-                // Refresh history & catalog
                 fetchHistory();
+                fetchQuotas();
                 fetchCatalog();
             } else {
                 toast.error(res.message || 'Failed to grant asset');
@@ -315,17 +526,9 @@ export default function AssetDistributionPage() {
         }
     };
 
-    // Computed message preview
-    const previewDisplayMessage = useMemo(() => {
-        const assetName = selectedAsset?.name || directUniqueIdInput || 'Exclusive Asset';
-        const daysText = durationDays > 0 ? `${durationDays} Days` : 'Permanent Lifetime';
-        if (customMessage.trim()) return customMessage.trim();
-        return `🎁 Congratulations! You have received ${assetName} (${daysText}) from the Official Admin Team. Tap View to equip in My Items.`;
-    }, [customMessage, selectedAsset, directUniqueIdInput, durationDays]);
-
     return (
         <div className="space-y-6 max-w-7xl mx-auto pb-12">
-            {/* Page Header */}
+            {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-2.5">
@@ -333,11 +536,18 @@ export default function AssetDistributionPage() {
                             <Sparkles className="h-6 w-6 animate-pulse" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
-                                Asset Distribution & Rewards
-                            </h1>
+                            <div className="flex items-center gap-2">
+                                <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-purple-400 via-pink-400 to-amber-300 bg-clip-text text-transparent">
+                                    Asset Allocation & Granting
+                                </h1>
+                                <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/40 uppercase text-[10px] tracking-wider">
+                                    {isOwner ? '👑 Platform Owner Panel' : '⚡ Operator Console'}
+                                </Badge>
+                            </div>
                             <p className="text-slate-400 text-sm mt-0.5 font-medium">
-                                Direct grant of Frames, Rides, Tags, SVIP & King of Kings to user backpacks with real-time System Messages.
+                                {isOwner
+                                    ? 'Allocate asset stock quotas to Operators with custom duration tiers, or directly grant assets to users.'
+                                    : 'Grant exclusive Frames, Entry Effects, Badges and Tags to users using your allocated stock inventory.'}
                             </p>
                         </div>
                     </div>
@@ -347,125 +557,489 @@ export default function AssetDistributionPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => { fetchCatalog(); fetchHistory(); }}
+                        onClick={() => { fetchCatalog(); fetchQuotas(); fetchHistory(); }}
                         className="flex items-center gap-2 border-slate-700 bg-slate-800/60 text-slate-300 hover:bg-slate-800"
                     >
                         <RefreshCw size={14} className={loadingAssets ? 'animate-spin' : ''} />
-                        Refresh Catalog
+                        Refresh Data
                     </Button>
                 </div>
             </div>
 
-            {/* Quick Stat Highlights */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-slate-900/60 border-slate-800 backdrop-blur-md">
-                    <CardContent className="p-4 flex items-center gap-3.5">
-                        <div className="p-3 bg-purple-500/10 text-purple-400 border border-purple-500/20 rounded-xl">
-                            <Gift className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-slate-400 font-medium">Active Asset Catalog</p>
-                            <p className="text-2xl font-black text-slate-100">{assets.length}</p>
-                        </div>
-                    </CardContent>
-                </Card>
+            {/* Navigation Tabs */}
+            <div className="flex items-center gap-2 border-b border-slate-800 pb-3 overflow-x-auto">
+                <Button
+                    size="sm"
+                    variant={activeTab === 'grant' ? 'default' : 'ghost'}
+                    onClick={() => setActiveTab('grant')}
+                    className={`gap-1.5 text-xs font-semibold ${activeTab === 'grant' ? 'bg-purple-600 hover:bg-purple-700 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                    <Gift className="h-4 w-4" />
+                    <span>Grant Asset to User</span>
+                </Button>
 
-                <Card className="bg-slate-900/60 border-slate-800 backdrop-blur-md">
-                    <CardContent className="p-4 flex items-center gap-3.5">
-                        <div className="p-3 bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded-xl">
-                            <Crown className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-slate-400 font-medium">SVIP & King Packages</p>
-                            <p className="text-2xl font-black text-slate-100">
-                                {assets.filter(a => a.category === 'VIP' || a.category === 'King of Kings').length}
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
+                {isOwner && (
+                    <>
+                        <Button
+                            size="sm"
+                            variant={activeTab === 'allocate' ? 'default' : 'ghost'}
+                            onClick={() => setActiveTab('allocate')}
+                            className={`gap-1.5 text-xs font-semibold ${activeTab === 'allocate' ? 'bg-amber-600 hover:bg-amber-700 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            <Boxes className="h-4 w-4" />
+                            <span>Allocate Stock to Operators (Owner)</span>
+                        </Button>
 
-                <Card className="bg-slate-900/60 border-slate-800 backdrop-blur-md">
-                    <CardContent className="p-4 flex items-center gap-3.5">
-                        <div className="p-3 bg-sky-500/10 text-sky-400 border border-sky-500/20 rounded-xl">
-                            <Briefcase className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-slate-400 font-medium">Staff & Employee Only</p>
-                            <p className="text-2xl font-black text-slate-100">
-                                {assets.filter(a => a.isStaffOnly || a.audience === 'employee').length}
-                            </p>
-                        </div>
-                    </CardContent>
-                </Card>
+                        <Button
+                            size="sm"
+                            variant={activeTab === 'quotas' ? 'default' : 'ghost'}
+                            onClick={() => setActiveTab('quotas')}
+                            className={`gap-1.5 text-xs font-semibold ${activeTab === 'quotas' ? 'bg-sky-600 hover:bg-sky-700 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                        >
+                            <Layers className="h-4 w-4" />
+                            <span>Operator Stock Ledger</span>
+                        </Button>
+                    </>
+                )}
 
-                <Card className="bg-slate-900/60 border-slate-800 backdrop-blur-md">
-                    <CardContent className="p-4 flex items-center gap-3.5">
-                        <div className="p-3 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl">
-                            <Send className="h-5 w-5" />
-                        </div>
-                        <div>
-                            <p className="text-xs text-slate-400 font-medium">Total Rewards Sent</p>
-                            <p className="text-2xl font-black text-slate-100">{history.length}</p>
-                        </div>
-                    </CardContent>
-                </Card>
+                <Button
+                    size="sm"
+                    variant={activeTab === 'history' ? 'default' : 'ghost'}
+                    onClick={() => setActiveTab('history')}
+                    className={`gap-1.5 text-xs font-semibold ${activeTab === 'history' ? 'bg-slate-700 hover:bg-slate-600 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+                >
+                    <Clock className="h-4 w-4" />
+                    <span>Grant History & Logs</span>
+                </Button>
             </div>
 
-            {/* Main Interactive Command Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                {/* Left 7 Columns: Grant Action Engine */}
-                <div className="lg:col-span-7 space-y-6">
-                    {/* Step 1: Target User Search */}
-                    <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
-                        <CardHeader className="pb-3 border-b border-slate-800/80">
-                            <div className="flex items-center gap-2">
-                                <span className="h-6 w-6 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 font-black text-xs flex items-center justify-center">1</span>
-                                <CardTitle className="text-base font-bold text-slate-100">Select Target User (Recipient)</CardTitle>
-                            </div>
-                            <CardDescription className="text-xs text-slate-400">
-                                Enter user numeric ID (e.g. 1000000086), Meethi ID, phone number or name.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-4 space-y-3">
-                            <div className="relative">
-                                <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
-                                <Input
-                                    placeholder="Search by User Numeric ID, Phone or Name..."
-                                    value={userQuery}
-                                    onChange={(e) => handleSearchUser(e.target.value)}
-                                    className="pl-10 bg-slate-950/70 border-slate-700 text-slate-100 placeholder:text-slate-500"
-                                />
-                                {isSearchingUser && (
-                                    <div className="absolute right-3.5 top-3.5">
-                                        <RefreshCw size={14} className="animate-spin text-purple-400" />
+            {/* TAB 1: GRANT ASSET TO USER */}
+            {activeTab === 'grant' && (
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    {/* Left 7 Columns: Grant Action Engine */}
+                    <div className="lg:col-span-7 space-y-6">
+                        {/* Step 1: Target User Search */}
+                        <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
+                            <CardHeader className="pb-3 border-b border-slate-800/80">
+                                <div className="flex items-center gap-2">
+                                    <span className="h-6 w-6 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 font-black text-xs flex items-center justify-center">1</span>
+                                    <CardTitle className="text-base font-bold text-slate-100">Select Target User (Recipient)</CardTitle>
+                                </div>
+                                <CardDescription className="text-xs text-slate-400">
+                                    Enter user numeric ID (e.g. 1000000086), Meethi ID, phone number or name.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="pt-4 space-y-3">
+                                <div className="relative">
+                                    <Search className="absolute left-3.5 top-3.5 h-4 w-4 text-slate-400" />
+                                    <Input
+                                        placeholder="Search by User Numeric ID, Phone or Name..."
+                                        value={userQuery}
+                                        onChange={(e) => handleSearchUser(e.target.value)}
+                                        className="pl-10 bg-slate-950/70 border-slate-700 text-slate-100 placeholder:text-slate-500"
+                                    />
+                                    {isSearchingUser && (
+                                        <div className="absolute right-3.5 top-3.5">
+                                            <RefreshCw size={14} className="animate-spin text-purple-400" />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Search Dropdown Results */}
+                                {userLookupResults.length > 0 && !selectedUser && (
+                                    <div className="border border-slate-800 rounded-xl bg-slate-950 p-2 max-h-56 overflow-y-auto space-y-1.5 shadow-2xl">
+                                        {userLookupResults.map((u) => (
+                                            <div
+                                                key={u._id}
+                                                onClick={() => handleSelectUser(u)}
+                                                className="p-2.5 rounded-lg hover:bg-slate-800/80 cursor-pointer flex items-center justify-between transition-colors border border-transparent hover:border-purple-500/30"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-full bg-purple-500/20 text-purple-300 font-bold flex items-center justify-center text-xs border border-purple-500/40">
+                                                        {u.name?.charAt(0) || 'U'}
+                                                    </div>
+                                                    <div>
+                                                        <p className="font-bold text-sm text-slate-100 flex items-center gap-1.5">
+                                                            {u.name}
+                                                            <span className="text-[10px] bg-slate-800 px-1.5 py-0.5 rounded text-slate-400 font-mono">
+                                                                ID: {u.userId}
+                                                            </span>
+                                                        </p>
+                                                        <p className="text-xs text-slate-400">
+                                                            {u.phoneNumber || u.email || 'No contact'} • Role: <span className="capitalize text-purple-400 font-medium">{u.role}</span>
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                <Button size="sm" variant="ghost" className="h-7 text-xs text-purple-400">
+                                                    Select
+                                                </Button>
+                                            </div>
+                                        ))}
                                     </div>
                                 )}
+
+                                {/* Selected User Card */}
+                                {selectedUser && (
+                                    <div className="p-3 bg-purple-950/30 border border-purple-500/40 rounded-xl flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-purple-600 text-white font-bold flex items-center justify-center text-sm shadow-md">
+                                                {selectedUser.name?.charAt(0) || 'U'}
+                                            </div>
+                                            <div>
+                                                <p className="font-black text-sm text-purple-200 flex items-center gap-2">
+                                                    {selectedUser.name}
+                                                    <Badge className="bg-purple-500/20 text-purple-300 text-[10px]">
+                                                        ID: {selectedUser.userId}
+                                                    </Badge>
+                                                </p>
+                                                <p className="text-xs text-slate-400">
+                                                    {selectedUser.phoneNumber || selectedUser.email || 'N/A'} • Role: {selectedUser.role}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => { setSelectedUser(null); setUserQuery(''); }}
+                                            className="text-slate-400 hover:text-red-400 h-8 w-8 p-0"
+                                        >
+                                            <X size={16} />
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Step 2: Select Asset */}
+                        <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
+                            <CardHeader className="pb-3 border-b border-slate-800/80">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="h-6 w-6 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 font-black text-xs flex items-center justify-center">2</span>
+                                        <CardTitle className="text-base font-bold text-slate-100">
+                                            {isOwner ? 'Select Asset from Catalog' : 'Select Asset from My Quota'}
+                                        </CardTitle>
+                                    </div>
+                                    {!isOwner && (
+                                        <Badge className="bg-amber-500/20 text-amber-300 border border-amber-500/40 text-[10px]">
+                                            Allocated by Owner
+                                        </Badge>
+                                    )}
+                                </div>
+                            </CardHeader>
+                            <CardContent className="pt-4 space-y-4">
+                                {/* Operator View: Available Quota Cards */}
+                                {!isOwner && (
+                                    <div className="space-y-3">
+                                        <p className="text-xs text-slate-400 font-medium">
+                                            Your Available Stock Quotas (click to select):
+                                        </p>
+                                        {quotas.length === 0 ? (
+                                            <div className="p-6 bg-slate-950/60 border border-slate-800 rounded-xl text-center space-y-2">
+                                                <AlertCircle className="h-8 w-8 text-amber-400 mx-auto" />
+                                                <p className="text-xs text-slate-300 font-semibold">No Asset Stock Allocated Yet</p>
+                                                <p className="text-[11px] text-slate-500">
+                                                    You do not have any asset stock allocated by the Owner. Please contact the Platform Owner to allocate frames, badges, entry effects or tags to your inventory.
+                                                </p>
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-72 overflow-y-auto p-1">
+                                                {quotas.map((q) => {
+                                                    const isSelected = selectedQuota?._id === q._id;
+                                                    const validPkgs = q.availablePackages || q.packages.filter(p => p.remainingQuantity > 0);
+
+                                                    return (
+                                                        <div
+                                                            key={q._id}
+                                                            onClick={() => handleSelectQuota(q)}
+                                                            className={`p-3 rounded-xl border cursor-pointer transition-all ${isSelected
+                                                                ? 'bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/30'
+                                                                : 'bg-slate-950/60 border-slate-800 hover:border-slate-700 hover:bg-slate-800/40'}`}
+                                                        >
+                                                            <div className="flex items-center justify-between mb-2">
+                                                                <span className="font-bold text-xs text-slate-100">{q.assetName}</span>
+                                                                <Badge className="bg-purple-500/20 text-purple-300 text-[9px]">
+                                                                    {q.assetCategory}
+                                                                </Badge>
+                                                            </div>
+                                                            <div className="flex flex-wrap gap-1.5 mt-2">
+                                                                {validPkgs.map((p, idx) => (
+                                                                    <span
+                                                                        key={idx}
+                                                                        className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] px-2 py-0.5 rounded font-mono font-bold"
+                                                                    >
+                                                                        {p.days}d: {p.remainingQuantity} left
+                                                                    </span>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {/* Owner View: Full Asset Catalog Grid */}
+                                {isOwner && (
+                                    <>
+                                        <div className="flex flex-wrap gap-1.5 pb-2 border-b border-slate-800">
+                                            {CATEGORY_TABS.map((cat) => (
+                                                <button
+                                                    key={cat.value}
+                                                    type="button"
+                                                    onClick={() => setSelectedCategoryTab(cat.value)}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${selectedCategoryTab === cat.value
+                                                        ? 'bg-purple-600 text-white shadow-md'
+                                                        : 'bg-slate-950 text-slate-400 hover:bg-slate-800 hover:text-slate-200 border border-slate-800'
+                                                        }`}
+                                                >
+                                                    {cat.label}
+                                                </button>
+                                            ))}
+                                        </div>
+
+                                        <div className="relative">
+                                            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-500" />
+                                            <Input
+                                                placeholder="Search assets by name or unique ID..."
+                                                value={assetSearchQuery}
+                                                onChange={(e) => setAssetSearchQuery(e.target.value)}
+                                                className="pl-9 h-8 text-xs bg-slate-950 border-slate-800 text-slate-200 placeholder:text-slate-500"
+                                            />
+                                        </div>
+
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-60 overflow-y-auto p-1">
+                                            {filteredAssets.map((asset) => {
+                                                const isSelected = selectedAsset?._id === asset._id;
+                                                return (
+                                                    <div
+                                                        key={asset._id}
+                                                        onClick={() => handleSelectAsset(asset)}
+                                                        className={`p-2.5 rounded-xl border text-left cursor-pointer transition-all ${isSelected
+                                                            ? 'bg-purple-950/40 border-purple-500 ring-2 ring-purple-500/30'
+                                                            : 'bg-slate-950/60 border-slate-800/80 hover:border-slate-700 hover:bg-slate-800/50'
+                                                            }`}
+                                                    >
+                                                        <div className="flex items-center justify-between gap-1 mb-1.5">
+                                                            <span className="font-bold text-xs text-slate-200 truncate">{asset.name}</span>
+                                                            {isSelected && <Check className="h-3.5 w-3.5 text-purple-400 shrink-0" />}
+                                                        </div>
+                                                        <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                                                            <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-300 font-mono">
+                                                                {asset.category}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Selected Asset Summary */}
+                                {selectedAsset && (
+                                    <div className="p-3 bg-purple-950/30 border border-purple-500/40 rounded-xl flex items-center justify-between">
+                                        <div>
+                                            <p className="font-bold text-sm text-purple-200 flex items-center gap-2">
+                                                {selectedAsset.name}
+                                                <Badge className="bg-purple-500/20 text-purple-300 text-[10px]">
+                                                    {selectedAsset.category}
+                                                </Badge>
+                                            </p>
+                                            {selectedQuota && (
+                                                <p className="text-xs text-emerald-400 font-medium mt-1">
+                                                    Stock available from Operator Quota
+                                                </p>
+                                            )}
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => { setSelectedAsset(null); setSelectedQuota(null); }}
+                                            className="text-slate-400 hover:text-red-400 h-7 w-7 p-0"
+                                        >
+                                            <X size={15} />
+                                        </Button>
+                                    </div>
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Step 3: Duration & Execution */}
+                        <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
+                            <CardHeader className="pb-3 border-b border-slate-800/80">
+                                <div className="flex items-center gap-2">
+                                    <span className="h-6 w-6 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-300 font-black text-xs flex items-center justify-center">3</span>
+                                    <CardTitle className="text-base font-bold text-slate-100">Validity Duration & Grant</CardTitle>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="pt-4 space-y-4">
+                                {/* If Operator with Quota: Show available duration pills */}
+                                {!isOwner && selectedQuota ? (
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-slate-400 font-medium">Select Duration from Your Allocated Stock:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {(selectedQuota.availablePackages || selectedQuota.packages.filter(p => p.remainingQuantity > 0)).map((p, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    type="button"
+                                                    onClick={() => { setDurationDays(p.days); setCustomDaysInput(String(p.days)); }}
+                                                    className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${durationDays === p.days
+                                                        ? 'bg-purple-600 text-white border-purple-500 ring-2 ring-purple-500/30'
+                                                        : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'}`}
+                                                >
+                                                    {p.days} Days ({p.remainingQuantity} in stock)
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* Owner: Presets */
+                                    <div className="space-y-2">
+                                        <p className="text-xs text-slate-400 font-medium">Duration Presets:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {DURATION_PRESETS.map((preset) => (
+                                                <button
+                                                    key={preset.days}
+                                                    type="button"
+                                                    onClick={() => handleDurationPreset(preset.days)}
+                                                    className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all border ${durationDays === preset.days
+                                                        ? 'bg-purple-600 text-white border-purple-500 ring-2 ring-purple-500/30'
+                                                        : 'bg-slate-950 text-slate-300 border-slate-800 hover:bg-slate-800'}`}
+                                                >
+                                                    {preset.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Auto-Equip Option */}
+                                <div className="flex items-center gap-2 pt-2">
+                                    <input
+                                        type="checkbox"
+                                        id="autoEquip"
+                                        checked={autoEquip}
+                                        onChange={(e) => setAutoEquip(e.target.checked)}
+                                        className="rounded border-slate-700 bg-slate-950 text-purple-600 focus:ring-purple-500"
+                                    />
+                                    <label htmlFor="autoEquip" className="text-xs text-slate-300 font-medium cursor-pointer">
+                                        Automatically equip this asset on the user&apos;s active profile immediately
+                                    </label>
+                                </div>
+
+                                {/* Custom Message */}
+                                <div className="space-y-1">
+                                    <label className="text-xs text-slate-400 font-medium">Custom In-App Notification Message (Optional):</label>
+                                    <Input
+                                        placeholder="e.g. Special reward from management for outstanding hosting!"
+                                        value={customMessage}
+                                        onChange={(e) => setCustomMessage(e.target.value)}
+                                        className="h-8 text-xs bg-slate-950 border-slate-800 text-slate-200"
+                                    />
+                                </div>
+
+                                {/* Grant Trigger Button */}
+                                <Button
+                                    onClick={() => setConfirmModalOpen(true)}
+                                    disabled={!selectedUser || (!selectedAsset && !directUniqueIdInput)}
+                                    className="w-full bg-gradient-to-r from-purple-600 via-pink-600 to-amber-600 hover:from-purple-500 hover:to-amber-500 text-white font-bold h-11 text-sm shadow-xl shadow-purple-900/20 gap-2"
+                                >
+                                    <Send className="h-4 w-4" />
+                                    <span>Grant Asset to User Now</span>
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* Right 5 Columns: Live Preview Card */}
+                    <div className="lg:col-span-5 space-y-6">
+                        <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg sticky top-6">
+                            <CardHeader className="pb-3 border-b border-slate-800/80">
+                                <CardTitle className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                                    <Sparkles className="h-4 w-4 text-amber-400" />
+                                    <span>Live In-App Message Preview</span>
+                                </CardTitle>
+                                <CardDescription className="text-xs text-slate-400">
+                                    How the push notification will appear in the user&apos;s app inbox.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent className="pt-4 space-y-4">
+                                <div className="p-4 rounded-2xl bg-gradient-to-b from-slate-950 to-purple-950/20 border border-purple-500/30 space-y-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300 font-bold text-lg">
+                                            🎁
+                                        </div>
+                                        <div>
+                                            <p className="text-xs font-bold text-slate-200">
+                                                {selectedAsset?.name || 'Exclusive Reward'} Received!
+                                            </p>
+                                            <p className="text-[10px] text-slate-400">Official System Message • Just Now</p>
+                                        </div>
+                                    </div>
+
+                                    <p className="text-xs text-slate-300 leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-slate-800">
+                                        {customMessage.trim() || `Congratulations! You have received ${selectedAsset?.name || 'an exclusive asset'} (${durationDays > 0 ? `${durationDays} Days` : 'Permanent Lifetime'}) from ${isOwner ? 'Platform Owner' : 'Operator'}. Tap View to equip in My Items.`}
+                                    </p>
+
+                                    <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+                                        <span className="text-[10px] text-slate-500 font-mono">Status: Ready to deliver</span>
+                                        <span className="text-[10px] bg-purple-500/20 text-purple-300 px-2 py-0.5 rounded font-bold">
+                                            {durationDays > 0 ? `${durationDays} Days Validity` : 'Permanent'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            )}
+
+            {/* TAB 2: OWNER ALLOCATE STOCK TO OPERATORS */}
+            {activeTab === 'allocate' && isOwner && (
+                <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
+                    <CardHeader className="border-b border-slate-800/80 pb-4">
+                        <div className="flex items-center gap-2">
+                            <Boxes className="h-5 w-5 text-amber-400" />
+                            <CardTitle className="text-lg font-bold text-slate-100">
+                                Allocate Asset Stock Quota to Operator
+                            </CardTitle>
+                        </div>
+                        <CardDescription className="text-xs text-slate-400">
+                            Distribute stock of Frames, Entry Effects, Badges, or Tags to Operators broken down by duration buckets (e.g. 5x Super Admin Frame: 1 for 30 days, 2 for 15 days, 2 for 7 days).
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="pt-6 space-y-6 max-w-3xl">
+                        {/* 1. Select Operator */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-200">1. Select Target Operator</label>
+                            <div className="relative">
+                                <Search className="absolute left-3 top-3 h-4 w-4 text-slate-500" />
+                                <Input
+                                    placeholder="Search Operator by Name, Numeric ID, or Phone..."
+                                    value={operatorSearchQuery}
+                                    onChange={(e) => handleSearchOperators(e.target.value)}
+                                    className="pl-9 bg-slate-950 border-slate-800 text-slate-200 text-xs"
+                                />
                             </div>
 
-                            {/* Search Dropdown Results */}
-                            {userLookupResults.length > 0 && !selectedUser && (
-                                <div className="border border-slate-800 rounded-xl bg-slate-950 p-2 max-h-56 overflow-y-auto space-y-1.5 shadow-2xl">
-                                    {userLookupResults.map((u) => (
+                            {/* Operator Results */}
+                            {operatorLookupResults.length > 0 && !selectedOperator && (
+                                <div className="border border-slate-800 rounded-xl bg-slate-950 p-2 max-h-48 overflow-y-auto space-y-1 shadow-2xl">
+                                    {operatorLookupResults.map((op) => (
                                         <div
-                                            key={u._id}
-                                            onClick={() => { setSelectedUser(u); setUserQuery(String(u.userId)); }}
-                                            className="flex items-center justify-between p-2.5 rounded-lg hover:bg-slate-900/90 cursor-pointer border border-transparent hover:border-slate-800 transition-all"
+                                            key={op._id}
+                                            onClick={() => { setSelectedOperator(op); setOperatorSearchQuery(op.name); setOperatorLookupResults([]); }}
+                                            className="p-2 rounded-lg hover:bg-slate-800 cursor-pointer flex items-center justify-between text-xs"
                                         >
-                                            <div className="flex items-center gap-3">
-                                                <div className="h-9 w-9 rounded-full bg-slate-800 overflow-hidden border border-slate-700 flex items-center justify-center font-bold text-xs text-slate-200">
-                                                    <img src={getAdminAvatar(u)} alt={u.name} className="h-full w-full object-cover" />
-                                                </div>
-                                                <div>
-                                                    <div className="flex items-center gap-2">
-                                                        <p className="font-bold text-sm text-slate-200">{u.name || 'Unnamed'}</p>
-                                                        <Badge variant="outline" className="text-[10px] py-0 border-purple-500/30 text-purple-400">
-                                                            {u.role || 'user'}
-                                                        </Badge>
-                                                    </div>
-                                                    <p className="text-xs text-slate-400 font-mono">ID: {u.userId} {u.phoneNumber ? `• ${u.phoneNumber}` : ''}</p>
-                                                </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="font-bold text-slate-200">{op.name}</span>
+                                                <Badge className="bg-purple-500/20 text-purple-300 text-[10px]">
+                                                    ID: {op.userId} • {op.role}
+                                                </Badge>
                                             </div>
-                                            <Button size="sm" variant="ghost" className="text-purple-400 hover:text-purple-300">
+                                            <Button size="sm" variant="ghost" className="h-6 text-[10px] text-purple-400">
                                                 Select
                                             </Button>
                                         </div>
@@ -473,385 +1047,294 @@ export default function AssetDistributionPage() {
                                 </div>
                             )}
 
-                            {/* Selected User Verification Card */}
-                            {selectedUser && (
-                                <div className="p-3.5 rounded-xl bg-purple-950/20 border border-purple-500/30 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-12 w-12 rounded-full overflow-hidden border-2 border-purple-400/50 flex items-center justify-center bg-slate-800">
-                                            <img src={getAdminAvatar(selectedUser)} alt={selectedUser.name} className="h-full w-full object-cover" />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-black text-base text-slate-100">{selectedUser.name}</p>
-                                                <Badge className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px]">
-                                                    Verified Target
-                                                </Badge>
-                                            </div>
-                                            <p className="text-xs text-purple-300 font-mono">
-                                                User ID: <span className="font-bold text-white">{selectedUser.userId}</span> • Role: {selectedUser.role}
-                                            </p>
-                                        </div>
+                            {selectedOperator && (
+                                <div className="p-3 bg-amber-950/30 border border-amber-500/40 rounded-xl flex items-center justify-between">
+                                    <div>
+                                        <p className="font-bold text-xs text-amber-200 flex items-center gap-2">
+                                            Operator: {selectedOperator.name}
+                                            <Badge className="bg-amber-500/20 text-amber-300 text-[10px]">
+                                                ID: {selectedOperator.userId}
+                                            </Badge>
+                                        </p>
                                     </div>
                                     <Button
                                         size="sm"
                                         variant="ghost"
-                                        onClick={() => { setSelectedUser(null); setUserQuery(''); }}
-                                        className="h-8 w-8 p-0 text-slate-400 hover:text-red-400"
+                                        onClick={() => { setSelectedOperator(null); setOperatorSearchQuery(''); }}
+                                        className="h-6 w-6 p-0 text-slate-400 hover:text-red-400"
                                     >
-                                        <X size={16} />
+                                        <X size={14} />
                                     </Button>
                                 </div>
                             )}
-                        </CardContent>
-                    </Card>
+                        </div>
 
-                    {/* Step 2: Asset Selection by ID or Picker */}
-                    <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
-                        <CardHeader className="pb-3 border-b border-slate-800/80">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <span className="h-6 w-6 rounded-full bg-pink-500/20 border border-pink-500/40 text-pink-300 font-black text-xs flex items-center justify-center">2</span>
-                                    <CardTitle className="text-base font-bold text-slate-100">Select Asset to Grant</CardTitle>
-                                </div>
-                                <span className="text-xs text-slate-400 font-mono">E.g. SVIP 1 ID = 555</span>
+                        {/* 2. Select Asset */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-200">2. Select Asset to Allocate</label>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 max-h-44 overflow-y-auto p-1">
+                                {assets.map((a) => {
+                                    const isSel = selectedAssetForAllocation?._id === a._id;
+                                    return (
+                                        <div
+                                            key={a._id}
+                                            onClick={() => setSelectedAssetForAllocation(a)}
+                                            className={`p-2 rounded-xl border text-left cursor-pointer transition-all ${isSel
+                                                ? 'bg-amber-950/40 border-amber-500 ring-2 ring-amber-500/30'
+                                                : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'}`}
+                                        >
+                                            <p className="font-bold text-xs text-slate-200 truncate">{a.name}</p>
+                                            <p className="text-[10px] text-slate-500">{a.category}</p>
+                                        </div>
+                                    );
+                                })}
                             </div>
-                            <CardDescription className="text-xs text-slate-400">
-                                Enter the Unique Asset ID directly or browse visually by category below.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-4 space-y-4">
-                            {/* Fast Direct Unique ID Input */}
-                            <div className="flex items-center gap-2">
-                                <div className="relative flex-1">
-                                    <Tag className="absolute left-3.5 top-3.5 h-4 w-4 text-pink-400" />
-                                    <Input
-                                        placeholder="Enter Unique Asset ID directly (e.g. 555, 1001)..."
-                                        value={directUniqueIdInput}
-                                        onChange={(e) => handleQuickUniqueIdLookup(e.target.value)}
-                                        className="pl-10 font-mono font-bold text-pink-300 bg-slate-950/70 border-slate-700"
-                                    />
+                            {selectedAssetForAllocation && (
+                                <div className="p-2.5 bg-amber-950/30 border border-amber-500/40 rounded-xl flex items-center justify-between">
+                                    <span className="text-xs font-bold text-amber-200">
+                                        Selected: {selectedAssetForAllocation.name} ({selectedAssetForAllocation.category})
+                                    </span>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => setSelectedAssetForAllocation(null)}
+                                        className="h-6 w-6 p-0 text-slate-400 hover:text-red-400"
+                                    >
+                                        <X size={14} />
+                                    </Button>
                                 </div>
+                            )}
+                        </div>
+
+                        {/* 3. Tiered Duration Packages */}
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between">
+                                <label className="text-xs font-bold text-slate-200">
+                                    3. Configure Tiered Duration Packages
+                                </label>
                                 <Button
+                                    size="sm"
                                     variant="outline"
-                                    onClick={() => handleQuickUniqueIdLookup(directUniqueIdInput)}
-                                    className="border-pink-500/30 text-pink-300 hover:bg-pink-500/10 font-bold"
+                                    onClick={handleAddTier}
+                                    className="h-7 text-xs border-slate-700 text-slate-300 gap-1"
                                 >
-                                    Lookup
+                                    <Plus size={13} /> Add Tier
                                 </Button>
                             </div>
 
-                            {/* Category Filter Pills */}
-                            <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin">
-                                {CATEGORY_TABS.map((tab) => (
-                                    <button
-                                        key={tab.value}
-                                        type="button"
-                                        onClick={() => setSelectedCategoryTab(tab.value)}
-                                        className={`px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${
-                                            selectedCategoryTab === tab.value
-                                                ? 'bg-purple-600 text-white border-purple-400 shadow-md shadow-purple-600/30'
-                                                : 'bg-slate-950/60 text-slate-400 border-slate-800 hover:border-slate-700'
-                                        }`}
-                                    >
-                                        {tab.label}
-                                    </button>
+                            <div className="space-y-2">
+                                {allocationTiers.map((tier, idx) => (
+                                    <div key={idx} className="flex items-center gap-3 p-3 bg-slate-950/80 border border-slate-800 rounded-xl">
+                                        <div className="flex-1">
+                                            <label className="text-[10px] text-slate-400 block mb-1">Validity (Days)</label>
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                value={tier.days}
+                                                onChange={(e) => handleUpdateTier(idx, 'days', Number(e.target.value))}
+                                                className="h-8 text-xs bg-slate-900 border-slate-700 text-slate-200"
+                                            />
+                                        </div>
+                                        <div className="flex-1">
+                                            <label className="text-[10px] text-slate-400 block mb-1">Quantity (Stock count)</label>
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                value={tier.quantity}
+                                                onChange={(e) => handleUpdateTier(idx, 'quantity', Number(e.target.value))}
+                                                className="h-8 text-xs bg-slate-900 border-slate-700 text-slate-200"
+                                            />
+                                        </div>
+                                        <div className="pt-4">
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => handleRemoveTier(idx)}
+                                                disabled={allocationTiers.length === 1}
+                                                className="h-8 w-8 p-0 text-slate-500 hover:text-red-400"
+                                            >
+                                                <Trash2 size={15} />
+                                            </Button>
+                                        </div>
+                                    </div>
                                 ))}
                             </div>
 
-                            {/* Search Within Assets */}
-                            <div className="relative">
-                                <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-slate-400" />
-                                <Input
-                                    placeholder="Search by asset name or unique ID..."
-                                    value={assetSearchQuery}
-                                    onChange={(e) => setAssetSearchQuery(e.target.value)}
-                                    className="pl-9 h-9 text-xs bg-slate-950/50 border-slate-800"
-                                />
-                            </div>
+                            <p className="text-[11px] text-slate-500">
+                                Total stock to allocate: <span className="font-bold text-amber-300">
+                                    {allocationTiers.reduce((acc, t) => acc + (Number(t.quantity) || 0), 0)} items
+                                </span>
+                            </p>
+                        </div>
 
-                            {/* Assets Visual Grid (Selectable) */}
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-64 overflow-y-auto p-1.5 rounded-xl border border-slate-800/80 bg-slate-950/40">
-                                {loadingAssets ? (
-                                    <div className="col-span-full py-8 text-center text-xs text-slate-500">Loading catalog...</div>
-                                ) : filteredAssets.length === 0 ? (
-                                    <div className="col-span-full py-8 text-center text-xs text-slate-500">No assets match this category/search</div>
-                                ) : (
-                                    filteredAssets.map((asset) => {
-                                        const isSelected = selectedAsset?._id === asset._id || directUniqueIdInput === asset.uniqueId;
-                                        return (
-                                            <div
-                                                key={asset._id}
-                                                onClick={() => { setSelectedAsset(asset); setDirectUniqueIdInput(asset.uniqueId || ''); }}
-                                                className={`p-2.5 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
-                                                    isSelected
-                                                        ? 'bg-pink-950/40 border-pink-500 shadow-lg shadow-pink-500/20'
-                                                        : 'bg-slate-900/60 border-slate-800 hover:border-slate-700 hover:bg-slate-800/60'
-                                                }`}
-                                            >
-                                                <div className="flex items-start justify-between gap-1 mb-2">
-                                                    <Badge className="bg-pink-500/20 text-pink-300 border border-pink-500/30 text-[10px] font-mono font-bold">
-                                                        {asset.number ? `Unique ID: ${asset.number} · ` : ''}Asset ID: {asset.uniqueId || 'N/A'}
-                                                    </Badge>
-                                                    {asset.isStaffOnly && (
-                                                        <Badge className="bg-sky-500/20 text-sky-300 border border-sky-500/30 text-[9px]">
-                                                            Staff
-                                                        </Badge>
-                                                    )}
-                                                </div>
+                        {/* Notes */}
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-slate-200">Notes / Reason (Optional)</label>
+                            <Input
+                                placeholder="e.g. Monthly promotional budget for Operator events"
+                                value={allocationNotes}
+                                onChange={(e) => setAllocationNotes(e.target.value)}
+                                className="h-8 text-xs bg-slate-950 border-slate-800 text-slate-200"
+                            />
+                        </div>
 
-                                                <div className="h-16 w-full flex items-center justify-center my-1">
-                                                    {asset.imageUrl ? (
-                                                        <img src={asset.imageUrl} alt={asset.name} className="max-h-full max-w-full object-contain" />
-                                                    ) : (
-                                                        <div className="h-12 w-12 rounded-lg bg-slate-800 flex items-center justify-center text-purple-400">
-                                                            <Sparkles size={20} />
-                                                        </div>
-                                                    )}
-                                                </div>
+                        {/* Submit Button */}
+                        <Button
+                            onClick={handleExecuteAllocation}
+                            disabled={allocating || !selectedOperator || !selectedAssetForAllocation}
+                            className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold h-11 text-sm shadow-xl shadow-amber-900/20 gap-2"
+                        >
+                            {allocating ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Boxes className="h-4 w-4" />}
+                            <span>Allocate Stock to Operator</span>
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
 
-                                                <div>
-                                                    <p className="font-bold text-xs text-slate-200 truncate">{asset.name}</p>
-                                                    <p className="text-[10px] text-slate-400 truncate">{asset.category}</p>
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                )}
-                            </div>
-
-                            {/* Selected Asset Banner */}
-                            {selectedAsset && (
-                                <div className="p-3 rounded-xl bg-gradient-to-r from-pink-950/30 to-purple-950/30 border border-pink-500/40 flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div className="h-12 w-12 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center p-1">
-                                            {selectedAsset.imageUrl ? (
-                                                <img src={selectedAsset.imageUrl} alt={selectedAsset.name} className="h-full w-full object-contain" />
-                                            ) : (
-                                                <Sparkles className="text-pink-400" />
-                                            )}
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <p className="font-black text-sm text-slate-100">{selectedAsset.name}</p>
-                                                <Badge className="bg-pink-500 text-black font-black text-[10px]">
-                                                    {selectedAsset.number ? `Unique ID: ${selectedAsset.number} · ` : ''}Asset ID: {selectedAsset.uniqueId}
-                                                </Badge>
-                                            </div>
-                                            <p className="text-xs text-slate-400">
-                                                Category: <span className="text-purple-300 font-semibold">{selectedAsset.category}</span>
-                                                {selectedAsset.isStaffOnly ? ' • Staff Exclusive' : ''}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => { setSelectedAsset(null); setDirectUniqueIdInput(''); }}
-                                        className="h-8 w-8 p-0 text-slate-400 hover:text-red-400"
-                                    >
-                                        <X size={16} />
-                                    </Button>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Step 3: Duration, Validity & Notification */}
-                    <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
-                        <CardHeader className="pb-3 border-b border-slate-800/80">
-                            <div className="flex items-center gap-2">
-                                <span className="h-6 w-6 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-black text-xs flex items-center justify-center">3</span>
-                                <CardTitle className="text-base font-bold text-slate-100">Validity, Message & Execution</CardTitle>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="pt-4 space-y-4">
-                            {/* Duration Presets */}
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center justify-between">
-                                    <span>Reward Validity Duration</span>
-                                    <span className="text-amber-400 font-mono normal-case">
-                                        {durationDays > 0 ? `${durationDays} Days continuous validity` : 'Permanent Lifetime'}
-                                    </span>
-                                </label>
-                                <div className="grid grid-cols-4 sm:grid-cols-4 gap-2">
-                                    {DURATION_PRESETS.map((p) => (
-                                        <button
-                                            key={p.days}
-                                            type="button"
-                                            onClick={() => handleDurationPreset(p.days)}
-                                            className={`py-2 px-1 text-xs font-bold rounded-lg border transition-all ${
-                                                durationDays === p.days
-                                                    ? 'bg-amber-500 text-black border-amber-400 shadow-md shadow-amber-500/25 font-black'
-                                                    : 'bg-slate-950/60 border-slate-800 text-slate-300 hover:bg-slate-800'
-                                            }`}
-                                        >
-                                            {p.label}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                <div className="flex items-center gap-2 pt-1">
-                                    <span className="text-xs text-slate-400 font-medium">Custom Days:</span>
-                                    <Input
-                                        type="number"
-                                        min="0"
-                                        max="3650"
-                                        value={customDaysInput}
-                                        onChange={(e) => handleCustomDaysChange(e.target.value)}
-                                        className="w-24 h-8 text-xs font-bold text-center bg-slate-950 border-slate-700"
-                                    />
-                                    <span className="text-xs text-slate-500">(0 = permanent lifetime)</span>
-                                </div>
-
-                                <div className="p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300 flex items-start gap-2">
-                                    <Clock className="h-4 w-4 mt-0.5 shrink-0 text-amber-400" />
-                                    <span>
-                                        <strong>Strict Expiry Rule:</strong> Validity countdown starts immediately upon sending. Whether the user equips it or leaves it unequipped in My Items, the validity remains strictly time-bound.
-                                    </span>
-                                </div>
-                            </div>
-
-                            {/* Custom Message to User */}
-                            <div className="space-y-2">
-                                <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                                        Official Message / Reason (Optional)
-                                    </label>
-                                    <span className="text-xs text-purple-400">Sent as System Notification</span>
-                                </div>
-                                <textarea
-                                    rows={2}
-                                    placeholder="E.g. Congratulations! You have received SVIP King of Kings frame from Admin Team."
-                                    value={customMessage}
-                                    onChange={(e) => setCustomMessage(e.target.value)}
-                                    className="w-full text-xs p-3 rounded-lg bg-slate-950/70 border border-slate-700 text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-purple-500 transition-all resize-none"
-                                />
-                            </div>
-
-                            {/* Auto Equip Checkbox */}
-                            <div className="flex items-center justify-between p-3 rounded-lg bg-slate-950/50 border border-slate-800">
-                                <div className="space-y-0.5">
-                                    <p className="text-xs font-bold text-slate-200">Auto-Equip for User</p>
-                                    <p className="text-[11px] text-slate-400">Equip frame / ride / tag immediately upon grant.</p>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setAutoEquip(!autoEquip)}
-                                    className={`w-11 h-6 flex items-center rounded-full p-1 transition-colors ${
-                                        autoEquip ? 'bg-purple-600' : 'bg-slate-800'
-                                    }`}
-                                >
-                                    <div
-                                        className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform ${
-                                            autoEquip ? 'translate-x-5' : 'translate-x-0'
-                                        }`}
-                                    />
-                                </button>
-                            </div>
-
-                            {/* Submit Button */}
-                            <Button
-                                onClick={() => setConfirmModalOpen(true)}
-                                disabled={(!selectedUser && !userQuery.trim()) || (!selectedAsset && !directUniqueIdInput.trim())}
-                                className="w-full py-5 text-sm font-black bg-gradient-to-r from-purple-600 via-pink-600 to-amber-500 hover:from-purple-500 hover:to-amber-400 text-white shadow-xl shadow-purple-600/30 flex items-center justify-center gap-2"
-                            >
-                                <Send size={16} />
-                                Grant Asset to User Now
-                            </Button>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                {/* Right 5 Columns: Live Notification Preview & Audit Feed */}
-                <div className="lg:col-span-5 space-y-6">
-                    {/* Live Mobile Notification Preview */}
-                    <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
-                        <CardHeader className="pb-3 border-b border-slate-800/80">
-                            <CardTitle className="text-sm font-bold text-slate-200 flex items-center gap-2">
-                                <MessageSquare className="h-4 w-4 text-purple-400" />
-                                User Mobile Notification Preview
-                            </CardTitle>
+            {/* TAB 3: OWNER OPERATOR STOCK LEDGER */}
+            {activeTab === 'quotas' && isOwner && (
+                <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
+                    <CardHeader className="border-b border-slate-800/80 pb-4 flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="text-base font-bold text-slate-100">Operator Stock Quotas Ledger</CardTitle>
                             <CardDescription className="text-xs text-slate-400">
-                                This is how the recipient will see it in the app's System Notice screen:
+                                Overview of all stock allocated to operators with remaining balances.
                             </CardDescription>
-                        </CardHeader>
-                        <CardContent className="pt-4">
-                            {/* Mock In-App System Notice Card */}
-                            <div className="p-3.5 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-purple-950/40 border border-purple-500/30 shadow-2xl space-y-3">
-                                <div className="flex items-start justify-between gap-2">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="h-10 w-10 rounded-xl bg-purple-600/20 border border-purple-500/40 flex items-center justify-center text-purple-300">
-                                            <Gift size={20} />
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-black text-white">🎁 New Asset Reward Received!</p>
-                                            <p className="text-[10px] text-purple-300 font-semibold">Official Management • Just now</p>
-                                        </div>
-                                    </div>
-                                    <Badge className="bg-pink-500/20 text-pink-300 border border-pink-500/30 text-[9px] font-bold">
-                                        NEW
-                                    </Badge>
-                                </div>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={fetchQuotas} className="h-8 text-xs border-slate-700">
+                            <RefreshCw size={13} className={loadingQuotas ? 'animate-spin' : ''} />
+                        </Button>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        {loadingQuotas ? (
+                            <div className="py-12 text-center text-xs text-slate-500">Loading quotas...</div>
+                        ) : quotas.length === 0 ? (
+                            <div className="py-12 text-center text-xs text-slate-500">No operator quotas recorded yet</div>
+                        ) : (
+                            <Table className="text-xs">
+                                <TableHeader className="bg-slate-950/60">
+                                    <TableRow className="border-slate-800">
+                                        <TableHead className="text-slate-400">Operator</TableHead>
+                                        <TableHead className="text-slate-400">Asset Name</TableHead>
+                                        <TableHead className="text-slate-400">Category</TableHead>
+                                        <TableHead className="text-slate-400">Duration Packages (Allocated / Remaining)</TableHead>
+                                        <TableHead className="text-slate-400 text-right">Actions</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody className="divide-y divide-slate-800/60 text-slate-300">
+                                    {quotas.map((q) => {
+                                        const opName = typeof q.operatorId === 'object' ? (q.operatorId?.name || q.operatorName) : q.operatorName;
+                                        return (
+                                            <TableRow key={q._id} className="hover:bg-slate-800/40">
+                                                <TableCell className="font-bold text-slate-200">
+                                                    {opName}
+                                                </TableCell>
+                                                <TableCell className="font-semibold text-purple-300">
+                                                    {q.assetName}
+                                                </TableCell>
+                                                <TableCell>
+                                                    <Badge className="bg-slate-800 text-slate-300 text-[10px]">
+                                                        {q.assetCategory}
+                                                    </Badge>
+                                                </TableCell>
+                                                <TableCell>
+                                                    <div className="flex flex-wrap gap-1.5">
+                                                        {q.packages.map((pkg, i) => (
+                                                            <span
+                                                                key={i}
+                                                                className={`px-2 py-0.5 rounded text-[10px] font-mono border ${pkg.remainingQuantity > 0
+                                                                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                                                                    : 'bg-red-500/20 text-red-300 border-red-500/30'}`}
+                                                            >
+                                                                {pkg.days}d: {pkg.remainingQuantity}/{pkg.allocatedQuantity} left
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    <Button
+                                                        size="sm"
+                                                        variant="ghost"
+                                                        onClick={() => handleDeleteQuota(q._id)}
+                                                        className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                                        title="Revoke Quota"
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </Button>
+                                                </TableCell>
+                                            </TableRow>
+                                        );
+                                    })}
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
 
-                                <p className="text-xs text-slate-300 leading-relaxed font-medium">
-                                    {previewDisplayMessage}
-                                </p>
-
-                                {/* Deep-link View button that redirects to My Items */}
-                                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
-                                    <span className="text-[10px] text-slate-500 font-mono">Action: Redirect to My Items</span>
-                                    <div className="px-3 py-1 rounded-full bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-[11px] flex items-center gap-1 shadow-md">
-                                        <Eye size={12} />
-                                        <span>View in My Items</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Recent Grants Log Table */}
-                    <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
-                        <CardHeader className="pb-3 border-b border-slate-800/80 flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle className="text-sm font-bold text-slate-200">Recent Distribution History</CardTitle>
-                                <CardDescription className="text-xs text-slate-400">Audit trail of rewards granted by admins</CardDescription>
-                            </div>
-                            <Button size="sm" variant="ghost" onClick={fetchHistory} className="h-7 w-7 p-0 text-slate-400">
-                                <RefreshCw size={13} className={loadingHistory ? 'animate-spin' : ''} />
-                            </Button>
-                        </CardHeader>
-                        <CardContent className="p-0 max-h-96 overflow-y-auto">
-                            {loadingHistory ? (
-                                <div className="py-8 text-center text-xs text-slate-500">Loading history...</div>
-                            ) : history.length === 0 ? (
-                                <div className="py-8 text-center text-xs text-slate-500">No grant records found</div>
-                            ) : (
-                                <div className="divide-y divide-slate-800/60">
+            {/* TAB 4: DISTRIBUTION HISTORY */}
+            {activeTab === 'history' && (
+                <Card className="bg-slate-900/80 border-slate-800 shadow-xl backdrop-blur-lg">
+                    <CardHeader className="border-b border-slate-800/80 pb-4 flex flex-row items-center justify-between">
+                        <div>
+                            <CardTitle className="text-base font-bold text-slate-100">Reward Distribution Audit Log</CardTitle>
+                            <CardDescription className="text-xs text-slate-400">
+                                Complete timeline of all assets granted to users across the platform.
+                            </CardDescription>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={fetchHistory} className="h-8 text-xs border-slate-700">
+                            <RefreshCw size={13} className={loadingHistory ? 'animate-spin' : ''} />
+                        </Button>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        {loadingHistory ? (
+                            <div className="py-12 text-center text-xs text-slate-500">Loading audit log...</div>
+                        ) : history.length === 0 ? (
+                            <div className="py-12 text-center text-xs text-slate-500">No grant records found</div>
+                        ) : (
+                            <Table className="text-xs">
+                                <TableHeader className="bg-slate-950/60">
+                                    <TableRow className="border-slate-800">
+                                        <TableHead className="text-slate-400">Date & Time</TableHead>
+                                        <TableHead className="text-slate-400">Asset</TableHead>
+                                        <TableHead className="text-slate-400">Recipient</TableHead>
+                                        <TableHead className="text-slate-400">Validity</TableHead>
+                                        <TableHead className="text-slate-400">Granted By</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody className="divide-y divide-slate-800/60 text-slate-300">
                                     {history.map((item) => (
-                                        <div key={item._id} className="p-3 text-xs hover:bg-slate-800/40 transition-colors">
-                                            <div className="flex items-center justify-between gap-1 mb-1">
-                                                <span className="font-bold text-slate-200">
-                                                    {item.newValue?.assetName || 'Asset'}
+                                        <TableRow key={item._id} className="hover:bg-slate-800/40">
+                                            <TableCell className="text-slate-400 whitespace-nowrap">
+                                                {new Date(item.createdAt).toLocaleString()}
+                                            </TableCell>
+                                            <TableCell className="font-bold text-purple-300">
+                                                {item.newValue?.assetName || 'Asset'}
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className="font-semibold text-slate-200">
+                                                    {item.newValue?.userName || item.target}
                                                 </span>
-                                                <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[9px] font-mono">
-                                                    ID: {item.newValue?.uniqueId || 'N/A'}
+                                                <span className="text-[10px] text-slate-500 ml-1.5 font-mono">
+                                                    (ID: {item.newValue?.userNumericId || 'N/A'})
+                                                </span>
+                                            </TableCell>
+                                            <TableCell>
+                                                <Badge className="bg-purple-500/20 text-purple-300 border border-purple-500/30 text-[10px]">
+                                                    {item.newValue?.durationDays ? `${item.newValue.durationDays} Days` : 'Permanent'}
                                                 </Badge>
-                                            </div>
-                                            <p className="text-[11px] text-slate-400">
-                                                Granted to: <span className="font-semibold text-slate-300">{item.newValue?.userName || item.target}</span> (ID: {item.newValue?.userNumericId || 'N/A'})
-                                            </p>
-                                            <div className="flex items-center justify-between text-[10px] text-slate-500 mt-1">
-                                                <span>Duration: {item.newValue?.durationDays ? `${item.newValue.durationDays} Days` : 'Permanent'}</span>
-                                                <span>{new Date(item.createdAt).toLocaleDateString()}</span>
-                                            </div>
-                                        </div>
+                                            </TableCell>
+                                            <TableCell className="text-slate-400">
+                                                {item.adminId?.name || 'Administrator'}
+                                            </TableCell>
+                                        </TableRow>
                                     ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-            </div>
+                                </TableBody>
+                            </Table>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
 
             {/* Confirmation Dialog Before Grant */}
             <Dialog open={confirmModalOpen} onOpenChange={setConfirmModalOpen}>
@@ -877,7 +1360,7 @@ export default function AssetDistributionPage() {
                         <div className="p-3 rounded-lg bg-slate-950 border border-slate-800 space-y-1.5">
                             <p className="text-xs text-slate-400">Asset to Grant:</p>
                             <p className="font-bold text-purple-300">
-                                {selectedAsset ? `${selectedAsset.name} (Unique ID: ${selectedAsset.uniqueId})` : `Asset ID: ${directUniqueIdInput}`}
+                                {selectedAsset ? `${selectedAsset.name} (Category: ${selectedAsset.category})` : `Asset ID: ${directUniqueIdInput}`}
                             </p>
                         </div>
 

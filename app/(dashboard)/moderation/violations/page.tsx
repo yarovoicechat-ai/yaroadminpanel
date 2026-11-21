@@ -25,7 +25,8 @@ import {
   FileText,
   Activity,
   Flame,
-  Users
+  Users,
+  Trash2
 } from 'lucide-react';
 import { apiClient } from '@/lib/apiClient';
 import Image from 'next/image';
@@ -251,6 +252,48 @@ export default function ChatViolationsPage() {
       }
     } catch (err: any) {
       toast.error(err?.message || "Failed to clear review status");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteViolation = async (violationId: string) => {
+    if (!window.confirm("Owner Action: Are you sure you want to permanently delete this violation record? If no active violations remain, any temporary chat restriction will also be removed.")) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await apiClient.delete<any>(`/api/moderation/violations/${violationId}`);
+      if (res.success) {
+        toast.success("Chat violation permanently deleted!");
+        fetchViolations();
+        setDetailsModalOpen(false);
+      } else {
+        toast.error(res.message || "Failed to delete violation");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete violation");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleClearUserRestrictions = async (userId: string) => {
+    if (!window.confirm("Platform Owner Action: Are you sure you want to permanently clear all chat restrictions and delete all violation history for this user?")) {
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await apiClient.delete<any>(`/api/moderation/users/${userId}/restrictions?deleteViolations=true`);
+      if (res.success) {
+        toast.success(res.message || "Chat restrictions cleared and violation records permanently deleted!");
+        fetchViolations();
+        if (riskModalOpen) handleOpenRiskProfile(userId);
+      } else {
+        toast.error(res.message || "Failed to clear user restrictions");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to clear user restrictions");
     } finally {
       setActionLoading(false);
     }
@@ -679,6 +722,16 @@ export default function ChatViolationsPage() {
                               >
                                 <X className="h-3 w-3" /> Dismiss
                               </Button>
+
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteViolation(item._id)}
+                                className="h-7 w-7 p-0 text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                                title="Delete Violation (Owner)"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
                             </>
                           )}
                         </div>
@@ -883,6 +936,16 @@ export default function ChatViolationsPage() {
                         Unmute User
                       </Button>
                     )}
+                    <Button
+                      size="sm"
+                      disabled={actionLoading}
+                      onClick={() => handleClearUserRestrictions(riskProfile.userId)}
+                      className="bg-red-600/20 hover:bg-red-600/40 text-red-300 border border-red-500/30 text-xs font-semibold gap-1.5"
+                      title="Permanently remove all chat restrictions and wipe violation history"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Clear Restrictions & Violations (Owner)
+                    </Button>
                     {riskProfile.accountReviewStatus.accountReviewRequired && (
                       <Button
                         size="sm"
