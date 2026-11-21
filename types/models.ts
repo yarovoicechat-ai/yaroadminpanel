@@ -21,6 +21,8 @@ export interface User {
     isDeleted: boolean;
     isOnline: boolean;
     isBlocked: boolean;
+    isFake?: boolean;
+    isMockUser?: boolean;
     lastOnline?: Date;
     language?: string[];
     country?: { name?: string; code?: string; flag?: string };
