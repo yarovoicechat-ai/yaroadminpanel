@@ -10,7 +10,7 @@ import {
     CheckSquare, FileCheck, DollarSign, Coins, Gem, ChevronDown, ChevronRight,
     Crown, Briefcase, Terminal, ShieldCheck, Shield, Settings, Headphones, Globe, Hash,
     FileText, Layers, Radio, Sliders, Image as ImageIcon, Download, Sparkles, ShoppingBag,
-    Heart, Flame
+    Heart, Flame, Trash2
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -31,6 +31,7 @@ interface SidebarItem {
     icon: any;
     submenu?: SubmenuItem[];
     category: string;
+    ownerOnly?: boolean;
 }
 
 interface SidebarSection {
@@ -488,6 +489,8 @@ const adminSidebarSections: SidebarSection[] = [
         category: 'Dashboard',
         items: [
             { name: 'Owner Console', href: '/owner', icon: Crown, category: 'Dashboard' },
+            { name: 'Room & Chat Cleaner', href: '/owner/cleaner', icon: Trash2, category: 'Dashboard', ownerOnly: true },
+            { name: 'Watch Together Access', href: '/watch-together', icon: Video, category: 'Dashboard', ownerOnly: true },
             { name: 'Finance & Wallet Ledger', href: '/finance/ledger', icon: DollarSign, category: 'Dashboard' },
             { name: 'Compliance & GDPR', href: '/compliance', icon: ShieldCheck, category: 'Dashboard' }
         ]
@@ -636,6 +639,9 @@ export default function Sidebar() {
         }
 
         const filteredItems = section.items.map(item => {
+            if (item.ownerOnly && user?.role !== 'owner') {
+                return null;
+            }
             if (isStoreOpsRestricted) {
                 const itemName = (item.name || '').toLowerCase();
                 const itemHref = (item.href || '').toLowerCase();

@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { toast } from 'sonner';
-import { UserPlus, ArrowLeft, Coins, Lock, Sparkles, RefreshCw, Copy, Check, CheckCircle2, Key, Eye, EyeOff } from 'lucide-react';
+import { UserPlus, ArrowLeft, Coins, Lock, Sparkles, RefreshCw, Copy, Check, CheckCircle2, Key, Eye, EyeOff, Crown } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { apiClient } from '@/lib/apiClient';
@@ -24,6 +24,7 @@ export default function AddUserPage() {
     const [coins, setCoins] = useState('10000');
     const [diamonds, setDiamonds] = useState('1000');
     const [customUserId, setCustomUserId] = useState('');
+    const [accountType, setAccountType] = useState<'fake' | 'test'>('fake');
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [createdCredentials, setCreatedCredentials] = useState<{
@@ -31,6 +32,7 @@ export default function AddUserPage() {
         name: string;
         phoneNumber: string;
         password: string;
+        isTestAccount?: boolean;
     } | null>(null);
     const [copiedField, setCopiedField] = useState<string | null>(null);
 
@@ -81,6 +83,8 @@ export default function AddUserPage() {
                 gender,
                 coins: Number(coins) || 0,
                 diamonds: Number(diamonds) || 0,
+                isTestAccount: accountType === 'test',
+                accountType,
             };
             if (email.trim()) {
                 payload.email = email.trim();
@@ -96,10 +100,11 @@ export default function AddUserPage() {
                     userId: res.data.userId,
                     name: res.data.name,
                     phoneNumber: res.data.phoneNumber,
-                    password: password.trim()
+                    password: password.trim(),
+                    isTestAccount: accountType === 'test'
                 };
-                setCreatedCredentials(creds);
-                toast.success(`Successfully registered "${name}" (User ID: #${creds.userId})`);
+                setCreatedCredentials({ ...creds, isTestAccount: accountType === 'test' });
+                toast.success(`Successfully registered ${accountType === 'test' ? 'Test ID' : 'User'} "${name}" (ID: #${creds.userId})`);
             } else {
                 toast.error(res.message || "Failed to register account");
             }
@@ -143,9 +148,20 @@ export default function AddUserPage() {
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        {createdCredentials.isTestAccount && (
+                            <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-300">
+                                <Crown className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                                <div>
+                                    <div className="font-bold text-amber-200">Test ID Created (Owner Exclusive)</div>
+                                    <p className="text-amber-400/80 mt-0.5">
+                                        ID number is visible here in panel (#{createdCredentials.userId}), but completely hidden in the mobile app. Other users cannot follow this ID.
+                                    </p>
+                                </div>
+                            </div>
+                        )}
                         <div className="space-y-2.5 p-4 rounded-xl bg-slate-900/80 border border-slate-800">
                             <div className="flex items-center justify-between text-sm">
-                                <span className="text-slate-400">User ID:</span>
+                                <span className="text-slate-400">User ID {createdCredentials.isTestAccount ? '(Panel only)' : ''}:</span>
                                 <span className="font-bold text-slate-100 font-mono">#{createdCredentials.userId}</span>
                             </div>
                             <div className="flex items-center justify-between text-sm">
@@ -231,6 +247,46 @@ export default function AddUserPage() {
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleAddUserSubmit} className="space-y-4">
+                            {currentUser?.role === 'owner' && (
+                                <div className="space-y-2 p-3.5 rounded-xl bg-slate-900/90 border border-slate-800">
+                                    <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                                        <span className="flex items-center gap-1.5">
+                                            <Crown className="w-3.5 h-3.5 text-amber-400" /> Account Type (Owner Exclusive)
+                                        </span>
+                                        <span className="text-[10px] text-amber-400 font-mono">Owner Panel</span>
+                                    </label>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <button
+                                            type="button"
+                                            onClick={() => setAccountType('fake')}
+                                            className={`p-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                                                accountType === 'fake'
+                                                    ? 'bg-indigo-600/25 border-indigo-500 text-indigo-300 shadow-sm'
+                                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                                            }`}
+                                        >
+                                            🤖 Standard Fake ID
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setAccountType('test')}
+                                            className={`p-2.5 rounded-lg border text-xs font-semibold flex items-center justify-center gap-2 transition-all ${
+                                                accountType === 'test'
+                                                    ? 'bg-amber-600/25 border-amber-500 text-amber-300 shadow-sm'
+                                                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700'
+                                            }`}
+                                        >
+                                            🧪 Test ID (Hidden in App)
+                                        </button>
+                                    </div>
+                                    {accountType === 'test' && (
+                                        <p className="text-[11px] text-amber-400/90 leading-tight pt-1">
+                                            ⚠️ Test ID: ID number will be visible in this Admin Panel, but completely hidden in the mobile app. Other users cannot follow this ID.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-sm font-semibold text-slate-300">Display Name *</label>
