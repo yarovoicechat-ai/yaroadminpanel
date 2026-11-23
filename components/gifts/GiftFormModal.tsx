@@ -415,18 +415,18 @@ export default function GiftFormModal({
                             <Label className="font-extrabold text-sm text-amber-300 flex items-center justify-between">
                                 <span className="flex items-center gap-1.5">
                                     <Gem className="w-4 h-4 text-amber-400" />
-                                    Gift Price in Diamonds (💎 डायमंड कीमत) <span className="text-rose-400">*</span>
+                                    Gift Price in Coins (🪙 कॉइन कीमत) <span className="text-rose-400">*</span>
                                 </span>
                                 <Badge variant="outline" className="text-amber-400 border-amber-500/40 font-mono text-[11px]">
-                                    {diamond.toLocaleString()} DIAMONDS
+                                    {diamond.toLocaleString()} COINS
                                 </Badge>
                             </Label>
                             <div className="relative">
-                                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg">💎</div>
+                                <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-lg">🪙</div>
                                 <Input
                                     type="number"
                                     min={1}
-                                    placeholder="Enter diamond price (e.g. 100)"
+                                    placeholder="Enter coin price (e.g. 100)"
                                     value={diamond || ''}
                                     onChange={e => setDiamond(parseInt(e.target.value) || 0)}
                                     className="pl-10 h-12 bg-slate-950 border-amber-500/50 text-amber-200 text-base font-black focus:border-amber-400 rounded-xl"
@@ -447,7 +447,7 @@ export default function GiftFormModal({
                                                 : 'bg-slate-900 border-slate-700/80 text-amber-300 hover:bg-amber-950/40'
                                         }`}
                                     >
-                                        💎 {amt >= 1000 ? `${amt / 1000}k` : amt}
+                                        🪙 {amt >= 1000 ? `${amt / 1000}k` : amt}
                                     </button>
                                 ))}
                             </div>

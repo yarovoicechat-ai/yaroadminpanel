@@ -17,11 +17,11 @@ import { Gem, Plus, RefreshCw, Calendar, Check, CheckCircle2, ShieldCheck, Alert
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 
-// Base User Rate: 16.7 Diamonds / ₹1 INR (₹100 = 1,670 💎)
+// Base User Rate: 16.7 Diamonds / ₹1 INR (₹100 = 1,670 🪙)
 // Seller Discount Rule: ₹95 for ₹100 worth of Diamonds (5% Discount)
 const USER_DIAMONDS_PER_RUPEE = 16.7;
 const SELLER_DISCOUNT_FACTOR = 0.95; // Seller pays ₹95 per ₹100 worth of Diamonds
-const SELLER_DIAMONDS_PER_RUPEE = USER_DIAMONDS_PER_RUPEE / SELLER_DISCOUNT_FACTOR; // ~17.579 💎 per ₹1
+const SELLER_DIAMONDS_PER_RUPEE = USER_DIAMONDS_PER_RUPEE / SELLER_DISCOUNT_FACTOR; // ~17.579 🪙 per ₹1
 
 const SELLER_DIAMOND_PLANS = [
     { price: '₹95', diamonds: 1670, worth: '₹100 User Value', isPopular: false },
@@ -160,7 +160,7 @@ export default function SellerRechargePage() {
         const rawRs = plan.price.replace(/[^\d]/g, '');
         setInrAmount(rawRs);
         setAmount(plan.diamonds.toString());
-        toast.info(`Selected ${plan.diamonds.toLocaleString()} 💎 plan (${plan.price}) - ${plan.worth}`);
+        toast.info(`Selected ${plan.diamonds.toLocaleString()} 🪙 plan (${plan.price}) - ${plan.worth}`);
     };
 
     const handleRecharge = async (e: React.FormEvent) => {
@@ -186,7 +186,7 @@ export default function SellerRechargePage() {
             });
 
             if (res.success) {
-                toast.success(res.message || `Successfully credited 💎 ${numDiamonds.toLocaleString()} to Seller ${verifiedSeller.name}`);
+                toast.success(res.message || `Successfully credited 🪙 ${numDiamonds.toLocaleString()} to Seller ${verifiedSeller.name}`);
                 setSellerCode('');
                 setInrAmount('');
                 setAmount('');
@@ -246,10 +246,10 @@ export default function SellerRechargePage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-indigo-400 bg-clip-text text-transparent">
-                        Seller Diamond Management & Stock Approvals
+                        Seller Coin Management & Stock Approvals
                     </h2>
                     <p className="text-muted-foreground mt-1 font-medium font-sans">
-                        Credit discounted Diamond packages & approve Buy Stock requests from authorized sellers
+                        Credit discounted Coin packages & approve Buy Stock requests from authorized sellers
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -264,7 +264,7 @@ export default function SellerRechargePage() {
                 <div className="flex items-center gap-2 text-cyan-300">
                     <Tag className="h-4 w-4 text-cyan-400 shrink-0" />
                     <span className="font-semibold text-sm">Seller Special Discount Rate:</span>
-                    <span className="text-slate-300">Seller pays <strong>₹95</strong> for <strong>1,670 💎</strong> (User pays <strong>₹100</strong> for <strong>1,670 💎</strong>)</span>
+                    <span className="text-slate-300">Seller pays <strong>₹95</strong> for <strong>1,670 🪙</strong> (User pays <strong>₹100</strong> for <strong>1,670 🪙</strong>)</span>
                 </div>
                 <Badge variant="outline" className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-bold shrink-0">
                     5% Seller Bonus Rate
@@ -292,7 +292,7 @@ export default function SellerRechargePage() {
                         <TableHeader>
                             <TableRow className="border-slate-800">
                                 <TableHead className="font-bold text-slate-300">Req ID / Seller</TableHead>
-                                <TableHead className="font-bold text-slate-300">Diamonds Requested</TableHead>
+                                <TableHead className="font-bold text-slate-300">Coins Requested</TableHead>
                                 <TableHead className="font-bold text-slate-300">Amount Payable (₹)</TableHead>
                                 <TableHead className="font-bold text-slate-300">UTR / Ref No.</TableHead>
                                 <TableHead className="font-bold text-slate-300">Status</TableHead>
@@ -308,7 +308,7 @@ export default function SellerRechargePage() {
                                         <div className="text-slate-300">{req.sellerName || `Seller #${req.sellerId}`}</div>
                                     </TableCell>
                                     <TableCell className="font-extrabold text-cyan-300">
-                                        +💎 {(req.diamonds || 0).toLocaleString()}
+                                        +🪙 {(req.diamonds || 0).toLocaleString()}
                                     </TableCell>
                                     <TableCell className="font-bold text-slate-100">
                                         ₹{(req.payableAmount || 0).toLocaleString()}
@@ -373,7 +373,7 @@ export default function SellerRechargePage() {
                 </CardContent>
             </Card>
 
-            {/* Seller Diamond Recharge Plans Section */}
+            {/* Seller Coin Recharge Plans Section */}
             <Card className="glass-card border-cyan-500/20">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-cyan-300 text-lg">
@@ -381,7 +381,7 @@ export default function SellerRechargePage() {
                         Direct Seller Credit Plans (5% Discounted)
                     </CardTitle>
                     <CardDescription className="text-slate-400 text-xs">
-                        Click on any discounted package card below to auto-select diamond amount for direct seller credit.
+                        Click on any discounted package card below to auto-select coin amount for direct seller credit.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -401,7 +401,7 @@ export default function SellerRechargePage() {
                                 )}
                                 <span className="text-sm font-bold text-slate-100">{plan.price}</span>
                                 <div className="my-1 flex items-center gap-1 text-cyan-400 font-extrabold text-xs">
-                                    <span>💎</span>
+                                    <span>🪙</span>
                                     <span>{plan.diamonds.toLocaleString()}</span>
                                 </div>
                                 <span className="text-[10px] text-emerald-400 font-medium">{plan.worth}</span>
@@ -499,7 +499,7 @@ export default function SellerRechargePage() {
 
                             {/* Calculated Diamonds Count Input */}
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-300">Calculated Diamonds (💎)</label>
+                                <label className="text-sm font-semibold text-slate-300">Calculated Diamonds (🪙)</label>
                                 <div className="relative">
                                     <Input
                                         type="number"
@@ -518,11 +518,11 @@ export default function SellerRechargePage() {
                                     <div className="flex items-center justify-between">
                                         <span className="text-slate-300 font-medium">Recharge Total:</span>
                                         <span className="text-cyan-300 font-bold text-sm flex items-center gap-1">
-                                            {inrAmount ? `₹${Number(inrAmount).toLocaleString()}` : ''} ➔ 💎 {Number(amount).toLocaleString()} Diamonds
+                                            {inrAmount ? `₹${Number(inrAmount).toLocaleString()}` : ''} ➔ 🪙 {Number(amount).toLocaleString()} Diamonds
                                         </span>
                                     </div>
                                     <span className="text-[11px] text-emerald-400 font-semibold text-right">
-                                        Seller Savings: Pays ₹95 rate for ₹100 User Diamond value
+                                        Seller Savings: Pays ₹95 rate for ₹100 User Coin value
                                     </span>
                                 </div>
                             )}
@@ -532,7 +532,7 @@ export default function SellerRechargePage() {
                                 className="w-full font-bold bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={loading || !isVerified || !verifiedSeller}
                             >
-                                {loading ? 'Crediting Diamonds...' : 'Credit Seller Diamonds'}
+                                {loading ? 'Crediting Coins...' : 'Credit Seller Coins'}
                             </Button>
                         </form>
                     </CardContent>
@@ -543,7 +543,7 @@ export default function SellerRechargePage() {
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle className="flex items-center gap-2 text-slate-200">
                             <Calendar size={20} className="text-cyan-400 animate-pulse" />
-                            Recent Sellers Diamond Recharge Audit Logs
+                            Recent Sellers Coin Recharge Audit Logs
                         </CardTitle>
                         <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
                             {logs.length} Transactions
@@ -555,7 +555,7 @@ export default function SellerRechargePage() {
                                 <TableRow className="border-slate-800">
                                     <TableHead className="font-bold text-slate-300">Seller Code</TableHead>
                                     <TableHead className="font-bold text-slate-300">Agency Name</TableHead>
-                                    <TableHead className="font-bold text-slate-300">Diamonds Credited</TableHead>
+                                    <TableHead className="font-bold text-slate-300">Coins Credited</TableHead>
                                     <TableHead className="font-bold text-slate-300">Date Timestamp</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -564,7 +564,7 @@ export default function SellerRechargePage() {
                                     <TableRow key={log.id || log._id} className="hover:bg-muted/30 border-slate-800/50">
                                         <TableCell className="font-mono text-xs text-cyan-400 font-bold">{log.sellerCode}</TableCell>
                                         <TableCell className="font-semibold text-slate-200">{log.name}</TableCell>
-                                        <TableCell className="font-bold text-cyan-300">+{ (log.amount || log.diamonds || 0).toLocaleString() } 💎</TableCell>
+                                        <TableCell className="font-bold text-cyan-300">+{ (log.amount || log.diamonds || 0).toLocaleString() } 🪙</TableCell>
                                         <TableCell className="text-xs text-muted-foreground font-semibold">
                                             {log.date || (log.createdAt ? new Date(log.createdAt).toLocaleString() : '-')}
                                         </TableCell>

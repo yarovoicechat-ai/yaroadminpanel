@@ -1,7 +1,12 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import {
+  Copy,
+  Check,
+  Link2,
+  Share2,
   Activity,
   BadgeCheck,
   Building2,
@@ -119,6 +124,8 @@ export function RoleManagementDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const loadDashboard = useCallback(async (manual = false) => {
     if (manual) setRefreshing(true);
@@ -259,7 +266,112 @@ export function RoleManagementDashboard() {
           </button>
         </div>
 
-        {['countryManager', 'stateManager'].includes(normalizedRole) && <div className="flex flex-wrap gap-3 p-5">{['super-admin', 'admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service'].map(role => <a key={role} className="rounded-lg border border-indigo-500/30 px-3 py-2 text-sm text-indigo-200" href={`/apply/${role}?ref=${encodeURIComponent(code)}`}>Hire {role.replaceAll('-', ' ')}</a>)}<a className="px-3 py-2 text-sm text-indigo-200" href="/team">View team</a><a className="px-3 py-2 text-sm text-indigo-200" href="/employees">Manage employees</a></div>}
+        {/* Universal Referral Link & Recruitment Console (Visible in all panels) */}
+        {(() => {
+          const recruitmentRolesMap: Record<string, string[]> = {
+            owner: ['country-manager', 'state-manager', 'super-admin', 'admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service', 'seller'],
+            operator: ['country-manager', 'state-manager', 'super-admin', 'admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service', 'seller'],
+            countrymanager: ['state-manager', 'super-admin', 'admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service'],
+            'country-manager': ['state-manager', 'super-admin', 'admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service'],
+            countryManager: ['state-manager', 'super-admin', 'admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service'],
+            statemanager: ['super-admin', 'admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service'],
+            'state-manager': ['super-admin', 'admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service'],
+            stateManager: ['super-admin', 'admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service'],
+            superadmin: ['admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service'],
+            'super-admin': ['admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service'],
+            superAdmin: ['admin', 'bd-leader', 'bd', 'agency', 'host', 'customer-service'],
+            admin: ['bd-leader', 'bd', 'agency', 'host', 'customer-service'],
+            bdleader: ['bd', 'agency', 'host'],
+            'bd-leader': ['bd', 'agency', 'host'],
+            bdLeader: ['bd', 'agency', 'host'],
+            bd: ['agency', 'host'],
+            agency: ['host'],
+          };
+          const allowedRecruitRoles = recruitmentRolesMap[normalizedRole] || recruitmentRolesMap[user?.role || ''] || [];
+          const primaryRole = allowedRecruitRoles[0] || (normalizedRole === 'agency' ? 'host' : 'agency');
+          const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://admin.yaroapp.in';
+          const primaryInviteUrl = `${baseUrl}/apply/${primaryRole}?referrer=${encodeURIComponent(code)}&role=${primaryRole}`;
+
+          const handleCopyLink = () => {
+            if (!code || code === 'Not assigned') {
+              toast.error('No referral code assigned to this account.');
+              return;
+            }
+            navigator.clipboard.writeText(primaryInviteUrl);
+            setCopiedLink(true);
+            toast.success('Referral link copied to clipboard!');
+            setTimeout(() => setCopiedLink(false), 2000);
+          };
+
+          const handleCopyCode = () => {
+            if (!code || code === 'Not assigned') {
+              toast.error('No referral code assigned to this account.');
+              return;
+            }
+            navigator.clipboard.writeText(code);
+            setCopiedCode(true);
+            toast.success('Referral code copied!');
+            setTimeout(() => setCopiedCode(false), 2000);
+          };
+
+          return (
+            <div className="border-t border-white/10 bg-gradient-to-r from-indigo-950/50 via-purple-950/40 to-slate-900/60 p-4 sm:p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 shrink-0">
+                    <Share2 className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-wider text-indigo-300">Referral Program</p>
+                    <p className="text-xs text-white font-mono font-bold">{code}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleCopyLink}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
+                  >
+                    {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
+                    <span>{copiedLink ? 'Copied Link!' : 'Copy Referral Link'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleCopyCode}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-bold transition-all border border-white/10 cursor-pointer"
+                  >
+                    {copiedCode ? <Check className="h-3.5 w-3.5 text-emerald-300" /> : <Copy className="h-3.5 w-3.5" />}
+                    <span>{copiedCode ? 'Copied Code!' : 'Copy Code'}</span>
+                  </button>
+                  <a
+                    href="/referrals/links"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/30 text-xs font-bold transition-all"
+                  >
+                    <Link2 className="h-3.5 w-3.5" />
+                    <span>All Referral Links</span>
+                  </a>
+                </div>
+              </div>
+
+              {allowedRecruitRoles.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-slate-400 font-semibold mr-1">Direct Recruitment:</span>
+                  {allowedRecruitRoles.slice(0, 4).map(role => (
+                    <a
+                      key={role}
+                      href={`/apply/${role}?referrer=${encodeURIComponent(code)}&role=${role}`}
+                      className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-200 transition-colors"
+                    >
+                      +{role.replaceAll('-', ' ')}
+                    </a>
+                  ))}
+                  <a href="/team" className="px-2 py-1 text-xs text-indigo-300 hover:text-white underline">Team</a>
+                  <a href="/employees" className="px-2 py-1 text-xs text-indigo-300 hover:text-white underline">Staff</a>
+                </div>
+              )}
+            </div>
+          );
+        })()}
         {/* Profile Field Strip */}
         <div className="grid grid-cols-1 divide-y divide-white/5 sm:grid-cols-2 sm:divide-x sm:divide-y-0 xl:grid-cols-4 bg-black/20">
           <ProfileField icon={UserRound} label="Account Name" value={displayName} />

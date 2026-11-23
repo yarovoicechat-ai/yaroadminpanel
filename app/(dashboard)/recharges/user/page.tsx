@@ -50,7 +50,7 @@ export default function UserRechargePage() {
     const [logs, setLogs] = useState<any[]>([]);
     const [selectedPlan, setSelectedPlan] = useState<number | null>(null);
 
-    // Rate: ~16.7 Diamonds per 1 Rupee
+    // Rate: ~16.7 Coins per 1 Rupee
     const DIAMONDS_PER_RUPEE = 16.7;
 
     // Verification states
@@ -117,19 +117,19 @@ export default function UserRechargePage() {
             return;
         }
         const numRs = Number(val);
-        const calcDiamonds = Math.round(numRs * DIAMONDS_PER_RUPEE);
-        setAmount(calcDiamonds.toString());
+        const calcCoins = Math.round(numRs * DIAMONDS_PER_RUPEE);
+        setAmount(calcCoins.toString());
     };
 
-    const handleDiamondsChange = (val: string) => {
+    const handleCoinsChange = (val: string) => {
         setAmount(val);
         setSelectedPlan(null);
         if (!val || isNaN(Number(val))) {
             setInrAmount('');
             return;
         }
-        const numDiamonds = Number(val);
-        const calcRs = Math.round(numDiamonds / DIAMONDS_PER_RUPEE);
+        const numCoins = Number(val);
+        const calcRs = Math.round(numCoins / DIAMONDS_PER_RUPEE);
         setInrAmount(calcRs.toString());
     };
 
@@ -138,7 +138,7 @@ export default function UserRechargePage() {
         const rawRs = plan.price.replace(/[^\d]/g, '');
         setInrAmount(rawRs);
         setAmount(plan.diamonds.toString());
-        toast.info(`Selected ${plan.diamonds.toLocaleString()} 💎 plan (${plan.price})`);
+        toast.info(`Selected ${plan.diamonds.toLocaleString()} 🪙 plan (${plan.price})`);
     };
 
     const handleRecharge = async (e: React.FormEvent) => {
@@ -181,10 +181,10 @@ export default function UserRechargePage() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
-                        User Diamond Recharge
+                        User Coin Recharge
                     </h2>
                     <p className="text-muted-foreground mt-1 font-medium font-sans">
-                        Credit Diamonds packages directly to verified user profiles
+                        Credit Coins packages directly to verified user profiles
                     </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={fetchHistory} disabled={historyLoading}>
@@ -197,10 +197,10 @@ export default function UserRechargePage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-cyan-300 text-lg">
                         <Gem className="h-5 w-5 text-cyan-400" />
-                        Available Diamond Plans
+                        Available Coin Plans
                     </CardTitle>
                     <CardDescription className="text-slate-400 text-xs">
-                        Click on any plan card below to auto-select the diamond amount for user credit.
+                        Click on any plan card below to auto-select the coin amount for user credit.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -220,7 +220,7 @@ export default function UserRechargePage() {
                                 )}
                                 <span className="text-sm font-bold text-slate-200">{plan.price}</span>
                                 <div className="my-1.5 flex items-center gap-1 text-cyan-400 font-extrabold text-base">
-                                    <span>💎</span>
+                                    <span>🪙</span>
                                     <span>{plan.diamonds.toLocaleString()}</span>
                                 </div>
                                 {selectedPlan === idx && (
@@ -238,7 +238,7 @@ export default function UserRechargePage() {
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-slate-200">
                             <Plus size={20} className="text-cyan-400" />
-                            Allocate Diamonds
+                            Allocate Coins
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
@@ -299,7 +299,7 @@ export default function UserRechargePage() {
                                         </div>
                                         <div className="flex items-center gap-3 mt-1 text-[11px]">
                                             <span className="text-amber-400 font-medium">🪙 {verifiedUser.coins?.toLocaleString()}</span>
-                                            <span className="text-cyan-400 font-medium">💎 {verifiedUser.diamonds?.toLocaleString()}</span>
+                                            <span className="text-cyan-400 font-medium">🪙 {verifiedUser.diamonds?.toLocaleString()}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -329,15 +329,15 @@ export default function UserRechargePage() {
                                 </div>
                             </div>
 
-                            {/* Calculated Diamonds Count Display & Input */}
+                            {/* Calculated Coins Count Display & Input */}
                             <div className="space-y-2">
-                                <label className="text-sm font-semibold text-slate-300">Calculated Diamonds (💎)</label>
+                                <label className="text-sm font-semibold text-slate-300">Calculated Coins (🪙)</label>
                                 <div className="relative">
                                     <Input
                                         type="number"
                                         placeholder="e.g. 1670"
                                         value={amount}
-                                        onChange={(e) => handleDiamondsChange(e.target.value)}
+                                        onChange={(e) => handleCoinsChange(e.target.value)}
                                         required
                                     />
                                     <Coins className="absolute right-3 top-3 h-4 w-4 text-cyan-400" />
@@ -349,7 +349,7 @@ export default function UserRechargePage() {
                                 <div className="p-3 rounded-lg bg-cyan-950/40 border border-cyan-500/30 flex items-center justify-between text-xs">
                                     <span className="text-slate-300 font-medium">Recharge Total:</span>
                                     <span className="text-cyan-300 font-bold text-sm flex items-center gap-1">
-                                        {inrAmount ? `₹${Number(inrAmount).toLocaleString()}` : ''} ➔ 💎 {Number(amount).toLocaleString()} Diamonds
+                                        {inrAmount ? `₹${Number(inrAmount).toLocaleString()}` : ''} ➔ 🪙 {Number(amount).toLocaleString()} Coins
                                     </span>
                                 </div>
                             )}
@@ -359,7 +359,7 @@ export default function UserRechargePage() {
                                 className="w-full font-bold bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white disabled:opacity-50 disabled:cursor-not-allowed"
                                 disabled={loading || !isVerified || !verifiedUser}
                             >
-                                {loading ? 'Crediting Diamonds...' : 'Credit Diamonds'}
+                                {loading ? 'Crediting Coins...' : 'Credit Coins'}
                             </Button>
                         </form>
                     </CardContent>
@@ -370,7 +370,7 @@ export default function UserRechargePage() {
                     <CardHeader className="flex flex-row items-center justify-between">
                         <CardTitle className="flex items-center gap-2 text-slate-200">
                             <Calendar size={20} className="text-cyan-400 animate-pulse" />
-                            Diamond Recharge History Logs
+                            Coin Recharge History Logs
                         </CardTitle>
                         <Badge variant="outline" className="text-xs border-cyan-500/30 text-cyan-400">
                             {logs.length} Transactions
@@ -382,7 +382,7 @@ export default function UserRechargePage() {
                                 <TableRow className="border-slate-800">
                                     <TableHead className="font-bold text-slate-300">User ID</TableHead>
                                     <TableHead className="font-bold text-slate-300">User Profile Name</TableHead>
-                                    <TableHead className="font-bold text-slate-300">Diamonds Credited</TableHead>
+                                    <TableHead className="font-bold text-slate-300">Coins Credited</TableHead>
                                     <TableHead className="font-bold text-slate-300">Type</TableHead>
                                     <TableHead className="font-bold text-slate-300">Date Timestamp</TableHead>
                                 </TableRow>
@@ -395,7 +395,7 @@ export default function UserRechargePage() {
                                             {log.user?.name || `User #${log.userId}`}
                                         </TableCell>
                                         <TableCell className="font-bold text-cyan-300">
-                                            +{ (log.diamonds || log.amount || 0).toLocaleString() } 💎
+                                            +{ (log.diamonds || log.amount || 0).toLocaleString() } 🪙
                                         </TableCell>
                                         <TableCell>
                                             <Badge variant="outline" className="text-[10px] uppercase border-cyan-500/20 text-cyan-400">

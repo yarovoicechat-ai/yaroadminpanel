@@ -27,6 +27,7 @@ import { Shield, UserPlus, Lock, Unlock, Search, RefreshCw, Eye, EyeOff, Copy, C
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
+import { useAuth } from '@/contexts/AuthContext';
 
 const ROLE_HIERARCHY = ['countryManager', 'stateManager', 'operator', 'superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport', 'coinSeller'];
 const ROLE_LABELS: Record<string, string> = {
@@ -39,6 +40,26 @@ const ROLE_LABELS: Record<string, string> = {
     agency: 'Agency',
     coinSeller: 'Diamond Seller',
 };
+
+const ALLOWED_ROLES_PER_ACTOR: Record<string, string[]> = {
+    owner: ['countryManager', 'stateManager', 'operator', 'superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport', 'coinSeller'],
+    operator: ['countryManager', 'stateManager', 'superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport', 'coinSeller'],
+    countrymanager: ['stateManager', 'superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport'],
+    'country-manager': ['stateManager', 'superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport'],
+    countryManager: ['stateManager', 'superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport'],
+    statemanager: ['superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport'],
+    'state-manager': ['superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport'],
+    stateManager: ['superAdmin', 'admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport'],
+    superadmin: ['admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport', 'coinSeller'],
+    'super-admin': ['admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport', 'coinSeller'],
+    superAdmin: ['admin', 'bdLeader', 'bd', 'agency', 'host', 'customerSupport', 'coinSeller'],
+    admin: ['bdLeader', 'bd', 'agency', 'host', 'customerSupport'],
+    bdleader: ['bd', 'agency', 'host', 'customerSupport'],
+    'bd-leader': ['bd', 'agency', 'host', 'customerSupport'],
+    bdLeader: ['bd', 'agency', 'host', 'customerSupport'],
+    bd: ['agency', 'host'],
+    agency: ['host'],
+};
 const ROLE_COLORS: Record<string, string> = {
     countryManager: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
     stateManager: 'bg-teal-500/20 text-teal-300 border-teal-500/30',
@@ -50,6 +71,11 @@ const ROLE_COLORS: Record<string, string> = {
 };
 
 export default function EmployeesPage() {
+    const { user } = useAuth();
+    const actorRole = (user?.role || '').toLowerCase().replace(/[-_]/g, '');
+    const allowedRoles = ALLOWED_ROLES_PER_ACTOR[actorRole] || ALLOWED_ROLES_PER_ACTOR[user?.role || ''] || ['host'];
+    const visibleRoleTabs = ROLE_HIERARCHY.filter(r => allowedRoles.includes(r));
+
     const [employees, setEmployees] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filterRole, setFilterRole] = useState('');
@@ -65,7 +91,7 @@ export default function EmployeesPage() {
         password: '',
         phoneNumber: '',
         country: '', state: '',
-        targetRole: 'admin',
+        targetRole: visibleRoleTabs[0] || 'admin',
         documents: [''],
     });
 
@@ -118,7 +144,7 @@ export default function EmployeesPage() {
     };
 
     const resetForm = () => {
-        setFormData({ name: '', email: '', password: '', phoneNumber: '', country: '', state: '', targetRole: 'admin', documents: [''] });
+        setFormData({ name: '', email: '', password: '', phoneNumber: '', country: '', state: '', targetRole: visibleRoleTabs[0] || 'admin', documents: [''] });
         setShowPassword(false);
     };
 
@@ -204,7 +230,7 @@ export default function EmployeesPage() {
                 >
                     All Roles
                 </button>
-                {ROLE_HIERARCHY.map(role => (
+                {visibleRoleTabs.map(role => (
                     <button
                         key={role}
                         onClick={() => setFilterRole(role)}
@@ -336,7 +362,7 @@ export default function EmployeesPage() {
                         <div className="space-y-1.5">
                             <Label className="text-xs text-slate-400 font-semibold">Role *</Label>
                             <div className="flex flex-wrap gap-2">
-                                {ROLE_HIERARCHY.map(role => (
+                                {visibleRoleTabs.map(role => (
                                     <button
                                         key={role}
                                         onClick={() => setFormData(prev => ({ ...prev, targetRole: role }))}

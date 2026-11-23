@@ -6,7 +6,7 @@ import { apiClient } from '@/lib/apiClient';
 import { RevenueChart, EarningsChart, LiveChart, DistributionChart } from '@/components/dashboard/Charts';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 import { toast } from 'sonner';
-import { User, Clock, Bell, Gem, Calendar, Users, TrendingUp, Sparkles, Phone, Mail, Award, ShieldCheck, Camera, Edit2, Check, DollarSign, Activity, AlertTriangle, Smartphone, Coins, Heart } from 'lucide-react';
+import { User, Clock, Bell, Gem, Calendar, Users, TrendingUp, Sparkles, Phone, Mail, Award, ShieldCheck, Camera, Edit2, Check, DollarSign, Activity, AlertTriangle, Smartphone, Coins, Heart, Share2, Copy, Link2 } from 'lucide-react';
 import { MeethiChatTeamWidget } from './MeethiChatTeamWidget';
 
 export function MeethiChatStyleDashboard() {
@@ -96,6 +96,60 @@ export function MeethiChatStyleDashboard() {
           <div className="flex items-center gap-2 bg-[#0d1527] px-3.5 py-1.5 rounded-full border border-slate-800 shadow-md">
             <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-xs font-semibold text-emerald-400">System Healthy</span>
+          </div>
+        </div>
+
+        {/* Executive Referral Link Console */}
+        <div className="bg-gradient-to-r from-indigo-950/60 via-purple-950/40 to-[#0d1527] border border-indigo-500/30 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center text-indigo-400">
+                <Share2 className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-[10px] font-bold uppercase tracking-wider text-indigo-300">Referral Code & Link</div>
+                <div className="text-base font-black text-white font-mono">{userCode}</div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const url = `https://admin.yaroapp.in/apply/country-manager?referrer=${encodeURIComponent(userCode)}&role=country-manager`;
+                  navigator.clipboard.writeText(url);
+                  toast.success('Referral link copied to clipboard!');
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy Referral Link</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(userCode);
+                  toast.success('Referral code copied!');
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-slate-200 text-xs font-bold transition-all border border-white/10 cursor-pointer"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy Code</span>
+              </button>
+              <a
+                href="/referrals/links"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-purple-600/30 hover:bg-purple-600/50 text-purple-200 border border-purple-500/30 text-xs font-bold transition-all"
+              >
+                <Link2 className="w-3.5 h-3.5" />
+                <span>All Referral Links</span>
+              </a>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[11px] text-slate-400 font-semibold mr-1">Recruit:</span>
+            <a href={`/apply/country-manager?referrer=${encodeURIComponent(userCode)}&role=country-manager`} className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-200 transition-colors">+Country Mgr</a>
+            <a href={`/apply/state-manager?referrer=${encodeURIComponent(userCode)}&role=state-manager`} className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-200 transition-colors">+State Mgr</a>
+            <a href={`/apply/agency?referrer=${encodeURIComponent(userCode)}&role=agency`} className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-200 transition-colors">+Agency</a>
+            <a href={`/apply/host?referrer=${encodeURIComponent(userCode)}&role=host`} className="rounded-lg border border-indigo-500/30 bg-indigo-500/10 hover:bg-indigo-500/20 px-2.5 py-1 text-xs font-semibold text-indigo-200 transition-colors">+Host</a>
           </div>
         </div>
 

@@ -154,7 +154,7 @@ export default function RechargePlansPage() {
     const handleSavePlan = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.description || !formData.actualPrice || !formData.diamonds) {
-            toast.error('Please enter description, price, and diamond amount');
+            toast.error('Please enter description, price, and coin amount');
             return;
         }
 
@@ -265,7 +265,7 @@ export default function RechargePlansPage() {
                         </div>
                         <div>
                             <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                                Diamond Recharge Plans
+                                Coin Recharge Plans
                                 <span className="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/15 border border-amber-500/30 text-amber-300 font-semibold uppercase tracking-wider">
                                     Economy Core
                                 </span>
@@ -351,7 +351,7 @@ export default function RechargePlansPage() {
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold text-purple-400">
-                            {stats.maxDiamonds.toLocaleString()} 💎
+                            {stats.maxDiamonds.toLocaleString()} 🪙
                         </div>
                         <p className="text-xs text-slate-500 mt-1">Max package capacity</p>
                     </CardContent>
@@ -364,7 +364,7 @@ export default function RechargePlansPage() {
                     <div className="relative w-full md:w-72">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <Input
-                            placeholder="Search by title, SKU, or diamonds..."
+                            placeholder="Search by title, SKU, or coins..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-9 bg-slate-950/60 border-slate-800 text-white placeholder:text-slate-500 focus:border-amber-500"
@@ -491,7 +491,7 @@ export default function RechargePlansPage() {
                                             </div>
 
                                             <h3 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors">
-                                                {plan.title || `${diamonds.toLocaleString()} Diamonds`}
+                                                {plan.title || `${diamonds.toLocaleString()} Coins`}
                                             </h3>
                                             <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
                                                 {plan.description}
@@ -575,7 +575,7 @@ export default function RechargePlansPage() {
                                 <TableHeader className="bg-slate-950/60">
                                     <TableRow className="border-slate-800">
                                         <TableHead className="text-slate-400 text-xs">Plan / Title</TableHead>
-                                        <TableHead className="text-slate-400 text-xs">Diamonds</TableHead>
+                                        <TableHead className="text-slate-400 text-xs">Coins</TableHead>
                                         <TableHead className="text-slate-400 text-xs">Price</TableHead>
                                         <TableHead className="text-slate-400 text-xs">SKU / Type</TableHead>
                                         <TableHead className="text-slate-400 text-xs">Status</TableHead>
@@ -592,12 +592,12 @@ export default function RechargePlansPage() {
                                             }`}
                                         >
                                             <TableCell>
-                                                <div className="font-semibold text-white">{plan.title || `${plan.coins} Diamonds`}</div>
+                                                <div className="font-semibold text-white">{plan.title || `${plan.coins} Coins`}</div>
                                                 <div className="text-xs text-slate-400 line-clamp-1">{plan.description}</div>
                                             </TableCell>
                                             <TableCell>
                                                 <div className="font-bold text-amber-400 flex items-center gap-1 font-mono">
-                                                    {(plan.diamonds || plan.coins).toLocaleString()} 💎
+                                                    {(plan.diamonds || plan.coins).toLocaleString()} 🪙
                                                 </div>
                                                 {(plan.bonusCoins || 0) > 0 && (
                                                     <span className="text-[10px] text-emerald-400">+{plan.bonusCoins} Bonus</span>
@@ -677,7 +677,7 @@ export default function RechargePlansPage() {
                                 {/* Mock App Wallet Header */}
                                 <div className="text-center space-y-1">
                                     <p className="text-[10px] text-slate-400 font-medium">YaroApp Wallet</p>
-                                    <h4 className="text-sm font-bold text-white">Recharge Diamonds</h4>
+                                    <h4 className="text-sm font-bold text-white">Recharge Coins</h4>
                                 </div>
 
                                 {/* Mock Balance Banner */}
@@ -768,7 +768,7 @@ export default function RechargePlansPage() {
                                     {editingPlan ? 'Edit Recharge Plan' : 'Create New Recharge Plan'}
                                 </h3>
                                 <p className="text-xs text-slate-400">
-                                    Define diamond amounts, Google Play SKU, and offer rates
+                                    Define coin amounts, Google Play SKU, and offer rates
                                 </p>
                             </div>
                             <button
@@ -787,7 +787,7 @@ export default function RechargePlansPage() {
                                 <Input
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    placeholder="e.g. Popular Diamond Chest"
+                                    placeholder="e.g. Popular Coin Chest"
                                     className="bg-slate-950 border-slate-800 text-white focus:border-amber-500"
                                     required
                                 />
@@ -800,7 +800,7 @@ export default function RechargePlansPage() {
                                 <Input
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    placeholder="e.g. 500 Diamonds + 50 Bonus Diamonds"
+                                    placeholder="e.g. 500 Coins + 50 Bonus Coins"
                                     className="bg-slate-950 border-slate-800 text-white focus:border-amber-500"
                                     required
                                 />
@@ -809,7 +809,7 @@ export default function RechargePlansPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-                                        Diamonds Credited (💎) *
+                                        Coins Credited (🪙) *
                                     </label>
                                     <Input
                                         type="number"
@@ -822,7 +822,7 @@ export default function RechargePlansPage() {
                                 </div>
                                 <div>
                                     <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-                                        Bonus Diamonds
+                                        Bonus Coins
                                     </label>
                                     <Input
                                         type="number"

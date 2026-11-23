@@ -260,7 +260,8 @@ const adminSidebarSections: SidebarSection[] = [
                 submenu: [
                     { name: 'Create', href: '/super-admins/create' },
                     { name: 'Requests', href: '/super-admins/request' },
-                    { name: 'List', href: '/super-admins' }
+                    { name: 'List', href: '/super-admins' },
+                    { name: 'Referral Links', href: '/referrals/links' }
                 ]
             },
             {
@@ -270,7 +271,8 @@ const adminSidebarSections: SidebarSection[] = [
                 submenu: [
                     { name: 'Create', href: '/admins/create' },
                     { name: 'Requests', href: '/admins/request' },
-                    { name: 'List', href: '/admins' }
+                    { name: 'List', href: '/admins' },
+                    { name: 'Referral Links', href: '/referrals/links' }
                 ]
             },
             {
@@ -280,7 +282,8 @@ const adminSidebarSections: SidebarSection[] = [
                 submenu: [
                     { name: 'Create', href: '/bd-leaders/create' },
                     { name: 'Requests', href: '/bd-leaders/request' },
-                    { name: 'List', href: '/bd-leaders' }
+                    { name: 'List', href: '/bd-leaders' },
+                    { name: 'Referral Links', href: '/referrals/links' }
                 ]
             },
             {
@@ -290,7 +293,8 @@ const adminSidebarSections: SidebarSection[] = [
                 submenu: [
                     { name: 'Create', href: '/bds/create' },
                     { name: 'Requests', href: '/bds/request' },
-                    { name: 'List', href: '/bds' }
+                    { name: 'List', href: '/bds' },
+                    { name: 'Referral Links', href: '/referrals/links' }
                 ]
             },
             {
@@ -315,7 +319,8 @@ const adminSidebarSections: SidebarSection[] = [
                 submenu: [
                     { name: 'Create', href: '/agencies/create' },
                     { name: 'Requests', href: '/agencies/request' },
-                    { name: 'List', href: '/agencies' }
+                    { name: 'List', href: '/agencies' },
+                    { name: 'Referral Links', href: '/referrals/links' }
                 ]
             },
             {
@@ -610,7 +615,8 @@ export default function Sidebar() {
 
     const filteredSections = activeSections.map(section => {
         if (!hasDynamicMenu(section.category) && !section.items.some(item => item.href === '/team' && isRouteAllowed(user?.role || 'user', '/team'))) return null;
-        if (user?.role === 'admin' && section.title.toUpperCase().includes('REFERRAL')) return null;
+        // Admin allowed staff referral links
+        if (user?.role === 'admin' && section.title.toUpperCase() === 'USER REFER & EARN') return null;
 
         const roleStr = user?.role ? String(user.role).toLowerCase().replace(/[-_]/g, '') : '';
         const isStoreOpsRestricted = ['admin', 'superadmin', 'customersupport', 'cs', 'bd', 'bdleader', 'agency', 'coinseller', 'seller'].includes(roleStr);
@@ -636,7 +642,7 @@ export default function Sidebar() {
                 if (
                     itemHref === '/live/rooms' || itemHref === '/rooms' || itemHref.startsWith('/rooms/') ||
                     itemHref === '/store/distribute' || itemHref.startsWith('/store/distribute') ||
-                    itemHref === '/referrals' || itemHref.startsWith('/referrals') ||
+                    itemHref === '/referrals' || itemHref === '/referrals/user' ||
                     itemHref === '/users' || itemHref.startsWith('/users') ||
                     itemHref === '/bd-agency-access' || itemHref.startsWith('/bd-agency-access') ||
                     itemHref === '/messages/system' || itemHref.startsWith('/messages/system') ||
@@ -663,7 +669,7 @@ export default function Sidebar() {
                         if (
                             subHref === '/rooms' || subHref.startsWith('/rooms/') ||
                             subHref === '/store/distribute' || subHref.startsWith('/store/distribute') ||
-                            subHref === '/referrals' || subHref.startsWith('/referrals') ||
+                            subHref === '/referrals' || subHref === '/referrals/user' ||
                             subHref === '/users' || subHref.startsWith('/users') ||
                             subHref === '/bd-agency-access' || subHref.startsWith('/bd-agency-access') ||
                             subHref === '/messages/system' || subHref.startsWith('/messages/system') ||

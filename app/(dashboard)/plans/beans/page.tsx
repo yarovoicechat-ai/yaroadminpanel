@@ -280,7 +280,7 @@ export default function BeansPlansPage() {
                                 </span>
                             </h1>
                             <p className="text-sm text-slate-400">
-                                Configure Beans to Diamonds exchange packages, conversion rates, and creator cashout tiers
+                                Configure Beans to Coins exchange packages, conversion rates, and creator cashout tiers
                             </p>
                         </div>
                     </div>
@@ -373,7 +373,7 @@ export default function BeansPlansPage() {
                     <div className="relative w-full md:w-72">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
                         <Input
-                            placeholder="Search beans, diamonds, or name..."
+                            placeholder="Search beans, coins, or name..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-9 bg-slate-950/60 border-slate-800 text-white placeholder:text-slate-500 focus:border-emerald-500"
@@ -386,7 +386,7 @@ export default function BeansPlansPage() {
                         className="bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-300 focus:outline-none focus:border-emerald-500"
                     >
                         <option value="all">All Types</option>
-                        <option value="exchange">Exchange (Beans → Diamonds)</option>
+                        <option value="exchange">Exchange (Beans → Coins)</option>
                         <option value="purchase">Direct Purchase</option>
                         <option value="agency">Agency Special</option>
                     </select>
@@ -491,7 +491,7 @@ export default function BeansPlansPage() {
                                                 {plan.name || `${plan.beans.toLocaleString()} Beans`}
                                             </h3>
                                             <p className="text-xs text-slate-400 line-clamp-1 mt-0.5">
-                                                {plan.description || `Exchange ${plan.beans} Beans for ${plan.diamonds} Diamonds`}
+                                                {plan.description || `Exchange ${plan.beans} Beans for ${plan.diamonds} Coins`}
                                             </p>
 
                                             {/* Exchange conversion flow display */}
@@ -511,10 +511,10 @@ export default function BeansPlansPage() {
 
                                                 <div className="text-right">
                                                     <span className="text-[10px] uppercase text-slate-400 font-semibold block">
-                                                        Yield Diamonds
+                                                        Yield Coins
                                                     </span>
                                                     <span className="text-lg font-black text-cyan-400 font-mono">
-                                                        {plan.diamonds.toLocaleString()} 💎
+                                                        {plan.diamonds.toLocaleString()} 🪙
                                                     </span>
                                                 </div>
                                             </div>
@@ -523,7 +523,7 @@ export default function BeansPlansPage() {
                                             {bonus > 0 && (
                                                 <div className="mt-2.5 flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-lg font-semibold">
                                                     <Sparkles size={14} />
-                                                    <span>Includes +{bonus.toLocaleString()} Extra Bonus Diamonds!</span>
+                                                    <span>Includes +{bonus.toLocaleString()} Extra Bonus Coins!</span>
                                                 </div>
                                             )}
                                         </div>
@@ -570,7 +570,7 @@ export default function BeansPlansPage() {
                                     <TableRow className="border-slate-800">
                                         <TableHead className="text-slate-400 text-xs">Plan Name</TableHead>
                                         <TableHead className="text-slate-400 text-xs">Beans (Cost)</TableHead>
-                                        <TableHead className="text-slate-400 text-xs">Diamonds (Yield)</TableHead>
+                                        <TableHead className="text-slate-400 text-xs">Coins (Yield)</TableHead>
                                         <TableHead className="text-slate-400 text-xs">Bonus</TableHead>
                                         <TableHead className="text-slate-400 text-xs">Status</TableHead>
                                         <TableHead className="text-slate-400 text-xs text-right">Actions</TableHead>
@@ -590,7 +590,7 @@ export default function BeansPlansPage() {
                                             </TableCell>
                                             <TableCell>
                                                 <span className="font-bold text-cyan-400 font-mono">
-                                                    {plan.diamonds.toLocaleString()} 💎
+                                                    {plan.diamonds.toLocaleString()} 🪙
                                                 </span>
                                             </TableCell>
                                             <TableCell>
@@ -694,9 +694,9 @@ export default function BeansPlansPage() {
                                 </div>
 
                                 <div className="flex items-center justify-between text-xs text-slate-400">
-                                    <span>Base Diamonds:</span>
+                                    <span>Base Coins:</span>
                                     <span className="font-bold text-cyan-300 font-mono">
-                                        {calcResult.diamonds.toLocaleString()} 💎
+                                        {calcResult.diamonds.toLocaleString()} 🪙
                                     </span>
                                 </div>
 
@@ -719,7 +719,7 @@ export default function BeansPlansPage() {
 
                             {/* Info note */}
                             <p className="text-[11px] text-slate-500 leading-relaxed">
-                                In YaroApp, hosts and users can convert accumulated call & gift beans into diamonds to send gifts or participate in live voice events.
+                                In YaroApp, hosts and users can convert accumulated call & gift beans into coins to send gifts or participate in live voice events.
                             </p>
                         </CardContent>
                     </Card>
@@ -737,7 +737,7 @@ export default function BeansPlansPage() {
                                     {editingPlan ? 'Edit Beans Plan' : 'Create New Beans Plan'}
                                 </h3>
                                 <p className="text-xs text-slate-400">
-                                    Configure beans conversion amount, diamonds received, and bonus perks
+                                    Configure beans conversion amount, coins received, and bonus perks
                                 </p>
                             </div>
                             <button
@@ -769,7 +769,7 @@ export default function BeansPlansPage() {
                                 <Input
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    placeholder="e.g. Convert 10,000 Beans into 9,000 Diamonds"
+                                    placeholder="e.g. Convert 10,000 Beans into 9,000 Coins"
                                     className="bg-slate-950 border-slate-800 text-white focus:border-emerald-500"
                                 />
                             </div>
@@ -790,7 +790,7 @@ export default function BeansPlansPage() {
                                 </div>
                                 <div>
                                     <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-                                        Diamonds Received (💎) *
+                                        Coins Received (🪙) *
                                     </label>
                                     <Input
                                         type="number"
@@ -806,7 +806,7 @@ export default function BeansPlansPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="text-xs font-semibold text-slate-300 block mb-1.5">
-                                        Bonus Diamonds (+💎)
+                                        Bonus Coins (+🪙)
                                     </label>
                                     <Input
                                         type="number"
@@ -846,7 +846,7 @@ export default function BeansPlansPage() {
                                         onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
                                         className="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm text-white focus:border-emerald-500"
                                     >
-                                        <option value="exchange">Exchange (Beans → Diamonds)</option>
+                                        <option value="exchange">Exchange (Beans → Coins)</option>
                                         <option value="purchase">Direct Purchase</option>
                                         <option value="agency">Agency Special</option>
                                     </select>
