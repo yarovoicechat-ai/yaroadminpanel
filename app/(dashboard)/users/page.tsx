@@ -142,6 +142,15 @@ export default function UsersPage() {
     // Edit User State
     const [editingUser, setEditingUser] = useState<User | null>(null);
     const [isEditOpen, setIsEditOpen] = useState(false);
+    const [customIdInput, setCustomIdInput] = useState('');
+    const [isCurrentAdminOwner, setIsCurrentAdminOwner] = useState(false);
+
+    useEffect(() => {
+        try {
+            const userObj = JSON.parse(localStorage.getItem('admin_user') || '{}');
+            setIsCurrentAdminOwner(userObj?.role === 'owner');
+        } catch {}
+    }, []);
 
     // Delete User State
     const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
@@ -417,6 +426,10 @@ export default function UsersPage() {
                 payload.canVideoCall = payload.hostTypes.includes('video');
                 payload.canRoomHost = payload.hostTypes.includes('room');
                 payload.isActive = true;
+            }
+
+            if (isCurrentAdminOwner && customIdInput.trim()) {
+                payload.customDisplayId = customIdInput.trim();
             }
 
             const response = await apiClient.patch(API_ENDPOINTS.USERS.UPDATE(editingUser.userId.toString()), payload);
@@ -951,6 +964,7 @@ export default function UsersPage() {
                                                                     ...user,
                                                                     hostTypes: Array.isArray(rawTypes) && rawTypes.length > 0 ? rawTypes : ['voice', 'video', 'room']
                                                                 } as any);
+                                                                setCustomIdInput((user as any).customDisplayId || (user as any).uniqueId || (user as any).meethiId || String(user.userId || ''));
                                                                 setIsEditOpen(true);
                                                             }}
                                                             title="Edit User Name & Details"
@@ -1024,6 +1038,39 @@ export default function UsersPage() {
                     </DialogHeader>
                     {editingUser && (
                         <div className="grid gap-4 py-4">
+                            {/* 👑 Owner Panel Custom ID Management */}
+                            {isCurrentAdminOwner ? (
+                                <div className="grid grid-cols-4 items-center gap-4 p-3 rounded-lg border border-amber-500/40 bg-amber-500/10">
+                                    <label htmlFor="edit-custom-id" className="text-right text-xs font-bold text-amber-400">
+                                        👑 Custom ID (Owner Only)
+                                    </label>
+                                    <div className="col-span-3 space-y-1">
+                                        <Input
+                                            id="edit-custom-id"
+                                            className="border-amber-500/40 bg-slate-900/90 font-mono text-amber-300 font-bold"
+                                            placeholder="Assign Custom User ID (e.g. 7777, VIP888)"
+                                            value={customIdInput}
+                                            onChange={(e) => setCustomIdInput(e.target.value)}
+                                        />
+                                        <p className="text-[11px] text-amber-300/80">
+                                            Only the Owner panel can edit or assign custom User IDs.
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-4 items-center gap-4 p-2.5 rounded-lg border border-slate-800 bg-slate-900/40">
+                                    <label className="text-right text-xs text-slate-400 font-medium">User ID</label>
+                                    <div className="col-span-3 flex items-center justify-between">
+                                        <span className="font-mono text-xs text-slate-300 font-bold">
+                                            #{(editingUser as any).customDisplayId || editingUser.userId}
+                                        </span>
+                                        <Badge variant="outline" className="text-[10px] text-amber-500/70 border-amber-500/30">
+                                            🔒 ID Locked (Owner Only)
+                                        </Badge>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-4 items-center gap-4">
                                 <label htmlFor="edit-name" className="text-right text-sm text-slate-400">Name</label>
                                 <Input

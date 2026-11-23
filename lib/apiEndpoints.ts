@@ -47,6 +47,7 @@ export const API_ENDPOINTS = {
         BLOCK: (id: string) => `/api/user/block/${id}`,
         UNBLOCK: (id: string) => `/api/user/unblock/${id}`,
         UPLOAD_IMAGE: (id: string) => `/api/user/upload/${id}`,
+        CUSTOM_ID: (id: string) => `/api/admin/users/${id}/custom-id`,
     },
 
     // Host Management

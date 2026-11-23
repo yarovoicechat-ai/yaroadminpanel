@@ -53,6 +53,20 @@ export default function UserDetailPage() {
     const [isProfileVerified, setIsProfileVerified] = useState(false);
     const [verifiedTitle, setVerifiedTitle] = useState('');
 
+    // 👑 Owner-exclusive Custom ID States
+    const [customId, setCustomId] = useState('');
+    const [updatingCustomId, setUpdatingCustomId] = useState(false);
+    const [isCurrentAdminOwner, setIsCurrentAdminOwner] = useState(false);
+
+    useEffect(() => {
+        try {
+            const userObj = JSON.parse(localStorage.getItem('admin_user') || '{}');
+            setIsCurrentAdminOwner(currentUser?.role === 'owner' || userObj?.role === 'owner');
+        } catch {
+            setIsCurrentAdminOwner(currentUser?.role === 'owner');
+        }
+    }, [currentUser]);
+
     useEffect(() => {
         if (!id) return;
         const fetchUserDetails = async () => {
@@ -77,6 +91,7 @@ export default function UserDetailPage() {
                     setUserNameState(u.userName || '');
                     setIsProfileVerified(Boolean((u as any).isProfileVerified));
                     setVerifiedTitle((u as any).verifiedTitle || '');
+                    setCustomId((u as any).customDisplayId || (u as any).uniqueId || (u as any).meethiId || String(u.userId || ''));
                 } else {
                     toast.error("User not found");
                 }
@@ -179,6 +194,35 @@ export default function UserDetailPage() {
         setSelectedAssetIds(prev =>
             prev.includes(itemId) ? prev.filter(i => i !== itemId) : [...prev, itemId]
         );
+    };
+
+    const handleUpdateCustomId = async () => {
+        if (!customId.trim()) {
+            toast.error('Please enter a custom ID');
+            return;
+        }
+        try {
+            setUpdatingCustomId(true);
+            const res = await apiClient.patch<any>(API_ENDPOINTS.USERS.CUSTOM_ID(id), {
+                customId: customId.trim(),
+            });
+            if (res.success) {
+                toast.success(res.message || 'Custom User ID updated successfully by Owner!');
+                if (user) {
+                    setUser({
+                        ...user,
+                        customDisplayId: customId.trim(),
+                        uniqueId: customId.trim(),
+                    } as any);
+                }
+            } else {
+                toast.error(res.message || 'Failed to update custom ID');
+            }
+        } catch (err: any) {
+            toast.error(err.message || 'Error updating custom ID');
+        } finally {
+            setUpdatingCustomId(false);
+        }
     };
 
     const handleSave = async (e: React.FormEvent) => {
@@ -388,7 +432,55 @@ export default function UserDetailPage() {
                 </div>
 
                 {/* Right Panel: Admin Settings / Profile Editor Form */}
-                <div className="lg:col-span-3">
+                <div className="lg:col-span-3 space-y-6">
+                    {/* 👑 Owner-Exclusive Custom ID Card */}
+                    {isCurrentAdminOwner ? (
+                        <Card className="border-amber-500/40 bg-gradient-to-r from-amber-950/30 via-slate-900 to-[#161520] shadow-xl">
+                            <CardHeader className="pb-3">
+                                <div className="flex items-center justify-between">
+                                    <CardTitle className="text-amber-400 font-bold flex items-center gap-2">
+                                        👑 Owner Panel: Custom User ID Management
+                                    </CardTitle>
+                                    <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/40">
+                                        Owner Only
+                                    </Badge>
+                                </div>
+                                <CardDescription className="text-amber-200/70 text-xs">
+                                    Only the Platform Owner panel is authorized to create or edit custom Unique IDs for any account.
+                                </CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <div className="flex flex-col sm:flex-row items-center gap-3">
+                                    <div className="flex-1 w-full">
+                                        <Input
+                                            placeholder="Assign Custom User ID (e.g. 777777, VIP888)"
+                                            className="font-mono text-amber-300 font-bold border-amber-500/40 bg-slate-950/80"
+                                            value={customId}
+                                            onChange={(e) => setCustomId(e.target.value)}
+                                        />
+                                    </div>
+                                    <Button
+                                        type="button"
+                                        onClick={handleUpdateCustomId}
+                                        disabled={updatingCustomId || !customId.trim()}
+                                        className="bg-amber-600 hover:bg-amber-500 text-black font-bold whitespace-nowrap w-full sm:w-auto"
+                                    >
+                                        {updatingCustomId ? 'Updating...' : 'Assign Custom ID'}
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <div className="p-3.5 rounded-xl border border-slate-800 bg-slate-900/50 flex items-center justify-between text-xs text-slate-400">
+                            <span className="flex items-center gap-2">
+                                <Lock className="w-4 h-4 text-amber-500/60" />
+                                Assigned ID: <strong className="text-slate-200 font-mono">#{(user as any).customDisplayId || user.userId}</strong>
+                            </span>
+                            <span className="text-[11px] text-amber-500/70">
+                                🔒 Only Platform Owner panel can edit or customize IDs
+                            </span>
+                        </div>
+                    )}
                     <Card className="border-slate-800 bg-[#161520] shadow-xl">
                         <CardHeader>
                             <CardTitle className="text-slate-200">Edit Profile Parameters</CardTitle>
