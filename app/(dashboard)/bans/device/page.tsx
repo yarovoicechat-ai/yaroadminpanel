@@ -1,439 +1,740 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/Table";
 import {
-    Ban, Search, Monitor, ShieldAlert, Smartphone, CheckCircle,
-    User, AlertCircle, RefreshCw, Plus, Key, Sliders, Shield
+  Ban, Search, Monitor, ShieldAlert, Smartphone, CheckCircle,
+  User, AlertCircle, RefreshCw, Plus, Key, Sliders, Shield, Clock,
+  History, Loader2, CheckCircle2, UserX, AlertTriangle
 } from "lucide-react";
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 
+const DURATION_PRESETS = [
+  '1 Hour',
+  '6 Hours',
+  '12 Hours',
+  '24 Hours',
+  '3 Days',
+  '7 Days',
+  '15 Days',
+  '30 Days',
+  '90 Days',
+  'Custom Date & Time',
+  'Permanent',
+];
+
+const DEVICE_REASON_PRESETS = [
+  'Multiple fraudulent account creation / Bot farm',
+  'Device used for platform harassment / Ban evasion',
+  'Suspicious payment / Refund abuse',
+  'Emulated environment / Security policy violation',
+  'Administrative restriction (General)',
+];
+
 export default function DeviceBansPage() {
-    // Search state for User ID -> Device ID lookup
-    const [userSearchInput, setUserSearchInput] = useState('');
-    const [searchingUser, setSearchingUser] = useState(false);
-    const [searchedData, setSearchedData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [devices, setDevices] = useState<any[]>([]);
+  const [totalDevices, setTotalDevices] = useState(0);
 
-    // Limit form state
-    const [targetDeviceId, setTargetDeviceId] = useState('');
-    const [maxAccountsInput, setMaxAccountsInput] = useState<number>(1);
-    const [noteInput, setNoteInput] = useState('');
-    const [savingLimit, setSavingLimit] = useState(false);
+  // Search & Filter
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'banned' | 'active'>('all');
+  const [page, setPage] = useState(1);
 
-    // Existing overrides & device limits list
-    const [loadingLimits, setLoadingLimits] = useState(false);
-    const [deviceLimits, setDeviceLimits] = useState<any[]>([]);
-    const [defaultMaxAccounts, setDefaultMaxAccounts] = useState<number>(1);
-    const [filterQuery, setFilterQuery] = useState('');
+  // User to Device lookup
+  const [userLookupInput, setUserLookupInput] = useState('');
+  const [lookingUpUser, setLookingUpUser] = useState(false);
 
-    // Fetch existing device limits list from server
-    const fetchDeviceLimits = async () => {
-        try {
-            setLoadingLimits(true);
-            const res = await apiClient.get('/api/admin/device-limits');
-            if (res.success && res.data) {
-                setDeviceLimits(res.data.deviceOverrides || []);
-                if (res.data.defaultMaxAccounts) {
-                    setDefaultMaxAccounts(res.data.defaultMaxAccounts);
-                }
-            }
-        } catch (err: any) {
-            console.error('Failed to load device limits:', err);
-        } finally {
-            setLoadingLimits(false);
+  // Ban Device Form State
+  const [targetDeviceId, setTargetDeviceId] = useState('');
+  const [banType, setBanType] = useState<'temporary' | 'permanent'>('temporary');
+  const [duration, setDuration] = useState<string>('24 Hours');
+  const [customDateTime, setCustomDateTime] = useState<string>('');
+  const [reason, setReason] = useState<string>('Administrative restriction');
+  const [adminNote, setAdminNote] = useState<string>('');
+  const [submittingBan, setSubmittingBan] = useState(false);
+
+  // Unban Device State
+  const [unbanningDevice, setUnbanningDevice] = useState<any | null>(null);
+  const [unbanReason, setUnbanReason] = useState<string>('Unbanned by authorized administrator');
+  const [submittingUnban, setSubmittingUnban] = useState(false);
+
+  // Device Ban History Modal
+  const [historyDeviceId, setHistoryDeviceId] = useState<string | null>(null);
+  const [historyRecords, setHistoryRecords] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  // Fetch registered devices
+  const fetchDevices = useCallback(async () => {
+    setLoading(true);
+    try {
+      const endpoint = `/api/admin/bans/devices?search=${encodeURIComponent(searchQuery)}&status=${statusFilter}&page=${page}&limit=25`;
+      const res: any = await apiClient.get(endpoint);
+      if (res?.success && Array.isArray(res.data?.devices)) {
+        setDevices(res.data.devices);
+        setTotalDevices(res.data.total || 0);
+      } else {
+        setDevices([]);
+        setTotalDevices(0);
+      }
+    } catch (err) {
+      console.error('Failed to load devices:', err);
+      setDevices([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, statusFilter, page]);
+
+  useEffect(() => {
+    fetchDevices();
+  }, [fetchDevices]);
+
+  // Lookup user's registered hardware device ID
+  const handleLookupUserDevice = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const q = userLookupInput.trim();
+    if (!q) {
+      toast.error('Please enter a User ID');
+      return;
+    }
+
+    setLookingUpUser(true);
+    try {
+      const res: any = await apiClient.get(`/api/admin/users/${encodeURIComponent(q)}`);
+      const user = res?.data?.user || res?.user;
+      if (user) {
+        const foundId = user?.device?.currentDeviceId || user?.device?.createdDeviceId || user?.deviceId;
+        if (foundId) {
+          setTargetDeviceId(foundId);
+          toast.success(`Found device for User #${user.userId}: ${foundId}`);
+        } else {
+          toast.warning(`User #${user.userId} found, but no hardware device ID registered.`);
         }
-    };
+      } else {
+        toast.error('User not found');
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'User lookup failed');
+    } finally {
+      setLookingUpUser(false);
+    }
+  };
 
-    useEffect(() => {
-        fetchDeviceLimits();
-    }, []);
+  // Submit Ban Device
+  const handleConfirmBanDevice = async () => {
+    const cleanId = targetDeviceId.trim();
+    if (!cleanId) {
+      toast.error('Please enter or select a Device ID');
+      return;
+    }
 
-    // Search User ID to extract Hardware Device ID & all linked accounts
-    const handleSearchUser = async (e?: React.FormEvent) => {
-        if (e) e.preventDefault();
-        const query = userSearchInput.trim();
-        if (!query) {
-            toast.error('Please enter a User ID, Meethi ID, or Phone Number');
-            return;
-        }
+    if (duration === 'Custom Date & Time' && !customDateTime) {
+      toast.error('Please select an expiration date and time');
+      return;
+    }
 
-        try {
-            setSearchingUser(true);
-            const res = await apiClient.get(`/api/admin/users/device-info/${encodeURIComponent(query)}`);
-            if (res.success && res.data) {
-                setSearchedData(res.data);
-                if (res.data.deviceId) {
-                    setTargetDeviceId(res.data.deviceId);
-                    setMaxAccountsInput(res.data.maxAllowedAccounts ?? 1);
-                    setNoteInput(res.data.customLimit?.note || `Allowed limit for User #${res.data.user?.userId}`);
-                    toast.success(`Device ID found: ${res.data.deviceId}`);
-                } else {
-                    toast.warning('User found, but no hardware device ID registered yet.');
-                }
-            } else {
-                toast.error(res.message || 'User not found');
-                setSearchedData(null);
-            }
-        } catch (err: any) {
-            console.error('User device search error:', err);
-            toast.error(err.message || 'User not found');
-            setSearchedData(null);
-        } finally {
-            setSearchingUser(false);
-        }
-    };
+    setSubmittingBan(true);
+    try {
+      const payload: any = {
+        deviceId: cleanId,
+        banType: duration === 'Permanent' ? 'permanent' : banType,
+        duration,
+        customDate: duration === 'Custom Date & Time' ? customDateTime : undefined,
+        reason: reason.trim(),
+        adminNote: adminNote.trim(),
+      };
 
-    // Save/Update max allowed accounts for a hardware device ID
-    const handleSaveDeviceLimit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!targetDeviceId.trim()) {
-            toast.error('Device ID is required');
-            return;
-        }
+      const res: any = await apiClient.post('/api/admin/bans/device', payload);
+      if (res?.success) {
+        toast.success(res.message || `Device ${cleanId} banned successfully`);
+        setTargetDeviceId('');
+        setAdminNote('');
+        fetchDevices();
+      } else {
+        toast.error(res?.message || 'Failed to ban device');
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to ban device');
+    } finally {
+      setSubmittingBan(false);
+    }
+  };
 
-        try {
-            setSavingLimit(true);
-            const limitVal = Number(maxAccountsInput);
-            const res = await apiClient.post('/api/admin/device-limits', {
-                deviceId: targetDeviceId.trim(),
-                maxAllowedAccounts: isNaN(limitVal) ? 1 : Math.max(0, limitVal),
-                note: noteInput.trim()
-            });
+  // Submit Unban Device
+  const handleConfirmUnbanDevice = async () => {
+    if (!unbanningDevice) return;
+    setSubmittingUnban(true);
+    try {
+      const cleanId = unbanningDevice.deviceId;
+      const res: any = await apiClient.post('/api/admin/bans/device/unban', {
+        deviceId: cleanId,
+        reason: unbanReason,
+      });
 
-            if (res.success) {
-                toast.success(limitVal === 0
-                    ? `Device hardware ${targetDeviceId.slice(0, 12)}... BLOCKED (0 accounts allowed)`
-                    : `Device limit updated to ${limitVal} max accounts!`
-                );
-                fetchDeviceLimits();
-                if (searchedData && searchedData.deviceId === targetDeviceId) {
-                    setSearchedData({
-                        ...searchedData,
-                        maxAllowedAccounts: limitVal,
-                        customLimit: res.data
-                    });
-                }
-            } else {
-                toast.error(res.message || 'Failed to update device limit');
-            }
-        } catch (err: any) {
-            console.error('Update device limit error:', err);
-            toast.error(err.message || 'Failed to update device limit');
-        } finally {
-            setSavingLimit(false);
-        }
-    };
+      if (res?.success) {
+        toast.success(res.message || `Device ${cleanId} unbanned successfully`);
+        setUnbanningDevice(null);
+        fetchDevices();
+      } else {
+        toast.error(res?.message || 'Failed to unban device');
+      }
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || err?.message || 'Failed to unban device');
+    } finally {
+      setSubmittingUnban(false);
+    }
+  };
 
-    return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-cyan-400 via-blue-400 to-indigo-400 bg-clip-text text-transparent flex items-center gap-2">
-                        <Smartphone className="h-8 w-8 text-cyan-400" /> Device ID & Hardware Limits Control
-                    </h2>
-                    <p className="text-muted-foreground mt-1 text-sm font-medium">
-                        Search User ID to extract Hardware Device ID and assign custom account creation limits (1, 2, 5, or 0 for block).
-                    </p>
-                </div>
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={fetchDeviceLimits} disabled={loadingLimits} className="border-slate-800">
-                        <RefreshCw className={`h-4 w-4 mr-1 ${loadingLimits ? 'animate-spin' : ''}`} /> Refresh Limits
-                    </Button>
-                </div>
+  // View Device Ban History
+  const handleOpenHistory = async (devId: string) => {
+    setHistoryDeviceId(devId);
+    setLoadingHistory(true);
+    try {
+      const res: any = await apiClient.get(`/api/admin/bans/history?targetType=DEVICE&targetId=${encodeURIComponent(devId)}`);
+      if (res?.success && Array.isArray(res.data?.history)) {
+        setHistoryRecords(res.data.history);
+      } else {
+        setHistoryRecords([]);
+      }
+    } catch (err) {
+      console.error('Failed to load device history:', err);
+      setHistoryRecords([]);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  return (
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-gradient-to-r from-slate-900 via-indigo-950/30 to-slate-900 p-6 rounded-2xl border border-indigo-500/20">
+        <div>
+          <div className="flex items-center gap-3 mb-1">
+            <span className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+              <Smartphone className="w-6 h-6" />
+            </span>
+            <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+              Device Ban & Hardware Security
+            </h1>
+          </div>
+          <p className="text-sm text-slate-400">
+            Manage device-level restrictions, view associated user accounts, and enforce temporary or permanent device hardware bans.
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          onClick={fetchDevices}
+          disabled={loading}
+          className="border-slate-800 text-slate-300 hover:bg-slate-800"
+        >
+          <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Main Grid: Device Ban Action Form & Lookup */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Form: Ban Device */}
+        <Card className="lg:col-span-7 bg-slate-900/60 border-slate-800">
+          <CardHeader>
+            <CardTitle className="text-white text-lg flex items-center gap-2">
+              <ShieldAlert className="w-5 h-5 text-indigo-400" />
+              <span>Apply Device Hardware Ban</span>
+            </CardTitle>
+            <CardDescription className="text-slate-400 text-xs">
+              Banning a device prevents any user from logging in or registering from that installation.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Find device via User ID */}
+            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+              <Label className="text-xs text-slate-400">Don&apos;t know the Device ID? Find it by User ID:</Label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter User ID..."
+                  value={userLookupInput}
+                  onChange={(e) => setUserLookupInput(e.target.value)}
+                  className="bg-slate-900 border-slate-700 text-white font-mono text-xs"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleLookupUserDevice}
+                  disabled={lookingUpUser || !userLookupInput.trim()}
+                  className="bg-slate-800 hover:bg-slate-700 text-white text-xs"
+                >
+                  {lookingUpUser ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : null}
+                  Find Device
+                </Button>
+              </div>
             </div>
 
-            {/* Step 1: User Search Box */}
-            <Card className="glass-card border-cyan-500/30">
-                <CardHeader>
-                    <CardTitle className="text-lg flex items-center gap-2 text-slate-100">
-                        <Search className="h-5 w-5 text-cyan-400" />
-                        1. Find Hardware Device ID by User ID
-                    </CardTitle>
-                    <CardDescription className="text-slate-400 text-xs">
-                        Enter User ID (e.g. 100452), Meethi ID (e.g. MC100452), or Phone Number to extract registered hardware device signature.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={handleSearchUser} className="flex flex-col sm:flex-row gap-3">
-                        <div className="relative flex-1">
-                            <Input
-                                placeholder="Enter User ID / Meethi ID / Phone Number (e.g. 100452)..."
-                                value={userSearchInput}
-                                onChange={(e) => setUserSearchInput(e.target.value)}
-                                className="pl-10 font-mono text-sm bg-slate-900/60 border-slate-700 text-cyan-300"
-                                required
-                            />
-                            <User className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                        </div>
-                        <Button type="submit" disabled={searchingUser} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold shrink-0">
-                            {searchingUser ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Search className="h-4 w-4 mr-2" />}
-                            Find Device Signature
-                        </Button>
-                    </form>
-                </CardContent>
-            </Card>
+            {/* Target Device ID */}
+            <div>
+              <Label className="text-xs text-slate-300 font-medium">1. Target Device ID</Label>
+              <Input
+                placeholder="Enter installation device ID (e.g. 550e8400-e29b-41d4-a716...)"
+                value={targetDeviceId}
+                onChange={(e) => setTargetDeviceId(e.target.value)}
+                className="mt-1.5 bg-slate-950 border-slate-800 text-white font-mono text-sm"
+              />
+            </div>
 
-            {/* Step 2 & 3: Device Search Result & Account Limit Form */}
-            {searchedData && (
-                <div className="grid gap-6 md:grid-cols-3">
-                    {/* User & Device Details Card */}
-                    <Card className="glass-card border-slate-700 md:col-span-1">
-                        <CardHeader className="pb-3">
-                            <CardTitle className="text-base flex items-center justify-between text-slate-200">
-                                <span>Matched User Profile</span>
-                                <Badge variant="outline" className={searchedData.user?.isBlocked ? "border-rose-500 text-rose-400" : "border-emerald-500 text-emerald-400"}>
-                                    {searchedData.user?.isBlocked ? "Blocked" : "Active"}
-                                </Badge>
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="flex items-center gap-3 p-3 rounded-lg bg-slate-800/60 border border-slate-700">
-                                <div className="h-10 w-10 rounded-full bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center font-bold text-cyan-400">
-                                    {searchedData.user?.name?.[0]?.toUpperCase() || 'U'}
-                                </div>
-                                <div className="overflow-hidden">
-                                    <h4 className="font-bold text-slate-100 truncate">{searchedData.user?.name || 'User'}</h4>
-                                    <p className="text-xs text-slate-400 font-mono">
-                                        ID #{searchedData.user?.userId} • {searchedData.user?.meethiId || 'No Meethi ID'}
-                                    </p>
-                                </div>
-                            </div>
+            {/* Ban Classification */}
+            <div>
+              <Label className="text-xs text-slate-300 font-medium">2. Ban Classification</Label>
+              <div className="grid grid-cols-2 gap-3 mt-1.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBanType('temporary');
+                    if (duration === 'Permanent') setDuration('24 Hours');
+                  }}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    banType === 'temporary'
+                      ? 'border-amber-500/50 bg-amber-500/10 text-white'
+                      : 'border-slate-800 bg-slate-950/60 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">Temporary Device Ban</span>
+                    <Clock className={`w-4 h-4 ${banType === 'temporary' ? 'text-amber-400' : 'text-slate-500'}`} />
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Automatic auto-expiration based on server UTC time</p>
+                </button>
 
-                            <div className="space-y-2 text-xs">
-                                <div className="flex justify-between py-1 border-b border-slate-800">
-                                    <span className="text-slate-400">Phone Number:</span>
-                                    <span className="font-mono text-slate-200 font-bold">{searchedData.user?.phoneNumber || '-'}</span>
-                                </div>
-                                <div className="flex justify-between py-1 border-b border-slate-800">
-                                    <span className="text-slate-400">Role:</span>
-                                    <span className="font-semibold text-cyan-400 uppercase">{searchedData.user?.role || 'user'}</span>
-                                </div>
-                                <div className="flex justify-between py-1 border-b border-slate-800">
-                                    <span className="text-slate-400">Hardware Device ID:</span>
-                                    <span className="font-mono text-[11px] text-cyan-300 font-bold truncate max-w-[140px]" title={searchedData.deviceId}>
-                                        {searchedData.deviceId ? searchedData.deviceId.slice(0, 16) + '...' : 'Not Recorded'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between py-1 border-b border-slate-800">
-                                    <span className="text-slate-400">Device IP Address:</span>
-                                    <span className="font-mono text-xs text-amber-300 font-bold">
-                                        {searchedData.ipAddress || searchedData.user?.ipAddress || searchedData.user?.lastIp || 'Not Recorded'}
-                                    </span>
-                                </div>
-                                <div className="flex justify-between py-1">
-                                    <span className="text-slate-400">Accounts on Device:</span>
-                                    <span className="font-bold text-emerald-400">{searchedData.totalAccountsCount} Registered</span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBanType('permanent');
+                    setDuration('Permanent');
+                  }}
+                  className={`p-3 rounded-xl border text-left transition-all ${
+                    banType === 'permanent'
+                      ? 'border-red-500/50 bg-red-500/10 text-white'
+                      : 'border-slate-800 bg-slate-950/60 text-slate-400 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-sm">Permanent Device Ban</span>
+                    <ShieldAlert className={`w-4 h-4 ${banType === 'permanent' ? 'text-red-400' : 'text-slate-500'}`} />
+                  </div>
+                  <p className="text-xs text-slate-400 mt-1">Indefinite hardware restriction until admin unban</p>
+                </button>
+              </div>
+            </div>
 
-                    {/* Limit Override Form */}
-                    <Card className="glass-card border-blue-500/40 md:col-span-2">
-                        <CardHeader>
-                            <CardTitle className="text-base flex items-center gap-2 text-slate-100">
-                                <Sliders className="h-5 w-5 text-blue-400" />
-                                2. Set Max Account Registrations for Device ID
-                            </CardTitle>
-                            <CardDescription className="text-slate-400 text-xs">
-                                Configure how many total account IDs this specific hardware device signature is allowed to register on the platform.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleSaveDeviceLimit} className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Device ID Signature</label>
-                                    <Input
-                                        value={targetDeviceId}
-                                        onChange={(e) => setTargetDeviceId(e.target.value)}
-                                        placeholder="Hardware Device UUID Signature..."
-                                        className="font-mono text-xs bg-slate-900 border-slate-700 text-cyan-300"
-                                        required
-                                    />
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                                            Max Allowed Accounts (0 = Block Device)
-                                        </label>
-                                        <Input
-                                            type="number"
-                                            min="0"
-                                            max="50"
-                                            value={maxAccountsInput}
-                                            onChange={(e) => setMaxAccountsInput(parseInt(e.target.value) || 0)}
-                                            className="font-bold bg-slate-900 border-slate-700 text-white"
-                                            required
-                                        />
-                                        <p className="text-[11px] text-slate-400">
-                                            Default: {defaultMaxAccounts} limit. Set to 0 to block all future signups.
-                                        </p>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">Admin Note / Reason</label>
-                                        <Input
-                                            value={noteInput}
-                                            onChange={(e) => setNoteInput(e.target.value)}
-                                            placeholder="e.g. Granted multi-account access to User #100452"
-                                            className="bg-slate-900 border-slate-700 text-slate-200 text-xs"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="flex items-center justify-between pt-2">
-                                    <div className="flex items-center gap-2">
-                                        <Badge variant="outline" className={maxAccountsInput === 0 ? "border-rose-500/40 text-rose-400" : "border-cyan-500/40 text-cyan-400"}>
-                                            {maxAccountsInput === 0 ? "Hardware Ban (0 Accounts)" : `Limit: ${maxAccountsInput} Accounts Allowed`}
-                                        </Badge>
-                                    </div>
-                                    <Button type="submit" disabled={savingLimit} className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold">
-                                        {savingLimit ? <RefreshCw className="h-4 w-4 mr-2 animate-spin" /> : <Shield className="h-4 w-4 mr-2" />}
-                                        Save Device Limit
-                                    </Button>
-                                </div>
-                            </form>
-
-                            {/* Registered Accounts Table */}
-                            {searchedData.registeredAccounts && searchedData.registeredAccounts.length > 0 && (
-                                <div className="mt-6 pt-4 border-t border-slate-800">
-                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-2">
-                                        <User className="h-4 w-4 text-cyan-400" />
-                                        Accounts Created on Same Hardware Signature ({searchedData.registeredAccounts.length})
-                                    </h4>
-                                    <div className="rounded-lg border border-slate-800 overflow-hidden">
-                                        <Table>
-                                            <TableHeader>
-                                                <TableRow className="border-slate-800 bg-slate-900/60">
-                                                    <TableHead className="text-xs font-bold text-slate-400">User ID</TableHead>
-                                                    <TableHead className="text-xs font-bold text-slate-400">Name</TableHead>
-                                                    <TableHead className="text-xs font-bold text-slate-400">Phone</TableHead>
-                                                    <TableHead className="text-xs font-bold text-slate-400">Role</TableHead>
-                                                    <TableHead className="text-xs font-bold text-slate-400">Registered</TableHead>
-                                                    <TableHead className="text-xs font-bold text-slate-400">Status</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {searchedData.registeredAccounts.map((acc: any) => (
-                                                    <TableRow key={acc._id} className="hover:bg-slate-800/40 border-slate-800">
-                                                        <TableCell className="font-mono text-xs text-cyan-400 font-bold">#{acc.userId}</TableCell>
-                                                        <TableCell className="font-medium text-slate-200 text-xs">{acc.name || 'User'}</TableCell>
-                                                        <TableCell className="font-mono text-slate-300 text-xs">{acc.phoneNumber || '-'}</TableCell>
-                                                        <TableCell className="text-xs uppercase font-bold text-slate-400">{acc.role || 'user'}</TableCell>
-                                                        <TableCell className="text-xs text-slate-400">{acc.createdAt ? new Date(acc.createdAt).toLocaleDateString() : '-'}</TableCell>
-                                                        <TableCell>
-                                                            <Badge variant="outline" className={acc.isBlocked ? "border-rose-500 text-rose-400 text-[10px]" : "border-emerald-500 text-emerald-400 text-[10px]"}>
-                                                                {acc.isBlocked ? "Blocked" : "Active"}
-                                                            </Badge>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    </div>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+            {/* Duration Presets */}
+            {banType === 'temporary' && (
+              <div>
+                <Label className="text-xs text-slate-300 font-medium">3. Ban Duration</Label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-1.5">
+                  {DURATION_PRESETS.filter((d) => d !== 'Permanent').map((d) => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setDuration(d)}
+                      className={`px-3 py-2 text-xs rounded-lg border font-medium transition-all ${
+                        duration === d
+                          ? 'border-amber-500/50 bg-amber-500/20 text-amber-300'
+                          : 'border-slate-800 bg-slate-950/60 text-slate-300 hover:border-slate-700'
+                      }`}
+                    >
+                      {d}
+                    </button>
+                  ))}
                 </div>
+
+                {duration === 'Custom Date & Time' && (
+                  <div className="mt-3 p-3 rounded-xl bg-slate-950 border border-slate-800">
+                    <Label className="text-xs text-slate-400">Custom Expiry Date & Time</Label>
+                    <Input
+                      type="datetime-local"
+                      value={customDateTime}
+                      onChange={(e) => setCustomDateTime(e.target.value)}
+                      className="mt-1 bg-slate-900 border-slate-700 text-white text-xs"
+                    />
+                  </div>
+                )}
+              </div>
             )}
 
-            {/* List of All Custom Device Limits */}
-            <Card className="glass-card border-slate-800">
-                <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div>
-                        <CardTitle className="flex items-center gap-2 text-slate-200 text-lg">
-                            <ShieldAlert className="h-5 w-5 text-cyan-400" />
-                            Hardware Device Limit Overrides & Blocklist
-                        </CardTitle>
-                        <CardDescription className="text-slate-400 text-xs">
-                            Active custom registration limits per hardware device signature
-                        </CardDescription>
-                    </div>
-                    <div className="w-full sm:w-64">
-                        <Input
-                            placeholder="Filter Device ID / Note..."
-                            value={filterQuery}
-                            onChange={(e) => setFilterQuery(e.target.value)}
-                            className="bg-slate-900 border-slate-700 text-xs text-slate-200"
-                        />
-                    </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                    <Table>
-                        <TableHeader>
-                            <TableRow className="border-slate-800">
-                                <TableHead className="font-bold text-slate-300">Device Signature ID</TableHead>
-                                <TableHead className="font-bold text-slate-300">Max Allowed Accounts</TableHead>
-                                <TableHead className="font-bold text-slate-300">Status</TableHead>
-                                <TableHead className="font-bold text-slate-300">Admin Note</TableHead>
-                                <TableHead className="font-bold text-slate-300">Last Updated</TableHead>
-                                <TableHead className="text-right font-bold text-slate-300">Action</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {deviceLimits
-                                .filter(d => d.deviceId.toLowerCase().includes(filterQuery.toLowerCase()) || (d.note || '').toLowerCase().includes(filterQuery.toLowerCase()))
-                                .map((lim) => (
-                                    <TableRow key={lim._id || lim.deviceId} className="hover:bg-slate-800/40 border-slate-800">
-                                        <TableCell className="font-mono text-xs text-cyan-400 font-bold max-w-[200px] truncate" title={lim.deviceId}>
-                                            {lim.deviceId}
-                                        </TableCell>
-                                        <TableCell className="font-extrabold text-slate-100">
-                                            {lim.maxAllowedAccounts} Accounts
-                                        </TableCell>
-                                        <TableCell>
-                                            <Badge variant="outline" className={lim.maxAllowedAccounts === 0 ? "border-rose-500 text-rose-400" : "border-cyan-500 text-cyan-400"}>
-                                                {lim.maxAllowedAccounts === 0 ? "Banned (0)" : `Allowed (${lim.maxAllowedAccounts})`}
-                                            </Badge>
-                                        </TableCell>
-                                        <TableCell className="text-xs text-slate-300">{lim.note || '-'}</TableCell>
-                                        <TableCell className="text-xs text-slate-400">
-                                            {lim.updatedAt ? new Date(lim.updatedAt).toLocaleString() : '-'}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                onClick={() => {
-                                                    setTargetDeviceId(lim.deviceId);
-                                                    setMaxAccountsInput(lim.maxAllowedAccounts);
-                                                    setNoteInput(lim.note || '');
-                                                    setUserSearchInput(lim.deviceId);
-                                                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                                                }}
-                                                className="text-xs border-slate-700 text-cyan-400 hover:bg-cyan-500/10"
-                                            >
-                                                Edit Limit
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
-                            {deviceLimits.length === 0 && !loadingLimits && (
-                                <TableRow>
-                                    <TableCell colSpan={6} className="text-center py-8 text-slate-500">
-                                        No custom device limit overrides set yet. All devices follow default max {defaultMaxAccounts} account rule.
-                                    </TableCell>
-                                </TableRow>
-                            )}
-                        </TableBody>
-                    </Table>
-                </CardContent>
-            </Card>
+            {/* Reason */}
+            <div>
+              <Label className="text-xs text-slate-300 font-medium">4. Reason for Ban</Label>
+              <div className="flex flex-wrap gap-1.5 mt-1.5 mb-2">
+                {DEVICE_REASON_PRESETS.map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setReason(r)}
+                    className="text-[11px] px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 hover:bg-slate-700 transition"
+                  >
+                    {r.length > 30 ? `${r.slice(0, 30)}...` : r}
+                  </button>
+                ))}
+              </div>
+              <Input
+                placeholder="Enter formal device ban reason..."
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                className="bg-slate-950 border-slate-800 text-white text-sm"
+              />
+            </div>
+
+            {/* Internal Admin Note */}
+            <div>
+              <Label className="text-xs text-slate-300 font-medium">5. Internal Admin Note (Confidential)</Label>
+              <Input
+                placeholder="Audit notes, ticket ID, incident reference..."
+                value={adminNote}
+                onChange={(e) => setAdminNote(e.target.value)}
+                className="mt-1 bg-slate-950 border-slate-800 text-white text-sm"
+              />
+            </div>
+
+            {/* Submit */}
+            <div className="pt-2">
+              <Button
+                type="button"
+                onClick={handleConfirmBanDevice}
+                disabled={submittingBan || !targetDeviceId.trim()}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-2.5"
+              >
+                {submittingBan ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Ban className="w-4 h-4 mr-2" />}
+                Confirm & Ban Device
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Right Info: Architecture & Scope */}
+        <div className="lg:col-span-5 space-y-6">
+          <Card className="bg-slate-900/60 border-slate-800">
+            <CardHeader>
+              <CardTitle className="text-white text-sm flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <span>Device vs User ID Ban Scope</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 text-xs text-slate-400 leading-relaxed">
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="font-semibold text-white">Device Ban Independence</span>
+                <p>
+                  A device ban restricts that particular installation from accessing YARO, but does NOT permanently ban genuine user accounts if they log in from another authorized device.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="font-semibold text-white">Immediate Socket.IO Severing</span>
+                <p>
+                  All active accounts currently online from the banned device are immediately disconnected via Socket.IO with a structured <code className="text-amber-300">DEVICE_BANNED</code> payload.
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="font-semibold text-white">Installation Identifier Notes</span>
+                <p>
+                  Uses secure installation-level tokens stored in app keystore. Does not use restricted hardware serial numbers or MAC addresses.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
-    );
+      </div>
+
+      {/* Registered & Banned Devices Table */}
+      <Card className="bg-slate-900/60 border-slate-800">
+        <CardHeader>
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div>
+              <CardTitle className="text-white text-lg flex items-center gap-2">
+                <Monitor className="w-5 h-5 text-indigo-400" />
+                <span>Registered Devices</span>
+                <Badge variant="outline" className="border-indigo-500/30 text-indigo-400 ml-2">
+                  {totalDevices} Devices
+                </Badge>
+              </CardTitle>
+            </div>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <div className="flex rounded-lg border border-slate-800 bg-slate-950 p-1">
+                {(['all', 'banned', 'active'] as const).map((filter) => (
+                  <button
+                    key={filter}
+                    onClick={() => setStatusFilter(filter)}
+                    className={`px-3 py-1 text-xs rounded-md capitalize font-medium transition ${
+                      statusFilter === filter
+                        ? 'bg-indigo-600 text-white'
+                        : 'text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    {filter}
+                  </button>
+                ))}
+              </div>
+              <Input
+                placeholder="Search Device or User ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-slate-950 border-slate-800 text-white text-xs w-48"
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow className="border-slate-800">
+                  <TableHead className="text-slate-400">Device ID</TableHead>
+                  <TableHead className="text-slate-400">Platform</TableHead>
+                  <TableHead className="text-slate-400">Associated Users</TableHead>
+                  <TableHead className="text-slate-400">Ban Status</TableHead>
+                  <TableHead className="text-slate-400">Expiry / Remaining</TableHead>
+                  <TableHead className="text-right text-slate-400">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-10 text-slate-400">
+                      <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-indigo-400" />
+                      Loading devices...
+                    </TableCell>
+                  </TableRow>
+                ) : devices.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-10 text-slate-500 text-sm">
+                      No devices matching the current filter.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  devices.map((device) => (
+                    <TableRow key={device._id || device.deviceId} className="border-slate-800 hover:bg-slate-800/40">
+                      <TableCell>
+                        <div className="font-mono text-xs text-white max-w-xs truncate" title={device.deviceId}>
+                          {device.deviceId}
+                        </div>
+                        <div className="text-[11px] text-slate-500">
+                          Last Seen: {device.lastSeenAt ? new Date(device.lastSeenAt).toLocaleString() : 'N/A'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className="border-slate-700 text-slate-300 capitalize text-xs">
+                          {device.platform || 'Android'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1 max-w-xs">
+                          {Array.isArray(device.associatedUserIds) && device.associatedUserIds.length > 0 ? (
+                            device.associatedUserIds.map((uid: number) => (
+                              <Badge key={uid} className="bg-slate-800 text-slate-300 text-[10px]">
+                                #{uid}
+                              </Badge>
+                            ))
+                          ) : (
+                            <span className="text-xs text-slate-500">None</span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {device.isBanned ? (
+                          <div className="space-y-0.5">
+                            <Badge className={device.banType === 'permanent' ? 'bg-red-500/20 text-red-300 border-red-500/30 text-xs' : 'bg-amber-500/20 text-amber-300 border-amber-500/30 text-xs'}>
+                              {device.banType === 'permanent' ? 'Banned (Permanent)' : 'Banned (Temporary)'}
+                            </Badge>
+                            <div className="text-[11px] text-slate-400 truncate max-w-xs">{device.banReason}</div>
+                          </div>
+                        ) : (
+                          <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 text-xs">
+                            Active
+                          </Badge>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {device.isBanned ? (
+                          <div className="text-xs text-amber-400 font-medium">
+                            {device.remainingTime || 'Permanent'}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-500">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleOpenHistory(device.deviceId)}
+                            className="border-slate-700 text-slate-300 hover:bg-slate-800 text-xs"
+                          >
+                            <History className="w-3.5 h-3.5 mr-1" />
+                            History
+                          </Button>
+                          {device.isBanned ? (
+                            <Button
+                              size="sm"
+                              onClick={() => setUnbanningDevice(device)}
+                              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                              Unban
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                setTargetDeviceId(device.deviceId);
+                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                              }}
+                              className="bg-rose-600 hover:bg-rose-500 text-white text-xs"
+                            >
+                              <Ban className="w-3.5 h-3.5 mr-1" />
+                              Ban
+                            </Button>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Unban Device Dialog */}
+      {unbanningDevice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-md w-full space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-emerald-400">
+              <span className="p-2.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
+                <CheckCircle2 className="w-6 h-6" />
+              </span>
+              <div>
+                <h3 className="font-bold text-white text-lg">Confirm Device Unban</h3>
+                <p className="text-xs text-slate-400 font-mono truncate max-w-xs">{unbanningDevice.deviceId}</p>
+              </div>
+            </div>
+
+            <div>
+              <Label className="text-xs text-slate-300 font-medium">Unban Reason</Label>
+              <Input
+                value={unbanReason}
+                onChange={(e) => setUnbanReason(e.target.value)}
+                placeholder="Reason for revoking device ban..."
+                className="mt-1.5 bg-slate-950 border-slate-800 text-white text-sm"
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <Button
+                variant="outline"
+                onClick={() => setUnbanningDevice(null)}
+                className="border-slate-800 text-slate-400 hover:bg-slate-800"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirmUnbanDevice}
+                disabled={submittingUnban}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white"
+              >
+                {submittingUnban ? <Loader2 className="w-4 h-4 animate-spin mr-1.5" /> : null}
+                Confirm Unban
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Device Ban History Modal */}
+      {historyDeviceId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-2xl w-full space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <History className="w-5 h-5 text-indigo-400" />
+                <h3 className="font-bold text-white text-base">Device Ban History — {historyDeviceId}</h3>
+              </div>
+              <button
+                onClick={() => setHistoryDeviceId(null)}
+                className="text-slate-400 hover:text-white text-sm p-1"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="overflow-y-auto flex-1 space-y-3 pr-1">
+              {loadingHistory ? (
+                <div className="py-12 text-center text-slate-400">
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-400" />
+                  Loading audit trail...
+                </div>
+              ) : historyRecords.length === 0 ? (
+                <div className="py-12 text-center text-slate-500 text-sm">
+                  No historical ban or unban events recorded for this device.
+                </div>
+              ) : (
+                historyRecords.map((item, idx) => (
+                  <div key={item._id || idx} className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          className={
+                            item.action === 'PERMANENT_BAN'
+                              ? 'bg-red-500/20 text-red-300 border-red-500/30'
+                              : item.action === 'TEMPORARY_BAN'
+                              ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                              : item.action === 'UNBAN'
+                              ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+                              : 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30'
+                          }
+                        >
+                          {item.action}
+                        </Badge>
+                        {item.duration && (
+                          <span className="text-slate-400 font-medium">({item.duration})</span>
+                        )}
+                      </div>
+                      <span className="text-slate-500 font-mono">
+                        {item.createdAt ? new Date(item.createdAt).toLocaleString() : ''}
+                      </span>
+                    </div>
+                    <div className="text-slate-300">
+                      Reason: <span className="text-slate-200">{item.reason || 'None specified'}</span>
+                    </div>
+                    {item.adminName && (
+                      <div className="text-slate-400">
+                        Admin: <span className="text-slate-300">{item.adminName}</span>
+                      </div>
+                    )}
+                    {item.bannedUntil && (
+                      <div className="text-amber-400/90">
+                        Expires: {new Date(item.bannedUntil).toLocaleString()}
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

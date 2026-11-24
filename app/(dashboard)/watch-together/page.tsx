@@ -101,7 +101,7 @@ export default function WatchTogetherPage() {
                   ...u,
                   hasVideoAccess: nextState,
                   canWatchTogether: nextState,
-                  videoAccessGrantedByName: nextState ? (user?.name || user?.userId || 'Admin') : undefined,
+                  videoAccessGrantedByName: nextState ? (user?.name || (user as any)?.userId || (user as any)?.id || 'Admin') : undefined,
                   videoAccessGrantedAt: nextState ? new Date().toISOString() : undefined,
                 }
               : u
