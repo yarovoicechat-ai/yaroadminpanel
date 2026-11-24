@@ -10,7 +10,7 @@ import {
     CheckSquare, FileCheck, DollarSign, Coins, Gem, ChevronDown, ChevronRight,
     Crown, Briefcase, Terminal, ShieldCheck, Shield, Settings, Headphones, Globe, Hash,
     FileText, Layers, Radio, Sliders, Image as ImageIcon, Download, Sparkles, ShoppingBag,
-    Heart, Flame, Trash2, Swords, History
+    Heart, Flame, Trash2, Swords, History, Key
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -495,9 +495,23 @@ const adminSidebarSections: SidebarSection[] = [
         category: 'Dashboard',
         items: [
             { name: 'Owner Console (Role Changer)', href: '/owner', icon: Crown, category: 'Dashboard' },
+            { name: 'Test & Fake ID Management', href: '/owner/test-fake-ids', icon: UserX, category: 'Dashboard', ownerOnly: true },
+            { name: 'Room ID Management', href: '/owner/rooms', icon: Hash, category: 'Dashboard', ownerOnly: true },
+            { name: 'Custom Room ID', href: '/owner/rooms/custom', icon: Key, category: 'Dashboard', ownerOnly: true },
+            {
+                name: 'Data Cleanup',
+                icon: Trash2,
+                category: 'Dashboard',
+                ownerOnly: true,
+                submenu: [
+                    { name: 'Chat Cleanup', href: '/owner/cleanup/chat' },
+                    { name: 'Room Cleanup', href: '/owner/cleanup/room' },
+                    { name: 'Cleanup History', href: '/owner/cleanup/history' }
+                ]
+            },
+            { name: 'Migration History', href: '/owner/migration-history', icon: History, category: 'Dashboard', ownerOnly: true },
             { name: 'Room PK Management', href: '/room-pk', icon: Swords, category: 'Dashboard' },
             { name: 'Video Access Management', href: '/video-access', icon: Video, category: 'Dashboard' },
-            { name: 'Room & Chat Cleaner', href: '/owner/cleaner', icon: Trash2, category: 'Dashboard', ownerOnly: true },
             { name: 'Finance & Wallet Ledger', href: '/finance/ledger', icon: DollarSign, category: 'Dashboard' },
             { name: 'Compliance & GDPR', href: '/compliance', icon: ShieldCheck, category: 'Dashboard' }
         ]
