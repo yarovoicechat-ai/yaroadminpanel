@@ -21,6 +21,11 @@ export interface User {
     isDeleted: boolean;
     isOnline: boolean;
     isBlocked: boolean;
+    hasVideoAccess?: boolean;
+    canWatchTogether?: boolean;
+    videoAccessGrantedBy?: string;
+    videoAccessGrantedByName?: string;
+    videoAccessGrantedAt?: string;
     isFake?: boolean;
     isMockUser?: boolean;
     lastOnline?: Date;

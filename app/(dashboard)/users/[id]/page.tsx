@@ -10,7 +10,7 @@ import { toast } from 'sonner';
 import { apiClient } from '@/lib/apiClient';
 import { API_ENDPOINTS } from '@/lib/apiEndpoints';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, Save, ShieldCheck, User as UserIcon, Coins, Award, Globe, Calendar, Ban, CheckCircle, Info, Mail, Phone, Lock, Edit3, Trash2, Sparkles, RefreshCw, CheckSquare, Square, AlertTriangle, Layers, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Save, ShieldCheck, User as UserIcon, Coins, Award, Globe, Calendar, Ban, CheckCircle, Info, Mail, Phone, Lock, Edit3, Trash2, Sparkles, RefreshCw, CheckSquare, Square, AlertTriangle, Layers, Image as ImageIcon, Video } from 'lucide-react';
 import type { User } from '@/types/models';
 import { getAdminAvatar } from '@/lib/avatar';
 
@@ -53,6 +53,12 @@ export default function UserDetailPage() {
     const [isProfileVerified, setIsProfileVerified] = useState(false);
     const [verifiedTitle, setVerifiedTitle] = useState('');
 
+    // 👑 Video Access Permission States
+    const [hasVideoAccess, setHasVideoAccess] = useState(false);
+    const [videoGrantedBy, setVideoGrantedBy] = useState('');
+    const [videoGrantedAt, setVideoGrantedAt] = useState<string | null>(null);
+    const [togglingVideo, setTogglingVideo] = useState(false);
+
     // 👑 Owner-exclusive Custom ID States
     const [customId, setCustomId] = useState('');
     const [updatingCustomId, setUpdatingCustomId] = useState(false);
@@ -92,6 +98,9 @@ export default function UserDetailPage() {
                     setIsProfileVerified(Boolean((u as any).isProfileVerified));
                     setVerifiedTitle((u as any).verifiedTitle || '');
                     setCustomId((u as any).customDisplayId || (u as any).uniqueId || (u as any).meethiId || String(u.userId || ''));
+                    setHasVideoAccess(Boolean(u.hasVideoAccess || (u as any).canWatchTogether));
+                    setVideoGrantedBy((u as any).videoAccessGrantedByName || '');
+                    setVideoGrantedAt((u as any).videoAccessGrantedAt || null);
                 } else {
                     toast.error("User not found");
                 }
@@ -194,6 +203,31 @@ export default function UserDetailPage() {
         setSelectedAssetIds(prev =>
             prev.includes(itemId) ? prev.filter(i => i !== itemId) : [...prev, itemId]
         );
+    };
+
+    const handleToggleVideoPermission = async () => {
+        const targetUid = String(user?.userId || id);
+        const nextPerm = !hasVideoAccess;
+        setTogglingVideo(true);
+        try {
+            const res: any = await apiClient.post('/api/admin/watch-together/toggle', {
+                userId: targetUid,
+                hasVideoAccess: nextPerm,
+                canWatchTogether: nextPerm,
+            });
+            if (res?.success) {
+                setHasVideoAccess(nextPerm);
+                setVideoGrantedBy(res.data?.videoAccessGrantedByName || currentUser?.name || 'Admin');
+                setVideoGrantedAt(res.data?.videoAccessGrantedAt || new Date().toISOString());
+                toast.success(`Video Access ${nextPerm ? 'Enabled' : 'Disabled'} for user`);
+            } else {
+                toast.error(res?.message || 'Failed to update video access');
+            }
+        } catch (err: any) {
+            toast.error(err?.message || 'Error updating video permission');
+        } finally {
+            setTogglingVideo(false);
+        }
     };
 
     const handleUpdateCustomId = async () => {
@@ -433,6 +467,55 @@ export default function UserDetailPage() {
 
                 {/* Right Panel: Admin Settings / Profile Editor Form */}
                 <div className="lg:col-span-3 space-y-6">
+                    {/* 🎥 Admin Video Access Permission Management Card */}
+                    <Card className="border-indigo-500/40 bg-gradient-to-r from-indigo-950/30 via-slate-900 to-[#161520] shadow-xl">
+                        <CardHeader className="pb-3">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-indigo-400 font-bold flex items-center gap-2">
+                                    <Video className="w-5 h-5 text-indigo-400" /> Video Access Permission Management
+                                </CardTitle>
+                                <Badge className={hasVideoAccess ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-slate-800 text-slate-400 border-slate-700"}>
+                                    Status: {hasVideoAccess ? 'Enabled' : 'Disabled'}
+                                </Badge>
+                            </div>
+                            <CardDescription className="text-slate-300 text-xs">
+                                Individual per-user Video Mode and YouTube Watch Together permission. When enabled, this user can open Video Mode, search and control playback in rooms.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-col sm:flex-row items-center justify-between p-3.5 rounded-lg bg-slate-950/80 border border-slate-800 gap-4">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-xs text-slate-400 font-medium">User ID:</span>
+                                        <span className="text-xs font-mono font-bold text-cyan-400">#{user.userId}</span>
+                                        <span className="text-xs text-slate-500">•</span>
+                                        <span className="text-xs text-slate-400 font-medium">Video Access:</span>
+                                        <span className={`text-xs font-bold ${hasVideoAccess ? 'text-emerald-400' : 'text-rose-400'}`}>
+                                            {hasVideoAccess ? 'ON (Active)' : 'OFF (Revoked)'}
+                                        </span>
+                                    </div>
+                                    {videoGrantedAt && (
+                                        <p className="text-[11px] text-slate-400">
+                                            Granted By: <strong className="text-slate-300">{videoGrantedBy || 'Authorized Admin'}</strong> • {new Date(videoGrantedAt).toLocaleString()}
+                                        </p>
+                                    )}
+                                </div>
+                                <Button
+                                    type="button"
+                                    onClick={handleToggleVideoPermission}
+                                    disabled={togglingVideo}
+                                    className={`font-bold whitespace-nowrap w-full sm:w-auto shadow-md ${
+                                        hasVideoAccess
+                                            ? 'bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/40'
+                                            : 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                                    }`}
+                                >
+                                    {togglingVideo ? 'Updating...' : hasVideoAccess ? 'Turn OFF Video Access' : 'Turn ON Video Access'}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     {/* 👑 Owner-Exclusive Custom ID Card */}
                     {isCurrentAdminOwner ? (
                         <Card className="border-amber-500/40 bg-gradient-to-r from-amber-950/30 via-slate-900 to-[#161520] shadow-xl">

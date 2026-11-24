@@ -29,11 +29,16 @@ interface WatchUser {
   svipLevel?: number;
   role?: string;
   canWatchTogether?: boolean;
+  hasVideoAccess?: boolean;
+  videoAccessGrantedBy?: string;
+  videoAccessGrantedByName?: string;
+  videoAccessGrantedAt?: string;
 }
 
 export default function WatchTogetherPage() {
   const { user } = useAuth();
-  const isOwner = user?.role === 'owner';
+  const roleLower = String(user?.role || '').toLowerCase();
+  const isAuthorized = roleLower === 'owner' || roleLower === 'superadmin' || roleLower === 'admin';
 
   const [searchQuery, setSearchQuery] = useState('');
   const [users, setUsers] = useState<WatchUser[]>([]);
@@ -64,10 +69,10 @@ export default function WatchTogetherPage() {
   }, []);
 
   useEffect(() => {
-    if (isOwner) {
+    if (isAuthorized) {
       fetchUsers();
     }
-  }, [isOwner, fetchUsers]);
+  }, [isAuthorized, fetchUsers]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,25 +81,33 @@ export default function WatchTogetherPage() {
 
   const handleToggle = async (targetUser: WatchUser) => {
     const targetUid = String(targetUser.userId || targetUser._id);
-    const nextState = !targetUser.canWatchTogether;
+    const nextState = !(targetUser.hasVideoAccess || targetUser.canWatchTogether);
     setTogglingId(targetUid);
     setStatusMessage(null);
 
     try {
       const res: any = await apiClient.post('/api/admin/watch-together/toggle', {
         userId: targetUid,
+        hasVideoAccess: nextState,
         canWatchTogether: nextState,
+        videoAccess: nextState,
       });
 
       if (res?.success) {
         setUsers((prev) =>
           prev.map((u) =>
             String(u.userId) === targetUid || String(u._id) === targetUid
-              ? { ...u, canWatchTogether: nextState }
+              ? {
+                  ...u,
+                  hasVideoAccess: nextState,
+                  canWatchTogether: nextState,
+                  videoAccessGrantedByName: nextState ? (user?.name || user?.userId || 'Admin') : undefined,
+                  videoAccessGrantedAt: nextState ? new Date().toISOString() : undefined,
+                }
               : u
           )
         );
-        setStatusMessage(`Watch Together access ${nextState ? 'granted to' : 'revoked from'} ${targetUser.name || targetUid}`);
+        setStatusMessage(`Video Access ${nextState ? 'Turned ON for' : 'Turned OFF for'} ${targetUser.name || targetUid}`);
       } else {
         setStatusMessage(res?.message || 'Failed to update access');
       }
@@ -105,15 +118,15 @@ export default function WatchTogetherPage() {
     }
   };
 
-  if (!isOwner) {
+  if (!isAuthorized) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-6">
         <div className="p-4 rounded-full bg-red-500/10 border border-red-500/20 mb-4">
           <ShieldAlert className="w-12 h-12 text-red-500" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-100 mb-2">Access Denied: Owner Exclusive</h1>
+        <h1 className="text-2xl font-bold text-slate-100 mb-2">Access Denied: Admin Exclusive</h1>
         <p className="text-slate-400 max-w-md">
-          This panel is restricted exclusively to the Owner role. You do not have permission to view or manage Watch Together privileges.
+          This panel is restricted to authorized administrators. You do not have permission to view or manage Video Access privileges.
         </p>
       </div>
     );
@@ -129,12 +142,12 @@ export default function WatchTogetherPage() {
               <Video className="w-6 h-6" />
             </span>
             <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-              YouTube Watch Together Access
+              User Video Access Control
               <Crown className="w-5 h-5 text-amber-400" />
             </h1>
           </div>
           <p className="text-sm text-slate-400">
-            Owner-exclusive control. VIP 4 & VIP 5 members unlock Watch Together automatically. You can also grant or revoke access for any user manually here.
+            User-wise Video Access permission management. Only users with Video Access turned ON here can see the Video option in Room Mode and initiate/control playback.
           </p>
         </div>
       </div>
@@ -199,8 +212,8 @@ export default function WatchTogetherPage() {
                   <TableHead className="text-slate-400">ID / Meethi ID</TableHead>
                   <TableHead className="text-slate-400">VIP / SVIP</TableHead>
                   <TableHead className="text-slate-400">Role</TableHead>
-                  <TableHead className="text-slate-400">Access Status</TableHead>
-                  <TableHead className="text-right text-slate-400">Owner Action</TableHead>
+                  <TableHead className="text-slate-400">Video Access Status</TableHead>
+                  <TableHead className="text-right text-slate-400">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -219,9 +232,7 @@ export default function WatchTogetherPage() {
                   </TableRow>
                 ) : (
                   users.map((target) => {
-                    const isVipEligible = Number(target.vipLevel || 0) >= 4 || Number(target.svipLevel || 0) >= 4;
-                    const isOwnerGranted = Boolean(target.canWatchTogether);
-                    const hasAccess = isVipEligible || isOwnerGranted;
+                    const isGranted = Boolean(target.hasVideoAccess || target.canWatchTogether);
                     const isToggling = togglingId === String(target.userId || target._id);
 
                     return (
@@ -247,7 +258,7 @@ export default function WatchTogetherPage() {
                         <TableCell>
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {Number(target.vipLevel || 0) > 0 && (
-                              <Badge className={Number(target.vipLevel || 0) >= 4 ? 'bg-amber-500/20 text-amber-300 border-amber-500/30' : 'bg-slate-800 text-slate-300'}>
+                              <Badge className="bg-slate-800 text-slate-300">
                                 VIP {target.vipLevel}
                               </Badge>
                             )}
@@ -267,20 +278,23 @@ export default function WatchTogetherPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          {isVipEligible ? (
-                            <div className="flex items-center gap-1.5 text-amber-400 text-sm font-medium">
-                              <Sparkles className="w-4 h-4 text-amber-400" />
-                              <span>Enabled (VIP Privilege)</span>
-                            </div>
-                          ) : isOwnerGranted ? (
-                            <div className="flex items-center gap-1.5 text-emerald-400 text-sm font-medium">
-                              <CheckCircle className="w-4 h-4 text-emerald-400" />
-                              <span>Enabled (Owner Granted)</span>
+                          {isGranted ? (
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-1.5 text-emerald-400 text-sm font-medium">
+                                <CheckCircle className="w-4 h-4 text-emerald-400" />
+                                <span>Enabled (ON)</span>
+                              </div>
+                              {(target.videoAccessGrantedByName || target.videoAccessGrantedAt) && (
+                                <div className="text-[11px] text-slate-400">
+                                  {target.videoAccessGrantedByName && `By: ${target.videoAccessGrantedByName}`}
+                                  {target.videoAccessGrantedAt && ` • ${new Date(target.videoAccessGrantedAt).toLocaleString()}`}
+                                </div>
+                              )}
                             </div>
                           ) : (
                             <div className="flex items-center gap-1.5 text-slate-500 text-sm">
                               <XCircle className="w-4 h-4 text-slate-500" />
-                              <span>Disabled</span>
+                              <span>Disabled (OFF)</span>
                             </div>
                           )}
                         </TableCell>
@@ -290,7 +304,7 @@ export default function WatchTogetherPage() {
                             disabled={isToggling}
                             onClick={() => handleToggle(target)}
                             className={
-                              isOwnerGranted
+                              isGranted
                                 ? 'bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30'
                                 : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                             }
@@ -298,7 +312,7 @@ export default function WatchTogetherPage() {
                             {isToggling ? (
                               <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" />
                             ) : null}
-                            {isOwnerGranted ? 'Revoke Access' : 'Grant Access'}
+                            {isGranted ? 'Turn OFF' : 'Turn ON'}
                           </Button>
                         </TableCell>
                       </TableRow>

@@ -33,7 +33,7 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/AlertDialog";
-import { Ban, Edit2, Search, ShieldCheck, UserPlus, Trash2, CheckCircle, Save, Users, UserCheck, Coins, Info, History as HistoryIcon, Bell, Copy, Clock, User as UserIcon, Key, Calendar, RotateCcw, Filter, Sparkles, CheckCircle2, Eye, EyeOff, RefreshCw, Check } from "lucide-react";
+import { Ban, Edit2, Search, ShieldCheck, UserPlus, Trash2, CheckCircle, Save, Users, UserCheck, Coins, Info, History as HistoryIcon, Bell, Copy, Clock, User as UserIcon, Key, Calendar, RotateCcw, Filter, Sparkles, CheckCircle2, Eye, EyeOff, RefreshCw, Check, Video } from "lucide-react";
 import { toast } from 'sonner';
 import { Pagination } from "@/components/ui/Pagination";
 import { apiClient } from '@/lib/apiClient';
@@ -133,6 +133,37 @@ export default function UsersPage() {
         password: string;
     } | null>(null);
     const [copiedField, setCopiedField] = useState<string | null>(null);
+    const [togglingVideoId, setTogglingVideoId] = useState<string | null>(null);
+
+    const handleToggleVideoAccess = async (targetUser: User) => {
+        const targetUid = String(targetUser.userId || targetUser._id);
+        const currentPerm = Boolean(targetUser.hasVideoAccess || (targetUser as any).canWatchTogether);
+        const nextPerm = !currentPerm;
+        setTogglingVideoId(targetUid);
+
+        try {
+            const res: any = await apiClient.post('/api/admin/watch-together/toggle', {
+                userId: targetUid,
+                hasVideoAccess: nextPerm,
+                canWatchTogether: nextPerm,
+            });
+
+            if (res?.success) {
+                setUsers(prev => prev.map(u => 
+                    String(u.userId) === targetUid || String(u._id) === targetUid
+                        ? { ...u, hasVideoAccess: nextPerm, canWatchTogether: nextPerm }
+                        : u
+                ));
+                toast.success(`Video Access ${nextPerm ? 'Enabled' : 'Disabled'} for #${targetUser.userId}`);
+            } else {
+                toast.error(res?.message || 'Failed to update video access');
+            }
+        } catch (err: any) {
+            toast.error(err?.message || 'Error updating video permission');
+        } finally {
+            setTogglingVideoId(null);
+        }
+    };
 
     // Legacy Add User State
     const [isAddingUser, setIsAddingUser] = useState(false);
@@ -796,6 +827,7 @@ export default function UsersPage() {
                                         <TableHead className="text-center">Info</TableHead>
                                         <TableHead className="text-center">History</TableHead>
                                         <TableHead className="text-center">Notification</TableHead>
+                                        <TableHead className="text-center">Video Access</TableHead>
                                         <TableHead className="text-right">Actions</TableHead>
                                     </TableRow>
                                 </TableHeader>
@@ -950,6 +982,21 @@ export default function UsersPage() {
                                                 >
                                                     <Bell className="h-4 w-4" />
                                                 </Button>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <button
+                                                    onClick={() => handleToggleVideoAccess(user)}
+                                                    disabled={togglingVideoId === String(user.userId)}
+                                                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold transition-all shadow-sm ${
+                                                        user.hasVideoAccess || (user as any).canWatchTogether
+                                                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
+                                                            : 'bg-slate-800 text-slate-400 border border-slate-700 hover:bg-slate-700/50 hover:text-slate-200'
+                                                    }`}
+                                                    title={user.hasVideoAccess || (user as any).canWatchTogether ? 'Video Permission: ON (Click to turn OFF)' : 'Video Permission: OFF (Click to turn ON)'}
+                                                >
+                                                    <Video className="h-3 w-3" />
+                                                    <span>{user.hasVideoAccess || (user as any).canWatchTogether ? 'ON' : 'OFF'}</span>
+                                                </button>
                                             </TableCell>
                                             <TableCell className="text-right">
                                                 <div className="flex items-center justify-end gap-2">
