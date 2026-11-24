@@ -10,7 +10,7 @@ import {
     CheckSquare, FileCheck, DollarSign, Coins, Gem, ChevronDown, ChevronRight,
     Crown, Briefcase, Terminal, ShieldCheck, Shield, Settings, Headphones, Globe, Hash,
     FileText, Layers, Radio, Sliders, Image as ImageIcon, Download, Sparkles, ShoppingBag,
-    Heart, Flame, Trash2
+    Heart, Flame, Trash2, Swords, History
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -134,7 +134,9 @@ const managementSidebarSections: SidebarSection[] = [
         category: 'Notifications',
         items: [
             { name: 'Device Limits & Bans', href: '/bans/device', icon: AlertOctagon, category: 'Notifications' },
-            { name: 'ID & Account Bans', href: '/bans/id', icon: Ban, category: 'Notifications' }
+            { name: 'ID & Account Bans', href: '/bans/id', icon: Ban, category: 'Notifications' },
+            { name: 'Banned Users Directory', href: '/bans/users', icon: UserX, category: 'Notifications' },
+            { name: 'Security & Ban History', href: '/bans/history', icon: History, category: 'Notifications' }
         ]
     },
     {
@@ -189,6 +191,8 @@ const adminSidebarSections: SidebarSection[] = [
         items: [
             { name: 'Team & Hosting Targets', href: '/team', icon: Users, category: 'Dashboard' },
             { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, category: 'Dashboard' },
+            { name: 'Room PK Battles', href: '/room-pk', icon: Swords, category: 'Dashboard' },
+            { name: 'Video Access Control', href: '/video-access', icon: Video, category: 'Dashboard' },
             { name: 'Live Rooms (Pin)', href: '/rooms', icon: Radio, category: 'Dashboard' },
             { name: 'Asset Distribution', href: '/store/distribute', icon: Sparkles, category: 'Dashboard' },
             { name: 'Agora RTC Status', href: '/settings/communication/agora', icon: Radio, category: 'Dashboard' },
@@ -390,6 +394,8 @@ const adminSidebarSections: SidebarSection[] = [
             { name: 'Chat Violations', href: '/moderation/violations', icon: ShieldAlert, category: 'Notifications' },
             { name: 'ID Ban', href: '/bans/id', icon: Ban, category: 'Notifications' },
             { name: 'Device Limits & Bans', href: '/bans/device', icon: AlertOctagon, category: 'Notifications' },
+            { name: 'Banned Users Directory', href: '/bans/users', icon: UserX, category: 'Notifications' },
+            { name: 'Ban History Audit', href: '/bans/history', icon: History, category: 'Notifications' },
             { name: 'Event', href: '/events', icon: Calendar, category: 'Notifications' },
             { name: 'System Message', href: '/messages/system', icon: MessageSquare, category: 'Notifications' },
             { name: 'Activity', href: '/messages/activity', icon: Bell, category: 'Notifications' },
@@ -488,9 +494,10 @@ const adminSidebarSections: SidebarSection[] = [
         title: 'Executive Command 5.0',
         category: 'Dashboard',
         items: [
-            { name: 'Owner Console', href: '/owner', icon: Crown, category: 'Dashboard' },
+            { name: 'Owner Console (Role Changer)', href: '/owner', icon: Crown, category: 'Dashboard' },
+            { name: 'Room PK Management', href: '/room-pk', icon: Swords, category: 'Dashboard' },
+            { name: 'Video Access Management', href: '/video-access', icon: Video, category: 'Dashboard' },
             { name: 'Room & Chat Cleaner', href: '/owner/cleaner', icon: Trash2, category: 'Dashboard', ownerOnly: true },
-            { name: 'Watch Together Access', href: '/watch-together', icon: Video, category: 'Dashboard', ownerOnly: true },
             { name: 'Finance & Wallet Ledger', href: '/finance/ledger', icon: DollarSign, category: 'Dashboard' },
             { name: 'Compliance & GDPR', href: '/compliance', icon: ShieldCheck, category: 'Dashboard' }
         ]

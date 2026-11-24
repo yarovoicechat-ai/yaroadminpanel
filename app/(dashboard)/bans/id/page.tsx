@@ -84,7 +84,7 @@ export default function IdBansPage() {
       setLoading(true);
       const [dashRes, usersRes]: any = await Promise.all([
         apiClient.get('/api/admin/bans/dashboard').catch(() => null),
-        apiClient.get('/api/admin/users?limit=50&status=suspended').catch(() => null),
+        apiClient.get('/api/admin/bans/users?limit=50&status=active').catch(() => null),
       ]);
 
       if (dashRes?.success) {
